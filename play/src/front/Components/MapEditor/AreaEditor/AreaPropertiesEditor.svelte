@@ -398,6 +398,11 @@
                     type,
                     // Note: lock state is stored in area property variables, not in the WAM
                     allowedTags: [],
+                    // New lockable areas default to the legacy ephemeral behaviour; the
+                    // door/grace values only take effect once switched to "owner" mode.
+                    lockMode: "ephemeral",
+                    doorGapTiles: 2,
+                    gracePeriodSeconds: 300,
                 };
             default:
                 throw new Error(`Unknown property type ${type}`);
