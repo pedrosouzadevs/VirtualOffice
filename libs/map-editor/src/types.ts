@@ -211,10 +211,32 @@ export const MaxUsersInAreaPropertyData = PropertyBase.extend({
     maxUsers: z.number().min(0).nullable().optional(),
 });
 
+export const AreaLockMode = z.enum(["ephemeral", "owner"]);
+
 export const LockableAreaPropertyData = PropertyBase.extend({
     type: z.literal("lockableAreaPropertyData"),
     // Note: lock state is now stored in area property variables, not in the WAM
     allowedTags: z.array(z.string()).optional(),
+    /**
+     * Locking behaviour of the area:
+     * - "ephemeral" (default, legacy): anyone inside can lock; the back auto-unlocks the
+     *   area when it becomes empty.
+     * - "owner": only the personal-area owner can lock; the lock persists until the owner
+     *   unlocks it (no auto-unlock on empty).
+     *
+     * The default keeps existing maps on the legacy behaviour with no migration.
+     */
+    lockMode: AreaLockMode.default("ephemeral"),
+    /**
+     * Width, in tiles, of the visual opening drawn on the south wall when an owner-locked
+     * area is unlocked. The opening is always centered on the south wall.
+     */
+    doorGapTiles: z.number().min(1).default(2),
+    /**
+     * Grace period, in seconds, during which a non-owner who dropped their connection may
+     * reconnect into a closed area before being repositioned outside. Capped at 5 minutes.
+     */
+    gracePeriodSeconds: z.number().min(0).max(300).default(300),
 });
 
 export const AreaDataProperty = z.discriminatedUnion("type", [
@@ -480,6 +502,7 @@ export type ExtensionModuleAreaPropertyData = z.infer<typeof ExtensionModuleArea
 export type TooltipPropertyData = z.infer<typeof TooltipPropertyData>;
 export type MaxUsersInAreaPropertyData = z.infer<typeof MaxUsersInAreaPropertyData>;
 export type LockableAreaPropertyData = z.infer<typeof LockableAreaPropertyData>;
+export type AreaLockMode = z.infer<typeof AreaLockMode>;
 
 export enum GameMapProperties {
     ALLOW_API = "allowApi",
