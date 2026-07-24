@@ -1,4 +1,4 @@
-import type { AreaData } from "./types";
+import type { AreaData, LockableAreaPropertyData, PersonalAreaPropertyData } from "./types";
 import { SpeakerMegaphonePropertyData } from "./types";
 
 export function getSpeakerMegaphoneAreaName(
@@ -64,4 +64,44 @@ export function isAreaOwnerLockValid(area: AreaData): boolean {
         return true;
     }
     return area.properties.some((property) => property.type === "personalAreaPropertyData");
+}
+
+/**
+ * Single source of truth for who may lock/unlock a lockable area. Used by both the front (to
+ * enable/disable the lock button) and the back (to enforce the permission on the server).
+ *
+ * - "owner" mode: only the personal-area owner may act. If the area has no personal-area owner
+ *   (no personal area property, or its ownerId is null), the lock degrades to the legacy
+ *   ephemeral behaviour instead of locking everyone out.
+ * - "ephemeral" mode (default/legacy): anyone if allowedTags is empty, otherwise the user needs
+ *   at least one matching tag.
+ *
+ * @param area The area whose (first) lockable property is being toggled.
+ * @param userTags The acting user's tags.
+ * @param userId The acting user's identifier (uuid), or undefined for anonymous users.
+ * @returns true when the user may toggle the lock.
+ */
+export function canToggleAreaLock(area: AreaData, userTags: string[], userId: string | undefined): boolean {
+    const lockable = area.properties.find(
+        (property): property is LockableAreaPropertyData => property.type === "lockableAreaPropertyData",
+    );
+    if (!lockable) {
+        return false;
+    }
+
+    if (lockable.lockMode === "owner") {
+        const personalArea = area.properties.find(
+            (property): property is PersonalAreaPropertyData => property.type === "personalAreaPropertyData",
+        );
+        if (personalArea && personalArea.ownerId) {
+            return userId !== undefined && personalArea.ownerId === userId;
+        }
+        // No owner assigned: fall through to the ephemeral/tag-based logic below.
+    }
+
+    const allowedTags = lockable.allowedTags ?? [];
+    if (allowedTags.length === 0) {
+        return true;
+    }
+    return userTags.some((tag) => allowedTags.includes(tag));
 }

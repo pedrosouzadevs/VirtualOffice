@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import { Metadata } from "@grpc/grpc-js";
 import type { WAMFileFormat, AreaData, AreaDataProperty } from "@workadventure/map-editor";
 import { GameMapProperties } from "@workadventure/map-editor";
+import { canToggleAreaLock } from "@workadventure/map-editor/src/Utils";
 import { LocalUrlError } from "@workadventure/map-editor/src/LocalUrlError";
 import { mapFetcher } from "@workadventure/map-editor/src/MapFetcher";
 import type {
@@ -753,42 +754,50 @@ export class GameRoom implements BrothersFinder {
     }
 
     /**
-     * Returns the normalized list of allowed tags for a lockable area property.
-     * Only a non-empty array of strings means "restricted"; undefined or [] means anyone can modify.
+     * Gets an area from the WAM file by areaId.
+     *
+     * @param areaId - The ID of the area
+     * @returns The area data or undefined if not found
      */
-    private static getLockableAllowedTags(property: { allowedTags?: unknown }): string[] {
-        const raw = property.allowedTags;
-        return Array.isArray(raw) ? raw.filter((t): t is string => typeof t === "string") : [];
+    public getArea(areaId: string): Promise<AreaData | undefined> {
+        const wam = this.getWam();
+        if (!wam) {
+            return Promise.resolve(undefined);
+        }
+        return Promise.resolve(wam.areas.find((a: AreaData) => a.id === areaId));
     }
 
     /**
      * Checks if a user has permission to modify an area property variable.
-     * For lockableAreaPropertyData, checks if the user has at least one of the allowedTags.
-     * If allowedTags is empty or undefined, any user can modify the variable.
+     *
+     * For lockableAreaPropertyData, the decision is delegated to {@link canToggleAreaLock}:
+     * in "owner" mode only the personal-area owner may lock/unlock; otherwise (legacy ephemeral
+     * mode) it falls back to the allowedTags check. This mirrors the front-end gating so the
+     * server remains the source of truth and the button cannot be bypassed by a crafted client.
      *
      * @param userTags - The tags of the user
+     * @param userUuid - The uuid of the user (used to match the personal-area owner)
      * @param areaId - The ID of the area
      * @param propertyId - The ID of the property within the area
      * @returns true if the user has permission, false otherwise
      */
-    public async hasAreaPropertyPermission(userTags: string[], areaId: string, propertyId: string): Promise<boolean> {
-        const property = await this.getAreaProperty(areaId, propertyId);
+    public async hasAreaPropertyPermission(
+        userTags: string[],
+        userUuid: string,
+        areaId: string,
+        propertyId: string,
+    ): Promise<boolean> {
+        const area = await this.getArea(areaId);
+        const property = area?.properties.find((p: AreaDataProperty) => p.id === propertyId);
 
-        if (!property) {
-            // If property doesn't exist, deny access for safety
+        if (!area || !property) {
+            // If the area or property doesn't exist, deny access for safety
             return false;
         }
 
-        // Only check permissions for lockableAreaPropertyData
+        // Only lockableAreaPropertyData is permission-gated.
         if (property.type === "lockableAreaPropertyData") {
-            const allowedTags = GameRoom.getLockableAllowedTags(property);
-
-            if (allowedTags.length === 0) {
-                return true;
-            }
-
-            // Check if user has at least one of the allowed tags
-            return userTags.some((tag) => allowedTags.includes(tag));
+            return canToggleAreaLock(area, userTags, userUuid);
         }
 
         // For other property types, allow by default
@@ -829,9 +838,10 @@ export class GameRoom implements BrothersFinder {
 
     /**
      * Sets an area property variable with permission checking.
-     * Verifies the user has appropriate permissions based on the property's allowedTags.
+     * Verifies the user has appropriate permissions (see {@link hasAreaPropertyPermission}).
      *
      * @param userTags - The tags of the user
+     * @param userUuid - The uuid of the user (used to match the personal-area owner)
      * @param areaId - The ID of the area
      * @param propertyId - The ID of the property within the area
      * @param key - The variable key (e.g., "lock")
@@ -840,12 +850,13 @@ export class GameRoom implements BrothersFinder {
      */
     public async setAreaPropertyVariableWithPermissionCheck(
         userTags: string[],
+        userUuid: string,
         areaId: string,
         propertyId: string,
         key: string,
         value: string,
     ): Promise<{ success: true; changed: boolean } | { success: false; error: string }> {
-        const hasPermission = await this.hasAreaPropertyPermission(userTags, areaId, propertyId);
+        const hasPermission = await this.hasAreaPropertyPermission(userTags, userUuid, areaId, propertyId);
 
         if (!hasPermission) {
             return {

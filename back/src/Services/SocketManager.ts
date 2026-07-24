@@ -300,6 +300,7 @@ export class SocketManager {
     ): Promise<void> {
         const result = await room.setAreaPropertyVariableWithPermissionCheck(
             user.tags,
+            user.uuid,
             message.areaId,
             message.propertyId,
             message.key,

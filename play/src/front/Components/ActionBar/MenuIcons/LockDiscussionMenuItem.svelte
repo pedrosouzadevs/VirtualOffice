@@ -1,6 +1,7 @@
 <script lang="ts">
-    import type { LockableAreaPropertyData } from "@workadventure/map-editor";
+    import { canToggleAreaLock } from "@workadventure/map-editor/src/Utils";
     import { onDestroy } from "svelte";
+    import { localUserStore } from "../../../Connection/LocalUserStore";
     import { SvelteSet } from "svelte/reactivity";
     import { analyticsClient } from "../../../Administration/AnalyticsClient";
     import LockIcon from "../../Icons/LockIcon.svelte";
@@ -45,18 +46,10 @@
         if (!area) {
             return false;
         }
-        const lockableProperty = area.properties.find(
-            (property): property is LockableAreaPropertyData => property.type === "lockableAreaPropertyData",
-        );
-        if (!lockableProperty) {
-            return false;
-        }
-        if (!lockableProperty.allowedTags || lockableProperty.allowedTags.length === 0) {
-            return true;
-        }
+        // Shared with the back (GameRoom.hasAreaPropertyPermission) so UI and enforcement agree:
+        // "owner" locks are limited to the personal-area owner, everything else uses allowedTags.
         const userTags = scene.connection?.getAllTags() ?? [];
-        const userTagsSet = new Set(userTags);
-        return lockableProperty.allowedTags.some((tag) => userTagsSet.has(tag));
+        return canToggleAreaLock(area, userTags, localUserStore.getLocalUser()?.uuid);
     }
 
     let lockableAreas = $derived($currentPlayerLockableAreasStore);
