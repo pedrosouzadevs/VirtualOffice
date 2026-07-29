@@ -92,7 +92,36 @@ Consequence: the schema fields `doorGapTiles` and `gracePeriodSeconds` (added in
 
 ### 7. Closing ≠ emptying
 
-Closing the area is an **entry gate**: it blocks new entrants, it evicts nobody. Those inside remain until they leave of their own accord (or via the button).
+Closing the area is an **entry gate**: it blocks new entrants, it evicts nobody. Those inside remain until they walk out of their own accord.
+
+### 8. Owner ejecting occupants (added 2026-07-24)
+
+The owner can **eject** occupants from their area — the active counterpart to the "entry gate" (the lock keeps newcomers out; ejection removes those already in). Decided 2026-07-24 with **two modes** and a **per-area flag** to disable it.
+
+#### What the owner does
+
+- **Eject everyone:** one click moves **all non-owners** inside the area out.
+- **Eject a specific person:** the owner sees the list of occupants (non-owners) and removes people individually.
+
+The owner's front computes the list locally (players whose position falls inside the area rectangle). The **ejection itself is server-mediated** — the owner does not move another client directly.
+
+#### Mechanism (reuses an existing primitive)
+
+`MoveToPositionMessage` already exists: the back sends it to a user and their front runs `GameScene.moveTo(position)` ([RoomConnection.ts:687](../../play/src/front/Connection/RoomConnection.ts)). It is the "reposition the target" primitive. All that is missing is a **request** message owner→pusher→back (`EjectFromAreaMessage { areaId, targetUserId? }`; no `targetUserId` = all non-owners), mirroring the `SetAreaPropertyVariableMessage` flow.
+
+Flow: owner clicks → front sends `EjectFromAreaMessage` → back **validates** (requester is the owner via `personalAreaPropertyData.ownerId`, and `ownerCanEject` is on) → back finds the targets inside the area and sends each a `MoveToPositionMessage` (to a coordinate outside the boundary).
+
+#### Admin block (per-area flag)
+
+A new field `ownerCanEject: boolean` (**default `true`**) on `lockableAreaPropertyData`, editable **only via the map editor** — which is already restricted to `admin`/`editor`. Since the owner (a plain member) **cannot** open the map editor, they cannot undo the block. The admin opens that owner's area and turns it off. Granular per owner, **without depending on F3**.
+
+Enforcement on **both sides** (defense-in-depth, as in P2): the front hides/disables the button when `ownerCanEject === false`; the back **rejects** the request, so a crafted client cannot bypass it.
+
+#### Preconditions and destination
+
+- Requires `personalAreaPropertyData` on the area (source of ownership) — the same precondition as the owner lock. No owner, no ejection.
+- Ejection destination: a coordinate **outside the area boundary** (repositioning within the same map, via `moveTo`). Not `RoomRedirect` (which changes map).
+- Ejection **does not require** the area to be locked. The natural combo is eject then lock, so they don't come back.
 
 ## Alternatives considered
 
@@ -149,6 +178,16 @@ Closing the area is an **entry gate**: it blocks new entrants, it evicts nobody.
 | **P3** | Front: **persistent red tint** while locked (`Area.setLockedHighlight`, driven by `AreasManager`). | ✅ done |
 | ~~P4~~ | ~~Grace period + leave button + teleport~~ — **removed** (user is not trapped; walks out). | ❌ cut |
 | **P5** | Bilingual docs (user and developer). | pending |
+
+### Ejection phases (§8, added 2026-07-24)
+
+| Phase | Scope | Status |
+|---|---|---|
+| **E0** | Schema `ownerCanEject` (default `true`) on `lockableAreaPropertyData` + toggle in `LockableAreaPropertyEditor` (admin/editor only, via the map editor). | pending |
+| **E1** | Protobuf `EjectFromAreaMessage { areaId, targetUserId? }` (front→pusher→back) + regenerate messages. | pending |
+| **E2** | `back`: handler + validation (owner via `ownerId` **and** `ownerCanEject`) + find occupants in the area + send `MoveToPositionMessage` outside the boundary. | pending |
+| **E3** | Front: eject button (owner only, gated by `ownerCanEject`) with "eject everyone" + occupant list for individual ejection. | pending |
+| **E4** | Tests (owner/flag validation in the back; pure "can eject" helper) + docs. | pending |
 
 ### Mandatory regression tests
 

@@ -94,6 +94,35 @@ Consequência: os campos de schema `doorGapTiles` e `gracePeriodSeconds` (introd
 
 Fechar a área é um **portão de entrada**: bloqueia novos entrantes, não expulsa ninguém. Quem está dentro permanece até sair andando por vontade própria.
 
+### 8. Ejeção de ocupantes pelo dono (adicionado 2026-07-24)
+
+O dono pode **ejetar** ocupantes da sua área — o complemento ativo do "portão de entrada" (a trava barra quem chega; a ejeção tira quem já está). Decidido em 2026-07-24 com **dois modos** e bloqueio por **flag por área**.
+
+#### O que o dono faz
+
+- **Ejetar todos:** um clique move para fora **todos os não-donos** dentro da área.
+- **Ejetar específico:** o dono vê a lista de ocupantes (não-donos) e remove pessoas individualmente.
+
+O front do dono computa a lista localmente (jogadores cuja posição cai dentro do retângulo da área). A **ejeção em si é mediada pelo servidor** — o dono não move o cliente alheio diretamente.
+
+#### Mecanismo (reusa primitiva existente)
+
+`MoveToPositionMessage` já existe: o back a envia a um usuário e o front dele executa `GameScene.moveTo(position)` ([RoomConnection.ts:687](../../play/src/front/Connection/RoomConnection.ts)). É a primitiva de "reposicionar o alvo". Falta apenas uma mensagem de **requisição** dono→pusher→back (`EjectFromAreaMessage { areaId, targetUserId? }`; sem `targetUserId` = todos os não-donos), espelhando o fluxo de `SetAreaPropertyVariableMessage`.
+
+Fluxo: dono clica → front envia `EjectFromAreaMessage` → back **valida** (requisitante é o dono via `personalAreaPropertyData.ownerId`, e `ownerCanEject` está ligada) → back acha os alvos dentro da área e envia `MoveToPositionMessage` (para uma coordenada fora da borda) a cada um.
+
+#### Bloqueio pelo admin (flag por área)
+
+Novo campo `ownerCanEject: boolean` (**default `true`**) na `lockableAreaPropertyData`, editável **só pelo map editor** — que já é restrito a `admin`/`editor`. Como o dono (membro comum) **não** abre o map editor, ele não reverte o bloqueio. O admin abre a área daquele dono e desliga. Granular por dono, **sem depender do F3**.
+
+Enforcement **nos dois lados** (defense-in-depth, como no P2): o front esconde/desabilita o botão quando `ownerCanEject === false`; o back **rejeita** a requisição, então um cliente forjado não burla.
+
+#### Precondições e destino
+
+- Requer `personalAreaPropertyData` na área (fonte do dono) — mesma precondição do owner-lock. Sem dono, sem ejeção.
+- Destino da ejeção: coordenada **fora da borda** da área (reposicionamento no mesmo mapa, via `moveTo`). Não é `RoomRedirect` (que troca de mapa).
+- Ejeção **não exige** que a área esteja trancada. O combo natural é ejetar e depois trancar, para não voltarem.
+
 ## Alternativas consideradas
 
 ### A. Criar uma propriedade nova (`ownerLockableAreaPropertyData`)
@@ -149,6 +178,16 @@ Fechar a área é um **portão de entrada**: bloqueia novos entrantes, não expu
 | **P3** | Front: **tinta vermelha persistente** enquanto trancada (`Area.setLockedHighlight`, dirigido pelo `AreasManager`). | ✅ feito |
 | ~~P4~~ | ~~Carência + botão sair + teleporte~~ — **removido** (usuário não fica preso; anda para fora). | ❌ cortado |
 | **P5** | Docs bilíngues (usuário e desenvolvedor). | pendente |
+
+### Fases da ejeção (§8, adicionado 2026-07-24)
+
+| Fase | Escopo | Status |
+|---|---|---|
+| **E0** | Schema `ownerCanEject` (default `true`) na `lockableAreaPropertyData` + toggle no `LockableAreaPropertyEditor` (só admin/editor via map editor). | pendente |
+| **E1** | Protobuf `EjectFromAreaMessage { areaId, targetUserId? }` (front→pusher→back) + regenerar messages. | pendente |
+| **E2** | `back`: handler + validação (dono via `ownerId` **e** `ownerCanEject`) + achar ocupantes na área + enviar `MoveToPositionMessage` para fora da borda. | pendente |
+| **E3** | Front: botão de ejeção (só dono, gated por `ownerCanEject`) com "ejetar todos" + lista de ocupantes para ejeção individual. | pendente |
+| **E4** | Testes (validação de dono/flag no back; função pura de "pode ejetar") + docs. | pendente |
 
 ### Testes de regressão obrigatórios
 
