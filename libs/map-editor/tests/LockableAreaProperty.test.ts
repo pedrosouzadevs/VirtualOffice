@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { AreaData, LockableAreaPropertyData } from "../src/types";
 import {
+    arePositionsSeparatedByLockedArea,
     canEjectFromArea,
     canPassAreaLock,
     canToggleAreaLock,
     hasEffectiveOwnerLock,
     isAreaOwnerLockValid,
+    isPositionInsideArea,
 } from "../src/Utils";
 
 /**
@@ -151,6 +153,61 @@ describe("canToggleAreaLock", () => {
 
     it("denies when the area has no lockable property", () => {
         expect(canToggleAreaLock(makeArea([personalArea("user-42")]), [], "user-42")).toBe(false);
+    });
+});
+
+describe("locked-area bubble separation", () => {
+    const makeArea = (id: string, x: number, y: number, width: number, height: number): AreaData =>
+        AreaData.parse({
+            id,
+            x,
+            y,
+            width,
+            height,
+            visible: true,
+            name: id,
+            properties: [{ id: `lock-${id}`, type: "lockableAreaPropertyData" }],
+        });
+
+    const room = makeArea("room", 100, 100, 200, 150);
+
+    describe("isPositionInsideArea", () => {
+        it("detects inside and outside positions", () => {
+            expect(isPositionInsideArea({ x: 150, y: 150 }, room)).toBe(true);
+            expect(isPositionInsideArea({ x: 50, y: 150 }, room)).toBe(false);
+            // Boundaries: the top-left edge is inside, the bottom-right edge is not.
+            expect(isPositionInsideArea({ x: 100, y: 100 }, room)).toBe(true);
+            expect(isPositionInsideArea({ x: 300, y: 250 }, room)).toBe(false);
+        });
+    });
+
+    describe("arePositionsSeparatedByLockedArea", () => {
+        const locked = () => true;
+        const unlocked = () => false;
+        const inside = { x: 150, y: 150 };
+        const outside = { x: 310, y: 150 };
+        const alsoInside = { x: 250, y: 200 };
+        const alsoOutside = { x: 400, y: 400 };
+
+        it("separates an inside position from an outside one when the area is locked", () => {
+            expect(arePositionsSeparatedByLockedArea([room], locked, inside, outside)).toBe(true);
+        });
+
+        it("does not separate two insiders (they keep bubbling together)", () => {
+            expect(arePositionsSeparatedByLockedArea([room], locked, inside, alsoInside)).toBe(false);
+        });
+
+        it("does not separate two outsiders", () => {
+            expect(arePositionsSeparatedByLockedArea([room], locked, outside, alsoOutside)).toBe(false);
+        });
+
+        it("does not separate across an unlocked area", () => {
+            expect(arePositionsSeparatedByLockedArea([room], unlocked, inside, outside)).toBe(false);
+        });
+
+        it("handles maps with no areas", () => {
+            expect(arePositionsSeparatedByLockedArea([], locked, inside, outside)).toBe(false);
+        });
     });
 });
 

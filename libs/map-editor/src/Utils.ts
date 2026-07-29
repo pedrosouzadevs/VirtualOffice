@@ -107,6 +107,49 @@ export function canToggleAreaLock(area: AreaData, userTags: string[], userId: st
 }
 
 /**
+ * Whether a position (in map pixels) falls inside an area's rectangle.
+ */
+export function isPositionInsideArea(position: { x: number; y: number }, area: AreaData): boolean {
+    return (
+        position.x >= area.x &&
+        position.x < area.x + area.width &&
+        position.y >= area.y &&
+        position.y < area.y + area.height
+    );
+}
+
+/**
+ * Whether two positions sit on opposite sides of at least one locked area's boundary.
+ *
+ * Used to keep proximity bubbles from crossing a locked area: someone standing just outside a
+ * locked room must not enter a voice bubble with someone inside it (ADR-0001). Both inside, or
+ * both outside, is fine.
+ *
+ * @param areas All areas of the map.
+ * @param isAreaLocked Callback resolving an area's current lock state (areas without a lockable
+ *   property must return false).
+ * @param positionA First position, in map pixels.
+ * @param positionB Second position, in map pixels.
+ * @returns true when a locked boundary separates the two positions.
+ */
+export function arePositionsSeparatedByLockedArea(
+    areas: Iterable<AreaData>,
+    isAreaLocked: (area: AreaData) => boolean,
+    positionA: { x: number; y: number },
+    positionB: { x: number; y: number },
+): boolean {
+    for (const area of areas) {
+        if (!isAreaLocked(area)) {
+            continue;
+        }
+        if (isPositionInsideArea(positionA, area) !== isPositionInsideArea(positionB, area)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Whether an area's owner lock is actually in effect. lockMode "owner" only takes effect when a
  * personal-area owner is claimed on the same area; without one, the lock degrades to the legacy
  * ephemeral behaviour everywhere (toggling, auto-unlock on empty, passing through). This is the

@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/node";
 import { Metadata } from "@grpc/grpc-js";
 import type { WAMFileFormat, AreaData, AreaDataProperty } from "@workadventure/map-editor";
 import { GameMapProperties } from "@workadventure/map-editor";
-import { canToggleAreaLock } from "@workadventure/map-editor/src/Utils";
+import { arePositionsSeparatedByLockedArea, canToggleAreaLock } from "@workadventure/map-editor/src/Utils";
 import { LocalUrlError } from "@workadventure/map-editor/src/LocalUrlError";
 import { mapFetcher } from "@workadventure/map-editor/src/MapFetcher";
 import type {
@@ -600,10 +600,41 @@ export class GameRoom implements BrothersFinder {
     }
 
     /**
+     * Whether the area's lock is currently engaged (its "lock" property variable is set).
+     * Areas without a lockable property are never locked.
+     */
+    private isAreaCurrentlyLocked(area: AreaData): boolean {
+        const lockable = area.properties.find((p: AreaDataProperty) => p.type === "lockableAreaPropertyData");
+        if (!lockable) {
+            return false;
+        }
+        return this.areaPropertyVariablesManager.getVariable(area.id, lockable.id, "lock") === "true";
+    }
+
+    /**
+     * Whether a locked area's boundary separates the two positions. Proximity bubbles must not
+     * cross it: someone just outside a locked room cannot start a voice bubble with someone
+     * inside (ADR-0001). Users on the same side keep bubbling normally.
+     */
+    private isBubbleBlockedByLockedArea(positionA: PositionInterface, positionB: PositionInterface): boolean {
+        const wam = this.getWam();
+        if (!wam) {
+            return false;
+        }
+        return arePositionsSeparatedByLockedArea(
+            wam.areas,
+            (area) => this.isAreaCurrentlyLocked(area),
+            positionA,
+            positionB,
+        );
+    }
+
+    /**
      * Looks for the closest user that is:
      * - close enough (distance <= minDistance)
      * - not in a group
      * - not silent
+     * - not on the other side of a locked area's boundary
      * OR
      * - close enough to a group (distance <= groupRadius)
      */
@@ -622,6 +653,9 @@ export class GameRoom implements BrothersFinder {
             if (currentUser.silent) {
                 continue;
             }
+            if (this.isBubbleBlockedByLockedArea(userPosition, currentUser.getPosition())) {
+                continue;
+            }
 
             const distance = GameRoom.computeDistance(user, currentUser); // compute distance between peers.
 
@@ -633,6 +667,9 @@ export class GameRoom implements BrothersFinder {
 
         for (const group of this.groups.queryCircle(userPosition.x, userPosition.y, this.groupRadius)) {
             if (group.isFull() || group.isLocked()) {
+                continue;
+            }
+            if (this.isBubbleBlockedByLockedArea(userPosition, group.getPosition())) {
                 continue;
             }
             const distance = GameRoom.computeDistanceBetweenPositions(user.getPosition(), group.getPosition());
