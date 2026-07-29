@@ -236,7 +236,7 @@ Enquanto trancada, a área ganha uma **tinta vermelha semi-transparente persiste
 - **P2** ✅ — Restrição ao dono nos dois lados (`canToggleAreaLock`).
 - **P3** ✅ — Tinta vermelha persistente enquanto trancada.
 - ~~P4~~ ❌ — Carência/reposicionamento/botão sair: **cortado**.
-- **P5** — Docs bilíngues (usuário e desenvolvedor).
+- **P5** ✅ — Docs: seção "Owner mode" na doc da área bloqueável; ADR-0001 aceito.
 
 ### Riscos
 
@@ -249,7 +249,7 @@ Não quebrar a **trava efêmera existente**, que é outra feature em uso — se 
 ## Sequenciamento e dependências
 
 ```
-F4 (trava de área do dono) ── ✅ entregue (P0–P3 + toggle; falta P5 docs)  [1º]
+F4 (trava de área do dono) ── ✅ COMPLETA (P0–P6, ADR aceito)            [1º]
 F3 (admin-api) ──► fundação de AuthZ — PRÓXIMA                             [2º]
       └── F2 liga identidade Azure sobre o F3;
              após o F3 completo, mock aposentado                            [3º]

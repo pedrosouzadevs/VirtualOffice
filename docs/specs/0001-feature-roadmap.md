@@ -236,7 +236,7 @@ While locked, the area gets a **persistent, semi-transparent red tint** (same co
 - **P2** ✅ — Owner-only restriction on both sides (`canToggleAreaLock`).
 - **P3** ✅ — Persistent red tint while locked.
 - ~~P4~~ ❌ — Grace / repositioning / leave button: **cut**.
-- **P5** — Bilingual docs (user and developer).
+- **P5** ✅ — Docs: "Owner mode" section in the lockable-area doc; ADR-0001 accepted.
 
 ### Risks
 
@@ -249,7 +249,7 @@ Do not break the **existing ephemeral lock**, which is another feature in use �
 ## Sequencing and dependencies
 
 ```
-F4 (owner area lock) ── ✅ delivered (P0–P3 + toggle; P5 docs pending)  [1st]
+F4 (owner area lock) ── ✅ COMPLETE (P0–P6, ADR accepted)                [1st]
 F3 (admin-api) ──► AuthZ foundation — NEXT                              [2nd]
       └── F2 wires Azure identity on top of F3;
              once F3 is complete, mock retired                          [3rd]

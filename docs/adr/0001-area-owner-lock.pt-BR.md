@@ -1,6 +1,6 @@
 # ADR-0001: Trava persistente de área controlada pelo dono, com tinta vermelha
 
-- **Status:** Proposto
+- **Status:** Aceito (implementado e validado em campo em 2026-07-29)
 - **Data:** 2026-07-23
 - **Decisores:** Equipe VirtualOffice
 - **Idiomas:** este arquivo (pt-BR) + [0001-area-owner-lock.md](0001-area-owner-lock.md) (en-US), em lockstep.
@@ -123,6 +123,14 @@ Enforcement **nos dois lados** (defense-in-depth, como no P2): o front esconde/d
 - Destino da ejeção: coordenada **fora da borda** da área (reposicionamento no mesmo mapa, via `moveTo`). Não é `RoomRedirect` (que troca de mapa).
 - Ejeção **não exige** que a área esteja trancada. O combo natural é ejetar e depois trancar, para não voltarem.
 
+### 9. Bolhas de voz não atravessam a borda trancada (adicionado 2026-07-29)
+
+Descoberto em teste de campo: a formação de bolha de proximidade era puramente por distância — alguém colado na borda, por fora, iniciava chat de voz com quem estava dentro da sala trancada, anulando a privacidade.
+
+**Decisão:** enquanto a área está trancada (qualquer modo — dono ou efêmero), **a bolha não cruza a borda**. Quem está do mesmo lado (ambos dentro, ou ambos fora) conversa normalmente. Implementado no **servidor** (`GameRoom.searchClosestAvailableUserOrGroup` consulta `arePositionsSeparatedByLockedArea`), então um cliente forjado não burla.
+
+**Limite conhecido (v1):** uma bolha que já atravessava a borda no momento do trancamento não é desfeita — ela se dissolve quando os participantes se afastam. O que a trava impede é a **formação** de novas bolhas atravessadas.
+
 ## Alternativas consideradas
 
 ### A. Criar uma propriedade nova (`ownerLockableAreaPropertyData`)
@@ -177,7 +185,8 @@ Enforcement **nos dois lados** (defense-in-depth, como no P2): o front esconde/d
 | **P2** | Front + back: restringir trava ao dono no modo `owner` (função pura `canToggleAreaLock`, enforcement nos dois lados). | ✅ feito |
 | **P3** | Front: **tinta vermelha persistente** enquanto trancada (`Area.setLockedHighlight`, dirigido pelo `AreasManager`). | ✅ feito |
 | ~~P4~~ | ~~Carência + botão sair + teleporte~~ — **removido** (usuário não fica preso; anda para fora). | ❌ cortado |
-| **P5** | Docs bilíngues (usuário e desenvolvedor). | pendente |
+| **P5** | Docs (seção "Owner mode" na doc de usuário da área bloqueável; ADR aceito). | ✅ feito |
+| **P6** | Endurecimento de campo: flash vs. tinta, passe do dono, degradação sem dono, sem bypass de admin, tinta auto-regenerativa, isolamento de bolhas (§9). | ✅ feito |
 
 ### Fases da ejeção (§8, adicionado 2026-07-24)
 

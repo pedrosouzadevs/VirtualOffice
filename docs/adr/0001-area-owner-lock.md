@@ -1,6 +1,6 @@
 # ADR-0001: Persistent owner-controlled area lock, with a red tint
 
-- **Status:** Proposed
+- **Status:** Accepted (implemented and field-validated on 2026-07-29)
 - **Date:** 2026-07-23
 - **Deciders:** VirtualOffice team
 - **Languages:** [0001-area-owner-lock.pt-BR.md](0001-area-owner-lock.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
@@ -123,6 +123,14 @@ Enforcement on **both sides** (defense-in-depth, as in P2): the front hides/disa
 - Ejection destination: a coordinate **outside the area boundary** (repositioning within the same map, via `moveTo`). Not `RoomRedirect` (which changes map).
 - Ejection **does not require** the area to be locked. The natural combo is eject then lock, so they don't come back.
 
+### 9. Voice bubbles do not cross a locked boundary (added 2026-07-29)
+
+Found in field testing: proximity bubble formation was purely distance-based — someone standing just outside the boundary could start a voice chat with someone inside the locked room, defeating the privacy.
+
+**Decision:** while an area is locked (either mode — owner or ephemeral), **bubbles do not cross the boundary**. Users on the same side (both inside, or both outside) keep chatting normally. Enforced on the **server** (`GameRoom.searchClosestAvailableUserOrGroup` consults `arePositionsSeparatedByLockedArea`), so a crafted client cannot bypass it.
+
+**Known limit (v1):** a bubble already spanning the boundary when the lock engages is not broken up — it dissolves as participants move apart. What the lock prevents is the **formation** of new cross-boundary bubbles.
+
 ## Alternatives considered
 
 ### A. Create a new property (`ownerLockableAreaPropertyData`)
@@ -177,7 +185,8 @@ Enforcement on **both sides** (defense-in-depth, as in P2): the front hides/disa
 | **P2** | Front + back: restrict locking to the owner in `owner` mode (pure `canToggleAreaLock`, enforced on both sides). | ✅ done |
 | **P3** | Front: **persistent red tint** while locked (`Area.setLockedHighlight`, driven by `AreasManager`). | ✅ done |
 | ~~P4~~ | ~~Grace period + leave button + teleport~~ — **removed** (user is not trapped; walks out). | ❌ cut |
-| **P5** | Bilingual docs (user and developer). | pending |
+| **P5** | Docs ("Owner mode" section in the lockable-area user doc; ADR accepted). | ✅ done |
+| **P6** | Field hardening: flash vs tint, owner pass-through, ownerless degradation, no admin bypass, self-healing tint, bubble isolation (§9). | ✅ done |
 
 ### Ejection phases (§8, added 2026-07-24)
 
