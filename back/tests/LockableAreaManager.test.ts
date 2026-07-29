@@ -7,15 +7,27 @@ import { LockableAreaManager } from "../src/Model/AreaPropertyEvents/LockableAre
 
 type LockMode = "ephemeral" | "owner";
 
-function createArea(areaId: string, lockMode: LockMode | undefined): AreaData {
-    const property = {
-        id: `property-${areaId}`,
-        type: "lockableAreaPropertyData",
-        allowedTags: [],
-        ...(lockMode !== undefined ? { lockMode } : {}),
-        doorGapTiles: 2,
-        gracePeriodSeconds: 300,
-    } as AreaData["properties"][number];
+function createArea(areaId: string, lockMode: LockMode | undefined, ownerId?: string | null): AreaData {
+    const properties: AreaData["properties"][number][] = [
+        {
+            id: `property-${areaId}`,
+            type: "lockableAreaPropertyData",
+            allowedTags: [],
+            ...(lockMode !== undefined ? { lockMode } : {}),
+            doorGapTiles: 2,
+            gracePeriodSeconds: 300,
+        } as AreaData["properties"][number],
+    ];
+
+    if (ownerId !== undefined) {
+        properties.push({
+            id: `personal-${areaId}`,
+            type: "personalAreaPropertyData",
+            accessClaimMode: "dynamic",
+            allowedTags: [],
+            ownerId,
+        } as AreaData["properties"][number]);
+    }
 
     return {
         id: areaId,
@@ -25,7 +37,7 @@ function createArea(areaId: string, lockMode: LockMode | undefined): AreaData {
         width: 10,
         height: 10,
         visible: true,
-        properties: [property],
+        properties,
     };
 }
 
@@ -83,15 +95,43 @@ describe("LockableAreaManager", () => {
         expect(setAreaPropertyVariable).toHaveBeenCalledWith("area-legacy", "property-area-legacy", "lock", "false");
     });
 
-    // Core new behaviour: an owner lock is persistent and must NOT auto-unlock when empty.
+    // Core new behaviour: an owner lock (backed by a claimed owner) is persistent and must NOT
+    // auto-unlock when empty.
     it("keeps an owner-locked area locked when the last user leaves", () => {
         const { enterSubject, leaveSubject, setAreaPropertyVariable } = createHarness();
-        const area = createArea("area-owner", "owner");
+        const area = createArea("area-owner", "owner", "user-42");
 
         enterSubject.next(area);
         leaveSubject.next(area);
 
         expect(setAreaPropertyVariable).not.toHaveBeenCalled();
+    });
+
+    // An owner lock with no claimed owner degrades to ephemeral: without this, the area could
+    // stay locked forever with nobody able to unlock it.
+    it("auto-unlocks an owner-locked area with no personal area (degrades to ephemeral)", () => {
+        const { enterSubject, leaveSubject, setAreaPropertyVariable } = createHarness();
+        const area = createArea("area-noowner", "owner");
+
+        enterSubject.next(area);
+        leaveSubject.next(area);
+
+        expect(setAreaPropertyVariable).toHaveBeenCalledWith("area-noowner", "property-area-noowner", "lock", "false");
+    });
+
+    it("auto-unlocks an owner-locked area whose personal area is unclaimed (ownerId null)", () => {
+        const { enterSubject, leaveSubject, setAreaPropertyVariable } = createHarness();
+        const area = createArea("area-unclaimed", "owner", null);
+
+        enterSubject.next(area);
+        leaveSubject.next(area);
+
+        expect(setAreaPropertyVariable).toHaveBeenCalledWith(
+            "area-unclaimed",
+            "property-area-unclaimed",
+            "lock",
+            "false",
+        );
     });
 
     it("only unlocks an ephemeral area once the last of several users leaves", () => {

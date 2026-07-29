@@ -107,6 +107,29 @@ export function canToggleAreaLock(area: AreaData, userTags: string[], userId: st
 }
 
 /**
+ * Whether an area's owner lock is actually in effect. lockMode "owner" only takes effect when a
+ * personal-area owner is claimed on the same area; without one, the lock degrades to the legacy
+ * ephemeral behaviour everywhere (toggling, auto-unlock on empty, passing through). This is the
+ * runtime counterpart of {@link isAreaOwnerLockValid}: an unbacked owner lock must never create
+ * an area nobody can unlock.
+ *
+ * @param area The area to check.
+ * @returns true when the area has an owner-mode lock backed by a claimed owner.
+ */
+export function hasEffectiveOwnerLock(area: AreaData): boolean {
+    const lockable = area.properties.find(
+        (property): property is LockableAreaPropertyData => property.type === "lockableAreaPropertyData",
+    );
+    if (!lockable || lockable.lockMode !== "owner") {
+        return false;
+    }
+    const personalArea = area.properties.find(
+        (property): property is PersonalAreaPropertyData => property.type === "personalAreaPropertyData",
+    );
+    return !!personalArea?.ownerId;
+}
+
+/**
  * Whether a user passes through an area's lock as if it were open (ADR-0001). The owner of an
  * owner-locked area is not blocked by their own lock: they can leave and re-enter freely while
  * everyone else stays locked out. Ephemeral locks keep their legacy behaviour (nobody passes).

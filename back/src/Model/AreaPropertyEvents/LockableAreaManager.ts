@@ -1,5 +1,6 @@
 import type { Subscription } from "rxjs";
-import type { AreaData, LockableAreaPropertyData } from "@workadventure/map-editor";
+import type { AreaData } from "@workadventure/map-editor";
+import { hasEffectiveOwnerLock } from "@workadventure/map-editor/src/Utils";
 import type { GameRoom } from "../GameRoom";
 import type { AreaZoneTracker } from "../AreaZoneTracker";
 
@@ -54,17 +55,17 @@ export class LockableAreaManager {
 
         if (delta === -1 && updatedUsersInArea === 0) {
             // Let's look for the "lockableAreaPropertyData" property of the area and set its "lock" variable to false.
-            const property = area.properties.find(
-                (p): p is LockableAreaPropertyData => p.type === "lockableAreaPropertyData",
-            );
+            const property = area.properties.find((p) => p.type === "lockableAreaPropertyData");
             if (!property) {
                 return;
             }
 
-            // Owner-locked areas stay locked until the owner explicitly unlocks them. Only the legacy
-            // ephemeral mode auto-unlocks when the area becomes empty. Missing lockMode (older maps) is
-            // treated as ephemeral by the schema default, so this preserves the historical behaviour.
-            if (property.lockMode === "owner") {
+            // Owner-locked areas stay locked until the owner explicitly unlocks them; only the legacy
+            // ephemeral mode auto-unlocks when the area becomes empty. The owner mode only takes effect
+            // when a personal-area owner is actually claimed (hasEffectiveOwnerLock): an owner lock with
+            // no owner degrades to ephemeral here too, otherwise the area could stay locked forever with
+            // nobody able to unlock it.
+            if (hasEffectiveOwnerLock(area)) {
                 return;
             }
 
