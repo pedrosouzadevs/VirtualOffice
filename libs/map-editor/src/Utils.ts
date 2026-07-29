@@ -105,3 +105,33 @@ export function canToggleAreaLock(area: AreaData, userTags: string[], userId: st
     }
     return userTags.some((tag) => allowedTags.includes(tag));
 }
+
+/**
+ * Single source of truth for whether a user may eject occupants from an area (ADR-0001 §8).
+ * Used by both the front (to show/enable the eject button) and the back (to enforce it).
+ *
+ * Requires the user to be the personal-area owner. An admin can block ejection for a given
+ * area by setting `ownerCanEject: false` on its lockable property (editable only in the map
+ * editor); `undefined`/`true` means allowed.
+ *
+ * @param area The area the ejection is requested on.
+ * @param userId The requesting user's identifier (uuid), or undefined for anonymous users.
+ * @returns true when the user is the owner and ejection is not blocked.
+ */
+export function canEjectFromArea(area: AreaData, userId: string | undefined): boolean {
+    const personalArea = area.properties.find(
+        (property): property is PersonalAreaPropertyData => property.type === "personalAreaPropertyData",
+    );
+    if (!personalArea || !personalArea.ownerId) {
+        return false;
+    }
+    if (userId === undefined || personalArea.ownerId !== userId) {
+        return false;
+    }
+
+    const lockable = area.properties.find(
+        (property): property is LockableAreaPropertyData => property.type === "lockableAreaPropertyData",
+    );
+    // Admins block ejection per area via this flag; only an explicit false blocks it.
+    return lockable?.ownerCanEject !== false;
+}

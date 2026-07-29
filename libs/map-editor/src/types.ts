@@ -237,6 +237,13 @@ export const LockableAreaPropertyData = PropertyBase.extend({
      * reconnect into a closed area before being repositioned outside. Capped at 5 minutes.
      */
     gracePeriodSeconds: z.number().min(0).max(300).default(300),
+    /**
+     * Whether the area owner may eject occupants (ADR-0001 §8). Editable only via the map editor
+     * (admin/editor), so an admin can revoke it for an owner who abuses it. `undefined` is treated
+     * as allowed; only an explicit `false` blocks ejection. Kept optional (not defaulted) so
+     * existing lockable literals do not all need to set it.
+     */
+    ownerCanEject: z.boolean().optional(),
 });
 
 export const AreaDataProperty = z.discriminatedUnion("type", [

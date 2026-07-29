@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AreaData, LockableAreaPropertyData } from "../src/types";
-import { canToggleAreaLock, isAreaOwnerLockValid } from "../src/Utils";
+import { canEjectFromArea, canToggleAreaLock, isAreaOwnerLockValid } from "../src/Utils";
 
 /**
  * Regression tests for the owner lock mode added to the lockable area property (F4 / ADR-0001).
@@ -145,5 +145,63 @@ describe("canToggleAreaLock", () => {
 
     it("denies when the area has no lockable property", () => {
         expect(canToggleAreaLock(makeArea([personalArea("user-42")]), [], "user-42")).toBe(false);
+    });
+});
+
+describe("canEjectFromArea", () => {
+    const makeArea = (properties: unknown[]): AreaData =>
+        AreaData.parse({
+            id: "area-1",
+            x: 0,
+            y: 0,
+            width: 64,
+            height: 64,
+            visible: true,
+            name: "office",
+            properties,
+        });
+
+    const personalArea = (ownerId: string | null) => ({
+        id: "personal-1",
+        type: "personalAreaPropertyData",
+        accessClaimMode: "dynamic",
+        ownerId,
+    });
+    const lockable = (ownerCanEject?: boolean) => ({
+        id: "lock-1",
+        type: "lockableAreaPropertyData",
+        ...(ownerCanEject !== undefined ? { ownerCanEject } : {}),
+    });
+
+    it("lets the owner eject by default (no flag set)", () => {
+        expect(canEjectFromArea(makeArea([personalArea("user-42"), lockable()]), "user-42")).toBe(true);
+    });
+
+    it("lets the owner eject when there is no lockable property to block it", () => {
+        expect(canEjectFromArea(makeArea([personalArea("user-42")]), "user-42")).toBe(true);
+    });
+
+    it("blocks ejection when an admin set ownerCanEject to false", () => {
+        expect(canEjectFromArea(makeArea([personalArea("user-42"), lockable(false)]), "user-42")).toBe(false);
+    });
+
+    it("allows ejection when ownerCanEject is explicitly true", () => {
+        expect(canEjectFromArea(makeArea([personalArea("user-42"), lockable(true)]), "user-42")).toBe(true);
+    });
+
+    it("denies a non-owner", () => {
+        expect(canEjectFromArea(makeArea([personalArea("user-42"), lockable()]), "user-99")).toBe(false);
+    });
+
+    it("denies an anonymous user", () => {
+        expect(canEjectFromArea(makeArea([personalArea("user-42"), lockable()]), undefined)).toBe(false);
+    });
+
+    it("denies when the area has no owner (no personal area)", () => {
+        expect(canEjectFromArea(makeArea([lockable()]), "user-42")).toBe(false);
+    });
+
+    it("denies when the personal area is unclaimed (ownerId null)", () => {
+        expect(canEjectFromArea(makeArea([personalArea(null), lockable()]), "user-42")).toBe(false);
     });
 });
