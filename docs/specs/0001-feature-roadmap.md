@@ -210,41 +210,32 @@ Two possible readings — **decide in the ADR**:
 
 Closing ≠ emptying. A closed area is an **entry gate**: those inside remain until they leave; those outside cannot get in.
 
-### Behavior while the area is closed (decided 2026-07-23)
+### Behavior while the area is closed (revised 2026-07-24)
 
 For anyone who is **not the owner**:
 
 | Situation | Behavior |
 |---|---|
-| Inside and wants to leave | **"Leave area"** button → avatar moved outside the area bounds |
-| Connection dropped, returns **within** N minutes | **Re-enters normally** (grace period valid) |
-| Connection dropped, returns **after** N minutes | Is **moved outside** the area |
+| Inside and wants to leave | **Walks out** — collision blocks entry only, not exit |
 | Never was inside | Blocked at the boundary (collision), as the current lock already does |
+| Reconnection | Treated as any entry: if still locked and not the owner, blocked at the boundary — **no grace** |
 
 With the area **open**, none of this applies.
 
-#### ❌ `RoomRedirect` does **not** apply here
+> **Scope cut (2026-07-24):** the **"Leave area" button**, the **reconnection grace period** and the **teleport/repositioning** were removed. The user **is not trapped** — they walk out. Full detail in [ADR-0001](../adr/0001-area-owner-lock.md).
 
-The previous version of this spec proposed `RoomRedirect` for "teleporting out". **Dropped:** `RoomRedirect` moves the user to a different **map/URL**, whereas here the user must stay in the **same map**, merely outside the area bounds. The correct mechanism is **repositioning the avatar** within the map (same family as what the lock's collision already does when blocking), not a room redirect.
+#### Visual signalling
 
-#### Grace tracking
+While locked, the area gets a **persistent, semi-transparent red tint** (same colour as the collision flash, without the fade) — a "closed" affordance for everyone. Implemented in `Area.setLockedHighlight`, driven by `AreasManager`.
 
-A token per **user + area** with a TTL of N minutes. Since area state already travels via area property variables, the grace period can live on the same path (or in Redis, via the back). Issued to those inside when the area closed.
+### Phased plan (revised)
 
-#### To define in the ADR
-
-- **The "outside" position** — where is the avatar moved to? Candidates: nearest point outside the boundary, or a configurable "exit" position on the area. *(Far simpler than the multi-map case: it is a coordinate in the same map.)*
-- **Value of N** and whether it is configurable.
-- Coexistence of `lockableAreaPropertyData` (ephemeral, existing) with the new persistent owner lock: **extend the current property with a mode** or create a new property? *(Prefer extending, to avoid duplicating the concept.)*
-
-### Phased plan
-
-- **P0** — Define the ownership source (revisit decision #4) and the persistent lock model.
-- **P1** — Persistent lock via area property variable, restricted to the owner (no auto-unlock).
-- **P2** — "Close/Open my area" UI for the owner.
-- **P3** — Grace period + avatar repositioning + "Leave area" button.
-- **P4** — (If reading (b)) ownership management via the F3 dashboard.
-- **P5** — Regression tests: new entrant blocked, those inside remain, admin **cannot** enter, reconnection within/after the grace period, "Leave" button repositions, and **the lock does not dissolve when empty** (the core difference from the current lock).
+- **P0** ✅ — Schema (`lockMode`; `doorGapTiles`/`gracePeriodSeconds` reserved) + validator (owner requires a personal area).
+- **P1** ✅ — Persistent lock: the `back` does not auto-unlock in `owner` mode.
+- **P2** ✅ — Owner-only restriction on both sides (`canToggleAreaLock`).
+- **P3** ✅ — Persistent red tint while locked.
+- ~~P4~~ ❌ — Grace / repositioning / leave button: **cut**.
+- **P5** — Bilingual docs (user and developer).
 
 ### Risks
 
@@ -289,7 +280,7 @@ Reason: F4 was confirmed **standalone** (ownership on the area, no `admin-api`) 
 | 5 | Execution order | ✅ **REVISED: F4 → F3 → F2 → F1** | F4 became standalone and cheap (S), so it delivers visible value first; see *Sequencing*. |
 | 6 | **F4** — do admins override the owner's lock? | **No** | Sovereign lock. Creates permanent-lockout risk → mitigate with owner reassignment. |
 | 7 | **F4** — those already inside when it closes? | **They stay** | Closing blocks new entrants; evicts nobody. |
-| 8 | **F4** — reconnection and leaving (closed area) | **"Leave area"** button moves the user out; a dropped connection gets an **N-minute grace period** (return within → re-enters; return after → moved out) | Avatar repositioning **within the same map** (`RoomRedirect` was dropped — it changes map). Still to define: the **exit position** and the value of **N**. |
+| 8 | **F4** — reconnection and leaving (closed area) | **Simplified (2026-07-24):** no leave button, no grace, no teleport — the user walks out. While locked, a persistent red tint | The user is not trapped; collision blocks entry only. See [ADR-0001](../adr/0001-area-owner-lock.md). |
 | 9 | **F4** — scope of "room" | **An area inside a single map**, not its own map | Premise correction. F4 effort drops to **S**; three core primitives already exist. |
 
 ## Remaining open items

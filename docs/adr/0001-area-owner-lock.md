@@ -1,4 +1,4 @@
-# ADR-0001: Persistent owner-controlled area lock, with visual walls
+# ADR-0001: Persistent owner-controlled area lock, with a red tint
 
 - **Status:** Proposed
 - **Date:** 2026-07-23
@@ -8,7 +8,7 @@
 
 ## Context
 
-In VirtualOffice, each user owns an **area** inside a **single shared map** — their virtual office. The goal is to let the owner **close and reopen** their area at will, with a **persistent** lock, and to give that lock a **visual representation via the walls** — a closed rectangle (locked) or one with a south opening (unlocked).
+In VirtualOffice, each user owns an **area** inside a **single shared map** — their virtual office. The goal is to let the owner **close and reopen** their area at will, with a **persistent** lock, and to give that lock a **visual representation** — a semi-transparent red tint over the area while it is locked.
 
 > ⚠️ Premise corrected during design: a "room" here is an **area inside a map**, not its own map/URL. This ruled out `RoomRedirect` (which changes map) and the `/api/room/access` gate (which is map-level).
 
@@ -52,32 +52,21 @@ With `lockMode: "owner"`, the owner is the `ownerId` of the `personalAreaPropert
 
 **Validation rule:** `lockMode: "owner"` requires the area to also carry `personalAreaPropertyData`. Without it the configuration is invalid — the editor must prevent it, and the runtime must degrade to `ephemeral` rather than break.
 
-### 3. Procedural walls + standardized south opening (no art)
+### 3. Visual signalling: persistent red tint while locked (revised 2026-07-24)
 
-**User decision (2026-07-23):** do not depend on a door asset. Instead of door art, draw **procedural walls** around the area and signal state via the **opening**:
+**Scope revision (2026-07-24):** the earlier designs — a door asset, then **procedural walls with a south opening** — were **dropped** after runtime testing. Reason: the user saw that (a) a locked area already reacts visually on contact (it flashes red, via `flashBlockedArea`) and (b) **nobody gets trapped** — those inside simply walk out. Walls and an "exit door" were needless complexity.
 
-- **Closed (locked):** a **complete** wall rectangle — all four sides.
-- **Open (unlocked):** the same rectangle, but with an **opening on the south wall**, always — width `doorGapTiles` (default 2), centered.
+**Decision:** while the area is locked, apply a **persistent, semi-transparent red tint** over the area — the same colour as the collision flash (`0xff6b6b` at `0.25`), but **without the fade**, for as long as the lock lasts. It is the "this area is closed" affordance, visible to **everyone**, including those inside.
 
-This gives the affordance the user wanted (closed rectangle vs. rectangle with a gap) **with no asset**. Rendering uses **Phaser Graphics** (procedural), the same family as the highlight/flash the area already uses today.
+Implementation: `Area.setLockedHighlight(locked)` ([Area.ts](../../play/src/front/Phaser/Entity/Area.ts)) sets/clears the tint; driven by [`AreasManager.updateAreaCollision`](../../play/src/front/Phaser/Game/GameMap/AreasManager.ts), which already watches the `"lock"` variable and runs on every state change. **No walls, no new Phaser Graphics, no exit-coordinate computation.**
 
-#### Critical separation: walls are **visual**, enforcement is the existing collision
+#### Enforcement is still the existing collision
 
-Access collision **does not change**. Verified in [`AreasManager.updateAreaCollision`](../../play/src/front/Phaser/Game/GameMap/AreasManager.ts): collision is **binary per client** — those **outside** get collision on the area (cannot enter); those already **inside get none** and move/leave freely (lines 275-278: *"Users already inside can still exit"*).
+Access collision **does not change**: it is **binary per client** — those **outside** get collision (cannot enter); those **inside get none** and walk out freely (`AreasManager` lines 275-278: *"Users already inside can still exit"*). The tint is purely **visual**; it does not alter access.
 
-**Optimal consequence:** the "those inside stay" requirement is **already satisfied for free** by the current mechanism. The procedural walls are just the **drawing** on top; they do not implement "perimeter-minus-gap" collision (which would be expensive). Enforcement = the usual binary collision; affordance = the drawing.
+#### Scope of the tint
 
-#### Exit coordinate computation (always south)
-
-Because the opening is always south and centered, the exit is deterministic. Given the area `{x, y, width, height}` (px) and tile `T = map.tilewidth ?? 32`:
-
-```
-exit = ( x + width / 2 ,  y + height + T / 2 )
-```
-
-That is: **one tile below the south wall, centered** — exactly where the opening is. The `T/2` centers the avatar in the destination tile.
-
-No missing-door fallback: the exit **always exists** (it is standardized), eliminating the error case of the previous design.
+It applies to **any** locked area (owner **and** ephemeral). For ephemeral locks (meeting rooms) the area also turns red while locked — a nicer affordance, but a visual change to an existing feature. Restricting it to `lockMode: "owner"` is a one-liner if the ephemeral lock's look should stay untouched.
 
 ### 4. Persistence: the `back` does not auto-unlock in `owner` mode
 
@@ -90,17 +79,16 @@ The behavioral change is **one point in the `back`**: on the user-leave event, a
 
 ### 6. Behavior while the area is closed (non-owners)
 
+**Scope revision (2026-07-24):** the **"Leave area"** button, the **reconnection grace period** and the **teleport** (`RoomRedirect`/repositioning) were **removed**. Reason: the user **is not trapped** — collision only blocks *entry*; those inside walk out normally. Assisted exit was unnecessary.
+
 | Situation | Behavior |
 |---|---|
-| Inside and wants to leave | **"Leave area"** button → `teleportTo(south opening)` |
-| Dropped, returns **within** N | Re-enters normally |
-| Dropped, returns **after** N | Repositioned to the south opening |
-| Never was inside | Blocked at the boundary by collision (**current behavior, unchanged**) |
+| Inside and wants to leave | Walks out — collision blocks entry only, not exit (current behavior) |
+| Never was inside | Blocked at the boundary by collision (current behavior) |
+| Reconnection | Treated as any entry: if still locked and not the owner, blocked at the boundary — **no grace** |
 | Administrator | **No exception** — does not bypass the lock |
 
-`N = gracePeriodSeconds`, **maximum 300s (5 min)**, enforced by the schema (`.max(300)`).
-
-**Grace tracking:** handled by the **`back`**, which already observes user entry/exit on the area (that is where auto-unlock lives). Token `(userId, areaId)` with TTL ≤ 300s. Issued to those inside at closing time.
+Consequence: the schema fields `doorGapTiles` and `gracePeriodSeconds` (added in P0 for the abandoned designs) are now **reserved/unused**. They stay in the schema (defaulted, harmless) and may be dropped in a future refactor if confirmed unnecessary. Only `lockMode` has an effect.
 
 ### 7. Closing ≠ emptying
 
@@ -153,36 +141,33 @@ Closing the area is an **entry gate**: it blocks new entrants, it evicts nobody.
 
 ## Implementation plan
 
-| Phase | Scope |
-|---|---|
-| **P0** | Schema: `lockMode`, `door`, `gracePeriodSeconds` + validation (owner requires a personal area). |
-| **P1** | `back`: auto-unlock conditional on `lockMode`. **Ephemeral-mode regression test first.** |
-| **P2** | Front: restrict locking to the owner in `owner` mode; "Close/Open my area" UI. |
-| **P3** | Procedural walls (Phaser Graphics): full rectangle when closed, south opening when open + south exit computation. |
-| **P4** | Grace period in the `back` (TTL ≤ 300s) + "Leave area" button + repositioning. |
-| **P5** | Full regression tests + bilingual docs (user and developer). |
+| Phase | Scope | Status |
+|---|---|---|
+| **P0** | Schema: `lockMode` (+ `doorGapTiles`/`gracePeriodSeconds`, now reserved) + validation (owner requires a personal area). | ✅ done |
+| **P1** | `back`: auto-unlock conditional on `lockMode`. Ephemeral-mode regression test first. | ✅ done |
+| **P2** | Front + back: restrict locking to the owner in `owner` mode (pure `canToggleAreaLock`, enforced on both sides). | ✅ done |
+| **P3** | Front: **persistent red tint** while locked (`Area.setLockedHighlight`, driven by `AreasManager`). | ✅ done |
+| ~~P4~~ | ~~Grace period + leave button + teleport~~ — **removed** (user is not trapped; walks out). | ❌ cut |
+| **P5** | Bilingual docs (user and developer). | pending |
 
 ### Mandatory regression tests
 
-1. **Ephemeral mode unchanged** — lock, empty out, auto-unlocks. *(Most important: it is the feature in production.)*
-2. `owner` mode: does **not** unlock when empty.
-3. Only the owner locks/unlocks; button disabled for everyone else.
-4. New entrant blocked while the area is closed.
-5. Those inside remain when it closes.
-6. Administrator **cannot** enter.
-7. Reconnection **within** the grace period re-enters; **after** it is repositioned.
-8. "Leave" button repositions to the south opening.
-9. Exit teleports to the tile south, centered on the opening.
-10. `lockMode: "owner"` without a personal area → degrades to `ephemeral`, does not break.
-11. Rendering: closed draws a full rectangle; open draws a south opening of `doorGapTiles`.
+1. **Ephemeral mode unchanged** — lock, empty out, auto-unlocks. *(Most important: it is the feature in production.)* ✅
+2. `owner` mode: does **not** unlock when empty. ✅
+3. Only the owner locks/unlocks; button disabled for everyone else. ✅
+4. `lockMode: "owner"` without a personal area → degrades to `ephemeral`, does not break. ✅
+5. New entrant blocked while closed; those inside walk out (collision blocks entry only). *(existing behavior)*
+6. The red tint appears on lock and clears on unlock. *(Phaser visual — manual in-app check; hard to unit test)*
 
-## Points confirmed (2026-07-23)
+> Reconnection / grace / teleport / door items were **removed** with the P3/P4 scope cut.
 
-1. ✅ **No art** — procedural walls (Phaser Graphics), standardized south opening. No asset dependency.
-2. ✅ **Rectangular areas only** — no composite-area case for personal rooms. The `{x,y,width,height}` model covers 100%.
-3. ✅ **One door per room** — one suffices, always south. Multiple doors out of scope.
+## Points confirmed
 
-No pending point blocks the start of implementation.
+1. ✅ **No art, no walls** — reuses the collision-flash red, made persistent.
+2. ✅ **Rectangular areas only** — no composite-area case for personal rooms.
+3. ✅ **Nobody is trapped** — collision blocks entry only; leaving is walking out.
+
+No pending point blocks implementation.
 
 ## References
 

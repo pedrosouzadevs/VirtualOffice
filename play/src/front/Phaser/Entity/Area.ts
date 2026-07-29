@@ -23,6 +23,7 @@ export class Area extends Rectangle {
     private userHasCollideWithArea = false;
     private highlightTimeOut: undefined | NodeJS.Timeout = undefined;
     private collideTimeOut: undefined | NodeJS.Timeout = undefined;
+    private lockedHighlight = false;
 
     constructor(
         public readonly scene: GameScene,
@@ -155,6 +156,33 @@ export class Area extends Rectangle {
                 this.setVisible(wasVisible);
             },
         });
+    }
+
+    /**
+     * Shows or clears a persistent, semi-transparent red tint while the area is locked, using the
+     * same colour as the blocked-collision flash ({@link flashBlockedArea}). Unlike the flash, it
+     * does not fade: the tint stays until the area is unlocked, so everyone (including the users
+     * inside) can see at a glance that the area is locked.
+     *
+     * @param locked - true to show the locked tint, false to clear it.
+     */
+    public setLockedHighlight(locked: boolean): void {
+        if (locked === this.lockedHighlight) {
+            return;
+        }
+        this.lockedHighlight = locked;
+
+        if (locked) {
+            // A pending flash fade-out would otherwise hide the tint after ~1s.
+            if (this.highlightTimeOut !== undefined) {
+                clearTimeout(this.highlightTimeOut);
+                this.highlightTimeOut = undefined;
+            }
+            this.setFillStyle(0xff6b6b, 0.25);
+            this.setVisible(true);
+        } else {
+            this.setVisible(false);
+        }
     }
 
     private displayWarningMessageOnCollide() {

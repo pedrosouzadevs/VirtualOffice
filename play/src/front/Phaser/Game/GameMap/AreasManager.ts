@@ -258,6 +258,9 @@ export class AreasManager {
 
         // Check if area is locked
         const isLocked = this.isAreaLocked(areaId);
+        // Persistent red tint while locked, so everyone can see the area is closed (not just on
+        // collision). Applies to any locked area; the flash on collision still fires on top.
+        area.setLockedHighlight(isLocked);
         area.updateArea(area.areaData);
         // If area is locked (unlock when empty is handled by the back on user leave)
         if (isLocked) {

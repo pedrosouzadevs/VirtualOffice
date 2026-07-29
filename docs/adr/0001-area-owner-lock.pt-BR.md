@@ -1,4 +1,4 @@
-# ADR-0001: Trava persistente de área controlada pelo dono, com paredes visuais
+# ADR-0001: Trava persistente de área controlada pelo dono, com tinta vermelha
 
 - **Status:** Proposto
 - **Data:** 2026-07-23
@@ -8,7 +8,7 @@
 
 ## Contexto
 
-No VirtualOffice, cada usuário é dono de uma **área** dentro de um **mapa único compartilhado** — seu escritório virtual. O objetivo é permitir que o dono **feche e reabra** sua área quando quiser, com uma trava **persistente**, e que essa trava tenha **representação visual pelas paredes** — retângulo fechado (travada) ou com abertura ao sul (destravada).
+No VirtualOffice, cada usuário é dono de uma **área** dentro de um **mapa único compartilhado** — seu escritório virtual. O objetivo é permitir que o dono **feche e reabra** sua área quando quiser, com uma trava **persistente**, e que a trava tenha **representação visual** — uma tinta vermelha semi-transparente sobre a área enquanto trancada.
 
 > ⚠️ Premissa corrigida durante o desenho: "sala" aqui é **área dentro de um mapa**, não um mapa/URL próprio. Isso descartou o uso de `RoomRedirect` (que troca de mapa) e o gate em `/api/room/access` (que é nível de mapa).
 
@@ -52,32 +52,21 @@ Com `lockMode: "owner"`, o dono é o `ownerId` do `personalAreaPropertyData` **d
 
 **Regra de validação:** `lockMode: "owner"` exige que a área também tenha `personalAreaPropertyData`. Sem isso, a configuração é inválida — o editor deve impedir, e o runtime deve degradar para `ephemeral` em vez de quebrar.
 
-### 3. Paredes procedurais + abertura padronizada ao sul (sem arte)
+### 3. Sinalização visual: tinta vermelha persistente enquanto trancada (revisado 2026-07-24)
 
-**Decisão do usuário (2026-07-23):** não depender de asset de porta. Em vez de uma arte de porta, desenhar **paredes procedurais** ao redor da área e sinalizar o estado pela **abertura**:
+**Revisão de escopo (2026-07-24):** os desenhos anteriores — arte de porta e, depois, **paredes procedurais com abertura ao sul** — foram **descartados** após teste em runtime. Motivo: o usuário viu que (a) uma área trancada já reage visualmente ao toque (fica vermelha, via `flashBlockedArea`) e (b) **ninguém fica preso** — quem está dentro simplesmente anda para fora. Paredes e "porta de saída" eram complexidade desnecessária.
 
-- **Fechada (travada):** retângulo de paredes **completo** — os quatro lados.
-- **Aberta (destravada):** o mesmo retângulo, mas com uma **abertura na parede sul**, sempre — largura `doorGapTiles` (default 2), centralizada.
+**Decisão:** enquanto a área está trancada, aplicar uma **tinta vermelha semi-transparente persistente** sobre a área — a mesma cor do flash de colisão (`0xff6b6b` a `0.25`), mas **sem fade**, durando o tempo da trava. É a afordância "esta área está fechada", visível para **todos**, inclusive quem está dentro.
 
-Isso dá a afordância que o usuário queria (retângulo fechado vs. retângulo com vão) **sem nenhum asset**. O desenho usa **Phaser Graphics** (procedural), na mesma família do highlight/flash que a área já usa hoje.
+Implementação: `Area.setLockedHighlight(locked)` ([Area.ts](../../play/src/front/Phaser/Entity/Area.ts)) pinta/limpa a tinta; dirigido por [`AreasManager.updateAreaCollision`](../../play/src/front/Phaser/Game/GameMap/AreasManager.ts), que já observa a variável `"lock"` e é chamado em toda mudança de estado. **Sem paredes, sem Phaser Graphics novo, sem cálculo de coordenada de saída.**
 
-#### Separação crítica: paredes são **visuais**, o enforcement é a colisão existente
+#### Enforcement continua sendo a colisão existente
 
-A colisão de acesso **não muda**. Verificado em [`AreasManager.updateAreaCollision`](../../play/src/front/Phaser/Game/GameMap/AreasManager.ts): a colisão é **binária por cliente** — quem está **fora** recebe colisão na área (não entra); quem já está **dentro não recebe** e circula/sai livremente (linhas 275-278: *"Users already inside can still exit"*).
+A colisão de acesso **não muda**: é **binária por cliente** — quem está **fora** recebe colisão (não entra); quem está **dentro não recebe** e anda para fora livremente (`AreasManager` linhas 275-278: *"Users already inside can still exit"*). A tinta é puramente **visual**; não altera acesso.
 
-**Consequência ótima:** o requisito "quem está dentro fica" **já é satisfeito de graça** pelo mecanismo atual. As paredes procedurais são apenas o **desenho** por cima; elas não implementam colisão "perímetro-menos-vão" (que seria caro). Enforcement = a colisão binária de sempre; afordância = o desenho.
+#### Escopo da tinta
 
-#### Cálculo da coordenada de saída (sempre ao sul)
-
-Como a abertura é sempre ao sul e centralizada, a saída é determinística. Dada a área `{x, y, width, height}` (px) e o tile `T = map.tilewidth ?? 32`:
-
-```
-saída = ( x + width / 2 ,  y + height + T / 2 )
-```
-
-Ou seja: **um tile abaixo da parede sul, centralizado** — exatamente onde fica a abertura. O `T/2` centraliza o avatar no tile de destino.
-
-Sem fallback de porta ausente: a saída **sempre existe** (é padronizada), eliminando o caso de erro do desenho anterior.
+Aplica-se a **qualquer** área trancada (owner **e** efêmera). Para locks efêmeros (salas de reunião), a área também fica vermelha enquanto trancada — melhora a afordância, mas é uma mudança visual de um recurso já existente. Restringir a `lockMode: "owner"` é uma linha, caso se prefira não tocar no visual do lock efêmero.
 
 ### 4. Persistência: o `back` não auto-destrava no modo `owner`
 
@@ -90,21 +79,20 @@ A mudança de comportamento é **um ponto no `back`**: no evento de saída de us
 
 ### 6. Comportamento com a área fechada (não-donos)
 
+**Revisão de escopo (2026-07-24):** removidos o botão **"Sair da área"**, a **carência de reconexão** e o **teleporte** (`RoomRedirect`/reposicionamento). Motivo: o usuário **não fica preso** — a colisão barra apenas a *entrada*; quem está dentro anda para fora normalmente. Saída assistida era desnecessária.
+
 | Situação | Comportamento |
 |---|---|
-| Está dentro e quer sair | Botão **"Sair da área"** → `teleportTo(abertura ao sul)` |
-| Caiu a conexão, voltou **dentro** de N | Reentra normalmente |
-| Caiu a conexão, voltou **depois** de N | Reposicionado para a abertura ao sul |
-| Nunca esteve dentro | Barrado na borda por colisão (**comportamento atual, sem mudança**) |
+| Está dentro e quer sair | Anda para fora — a colisão só barra entrada, não saída (comportamento atual) |
+| Nunca esteve dentro | Barrado na borda por colisão (comportamento atual) |
+| Reconexão | Tratada como qualquer entrada: se ainda trancada e não é dono, é barrado na borda — **sem carência** |
 | Administrador | **Sem exceção** — não fura a trava |
 
-`N = gracePeriodSeconds`, **máximo 300s (5 min)**, imposto pelo schema (`.max(300)`).
-
-**Rastreio da carência:** feito pelo **`back`**, que já observa entrada/saída de usuário na área (é onde vive o auto-destravar). Token `(userId, areaId)` com TTL ≤ 300s. Emitido a quem estava dentro no momento do fechamento.
+Consequência: os campos de schema `doorGapTiles` e `gracePeriodSeconds` (introduzidos no P0 para os desenhos abandonados) ficam **reservados/sem uso** por ora. Mantidos no schema (têm default, não quebram nada); podem ser removidos num refactor futuro se confirmadamente desnecessários. Só `lockMode` tem efeito.
 
 ### 7. Fechar ≠ esvaziar
 
-Fechar a área é um **portão de entrada**: bloqueia novos entrantes, não expulsa ninguém. Quem está dentro permanece até sair por vontade própria (ou pelo botão).
+Fechar a área é um **portão de entrada**: bloqueia novos entrantes, não expulsa ninguém. Quem está dentro permanece até sair andando por vontade própria.
 
 ## Alternativas consideradas
 
@@ -153,36 +141,33 @@ Fechar a área é um **portão de entrada**: bloqueia novos entrantes, não expu
 
 ## Plano de implementação
 
-| Fase | Escopo |
-|---|---|
-| **P0** | Schema: `lockMode`, `door`, `gracePeriodSeconds` + validação (owner exige área pessoal). |
-| **P1** | `back`: auto-destravar condicional ao `lockMode`. **Teste de regressão do modo efêmero primeiro.** |
-| **P2** | Front: restringir trava ao dono no modo `owner`; UI "Fechar/Abrir minha área". |
-| **P3** | Paredes procedurais (Phaser Graphics): retângulo completo quando fechada, abertura ao sul quando aberta + cálculo da saída ao sul. |
-| **P4** | Carência no `back` (TTL ≤ 300s) + botão "Sair da área" + reposicionamento. |
-| **P5** | Testes de regressão completos + docs bilíngues (usuário e desenvolvedor). |
+| Fase | Escopo | Status |
+|---|---|---|
+| **P0** | Schema: `lockMode` (+ `doorGapTiles`/`gracePeriodSeconds`, hoje reservados) + validação (owner exige área pessoal). | ✅ feito |
+| **P1** | `back`: auto-destravar condicional ao `lockMode`. Teste de regressão do modo efêmero primeiro. | ✅ feito |
+| **P2** | Front + back: restringir trava ao dono no modo `owner` (função pura `canToggleAreaLock`, enforcement nos dois lados). | ✅ feito |
+| **P3** | Front: **tinta vermelha persistente** enquanto trancada (`Area.setLockedHighlight`, dirigido pelo `AreasManager`). | ✅ feito |
+| ~~P4~~ | ~~Carência + botão sair + teleporte~~ — **removido** (usuário não fica preso; anda para fora). | ❌ cortado |
+| **P5** | Docs bilíngues (usuário e desenvolvedor). | pendente |
 
 ### Testes de regressão obrigatórios
 
-1. **Modo efêmero inalterado** — trava, esvazia, destrava sozinha. *(O mais importante: é a feature em produção.)*
-2. Modo `owner`: **não** destrava ao esvaziar.
-3. Só o dono trava/destrava; botão desabilitado para os demais.
-4. Novo entrante barrado com a área fechada.
-5. Quem está dentro permanece ao fechar.
-6. Administrador **não** entra.
-7. Reconexão **dentro** da carência reentra; **depois** é reposicionada.
-8. Botão "Sair" reposiciona para a abertura ao sul.
-9. Saída teleporta para o tile ao sul, centralizado na abertura.
-10. `lockMode: "owner"` sem área pessoal → degrada para `ephemeral`, não quebra.
-11. Render: fechada desenha retângulo completo; aberta desenha abertura ao sul de `doorGapTiles`.
+1. **Modo efêmero inalterado** — trava, esvazia, destrava sozinha. *(O mais importante: é a feature em produção.)* ✅
+2. Modo `owner`: **não** destrava ao esvaziar. ✅
+3. Só o dono trava/destrava; botão desabilitado para os demais. ✅
+4. `lockMode: "owner"` sem área pessoal → degrada para `ephemeral`, não quebra. ✅
+5. Novo entrante barrado com a área fechada; quem está dentro anda para fora (colisão só barra entrada). *(comportamento existente)*
+6. Tinta vermelha aparece ao trancar e some ao destrancar. *(visual Phaser — verificação manual no app; difícil em unidade)*
 
-## Pontos confirmados (2026-07-23)
+> Itens de reconexão/carência/teleporte/porta foram **removidos** com o corte de escopo do P3/P4.
 
-1. ✅ **Sem arte** — paredes procedurais (Phaser Graphics), abertura padronizada ao sul. Sem dependência de asset.
-2. ✅ **Só áreas retangulares** — não há caso de área composta para salas pessoais. O modelo `{x,y,width,height}` cobre 100%.
-3. ✅ **Uma porta por sala** — basta uma, sempre ao sul. Múltiplas portas fora de escopo.
+## Pontos confirmados
 
-Nenhum ponto pendente bloqueia o início da implementação.
+1. ✅ **Sem arte, sem paredes** — reusa a tinta vermelha do flash de colisão, persistente.
+2. ✅ **Só áreas retangulares** — sem caso de área composta para salas pessoais.
+3. ✅ **Ninguém fica preso** — a colisão só barra a entrada; a saída é andar para fora.
+
+Nenhum ponto pendente bloqueia a implementação.
 
 ## Referências
 

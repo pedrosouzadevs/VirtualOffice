@@ -210,41 +210,32 @@ Duas leituras possíveis — **decidir no ADR**:
 
 Fechar ≠ esvaziar. A área fechada é um **portão de entrada**: quem está dentro permanece até sair; quem está fora não entra.
 
-### Comportamento com a área fechada (decidido em 2026-07-23)
+### Comportamento com a área fechada (revisado 2026-07-24)
 
 Para quem **não é o dono**:
 
 | Situação | Comportamento |
 |---|---|
-| Está dentro e quer sair | Botão **"Sair da área"** → avatar movido para fora dos limites da área |
-| Caiu a conexão e voltou **dentro** de N minutos | **Reentra normalmente** (carência válida) |
-| Caiu a conexão e voltou **depois** de N minutos | É **movido para fora** da área |
+| Está dentro e quer sair | **Anda para fora** — a colisão só barra entrada, não saída |
 | Nunca esteve dentro | Barrado na borda (colisão), como a trava atual já faz |
+| Reconexão | Tratada como qualquer entrada: se ainda trancada e não é dono, barrado na borda — **sem carência** |
 
 Com a área **aberta**, nada disso se aplica.
 
-#### ❌ `RoomRedirect` **não** serve aqui
+> **Corte de escopo (2026-07-24):** removidos o **botão "Sair da área"**, a **carência de reconexão** e o **teleporte/reposicionamento**. O usuário **não fica preso** — anda para fora. Detalhe completo no [ADR-0001](../adr/0001-area-owner-lock.pt-BR.md).
 
-A versão anterior deste spec propunha `RoomRedirect` para "teleportar para fora". **Descartado:** o `RoomRedirect` troca o usuário de **mapa/URL**, e aqui o usuário deve permanecer no **mesmo mapa**, apenas fora dos limites da área. O mecanismo correto é **reposicionar o avatar** dentro do mapa (mesma família do que a colisão da trava já faz ao barrar), não redirecionar de sala.
+#### Sinalização visual
 
-#### Rastreio da carência
+Enquanto trancada, a área ganha uma **tinta vermelha semi-transparente persistente** (a mesma cor do flash de colisão, sem fade) — afordância de "fechada" para todos. Implementado em `Area.setLockedHighlight`, dirigido pelo `AreasManager`.
 
-Token por **usuário + área** com TTL de N minutos. Como o estado de área já trafega por variáveis de propriedade de área, a carência pode viver no mesmo caminho (ou no Redis, via back). Emitido a quem estava dentro quando a área fechou.
+### Plano faseado (revisado)
 
-#### A definir no ADR
-
-- **Posição de "fora"** — para onde o avatar é movido? Candidatos: ponto mais próximo fora da borda, ou uma posição de "saída" configurável na área. *(Bem mais simples que o caso multi-mapa: é uma coordenada no mesmo mapa.)*
-- **Valor de N** e se é configurável.
-- Convivência entre `lockableAreaPropertyData` (efêmera, existente) e a nova trava persistente de dono: **estender a propriedade atual com um modo** ou criar propriedade nova? *(Preferir estender, para não duplicar conceito.)*
-
-### Plano faseado
-
-- **P0** — Definir origem da propriedade (revisão da decisão #4) e o modelo da trava persistente.
-- **P1** — Trava persistente por variável de propriedade de área, restrita ao dono (sem auto-destravar).
-- **P2** — UI "Fechar/Abrir minha área" para o dono.
-- **P3** — Carência + reposicionamento do avatar + botão "Sair da área".
-- **P4** — (Se decisão (b)) gestão de propriedade pelo dashboard do F3.
-- **P5** — Testes de regressão: novo entrante barrado, quem está dentro permanece, admin **não** entra, reconexão dentro/fora da carência, botão "Sair" reposiciona, e **a trava não se desfaz ao esvaziar** (diferença central da trava atual).
+- **P0** ✅ — Schema (`lockMode`; `doorGapTiles`/`gracePeriodSeconds` reservados) + validador (owner exige área pessoal).
+- **P1** ✅ — Trava persistente: `back` não auto-destrava no modo `owner`.
+- **P2** ✅ — Restrição ao dono nos dois lados (`canToggleAreaLock`).
+- **P3** ✅ — Tinta vermelha persistente enquanto trancada.
+- ~~P4~~ ❌ — Carência/reposicionamento/botão sair: **cortado**.
+- **P5** — Docs bilíngues (usuário e desenvolvedor).
 
 ### Riscos
 
@@ -289,7 +280,7 @@ Razão: o F4 foi confirmado **standalone** (propriedade na área, sem `admin-api
 | 5 | Ordem de execução | ✅ **REVISADA: F4 → F3 → F2 → F1** | O F4 virou standalone e barato (S), então entrega valor visível primeiro; ver *Sequenciamento*. |
 | 6 | **F4** — admins sobrepõem a trava do dono? | **Não** | Trava soberana. Gera risco de bloqueio permanente → mitigar com reatribuição de dono. |
 | 7 | **F4** — quem já está dentro quando fecha? | **Fica** | Fechar barra novos entrantes; não expulsa. |
-| 8 | **F4** — reconexão e saída (área fechada) | Botão **"Sair da área"** move para fora; queda de conexão tem **carência de N min** (volta dentro → reentra; volta depois → movido para fora) | Reposicionamento do avatar **no mesmo mapa** (o `RoomRedirect` foi descartado — ele troca de mapa). Falta definir a **posição de saída** e o valor de **N**. |
+| 8 | **F4** — reconexão e saída (área fechada) | **Simplificado (2026-07-24):** sem botão de sair, sem carência, sem teleporte — o usuário anda para fora. Enquanto trancada, tinta vermelha persistente | O usuário não fica preso; a colisão só barra entrada. Ver [ADR-0001](../adr/0001-area-owner-lock.pt-BR.md). |
 | 9 | **F4** — escopo de "sala" | **Área dentro de um mapa único**, não mapa próprio | Correção de premissa. Esforço do F4 cai para **S**; três primitivas centrais já existem. |
 
 ## Pendências remanescentes
