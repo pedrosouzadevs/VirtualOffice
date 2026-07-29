@@ -129,6 +129,12 @@ export class Area extends Rectangle {
      * @param duration - Duration of the fade-out in milliseconds (default: 800ms)
      */
     public flashBlockedArea(duration = 800): void {
+        // While the persistent locked tint is shown the flash is redundant — and its fade-out
+        // would restore the pre-flash style, wiping the tint (the "blinks then disappears" bug).
+        if (this.lockedHighlight) {
+            return;
+        }
+
         // Store original values
         const originalFillColor = this.fillColor;
         const originalFillAlpha = this.fillAlpha;
@@ -173,6 +179,10 @@ export class Area extends Rectangle {
         this.lockedHighlight = locked;
 
         if (locked) {
+            // Kill any in-flight flash tween: the lock button fires flashBlockedArea immediately,
+            // while the lock variable only comes back from the server an instant later. Left alive,
+            // the tween's completion would restore the pre-flash style and wipe this tint.
+            this.scene.tweens.killTweensOf(this);
             // A pending flash fade-out would otherwise hide the tint after ~1s.
             if (this.highlightTimeOut !== undefined) {
                 clearTimeout(this.highlightTimeOut);
