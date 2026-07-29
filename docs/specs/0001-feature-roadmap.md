@@ -13,6 +13,7 @@ This document specifies four features for the VirtualOffice fork of WorkAdventur
 2. **Azure authentication** — add Azure Entra ID (Microsoft) as a login provider while **keeping** the current provider (dev/mock OIDC) available in parallel.
 3. **Admin dashboard & APIs** — implement the Admin API contract (`AdminInterface`) with our own persistence plus an administrator UI for managing members, tags and permissions.
 4. **Area owner opens/closes their area** — let the user who owns an **area** (their office inside the shared map) close and reopen it at will (persistent, owner-controlled lock).
+5. **Owner ejecting occupants** *(promoted to its own feature on 2026-07-29)* — the owner removes occupants from their area ("everyone" or individually), admin-blockable via a per-area flag. Design in [ADR-0001 §8](../adr/0001-area-owner-lock.md); foundation (E0: schema + `canEjectFromArea`) already delivered.
 
 **Decided order:** **F4 → F3 → F2 → F1** (revised 2026-07-23). F4 was confirmed **standalone** — ownership stays on the area, with no `admin-api` dependency — and is the cheapest (**S**), so it delivers visible value first. Then the foundation (F3), identity on top of it (F2), and finally F1.
 
@@ -248,14 +249,15 @@ Do not break the **existing ephemeral lock**, which is another feature in use �
 ## Sequencing and dependencies
 
 ```
-F4 (owner area lock) ── standalone, no dependencies  [1st]  ← ADR-0001
-F3 (admin-api) ──► AuthZ foundation                  [2nd]
+F4 (owner area lock) ── ✅ delivered (P0–P3 + toggle; P5 docs pending)  [1st]
+F3 (admin-api) ──► AuthZ foundation — NEXT                              [2nd]
       └── F2 wires Azure identity on top of F3;
-             once F3 is complete, mock retired       [3rd]
-F1 (animated entity) ── independent, no dependencies [4th]
+             once F3 is complete, mock retired                          [3rd]
+F5 (owner eject) ── standalone; E0 done; slotted after F3               [4th]
+F1 (animated entity) ── independent, no dependencies                    [5th]
 ```
 
-**Decided order: F4 → F3 → F2 → F1.**
+**Decided order: F4 ✅ → F3 → F2 → F5 → F1** *(revised 2026-07-29: F4 delivered; ejection promoted to F5, position adjustable).*
 
 Reason: F4 was confirmed **standalone** (ownership on the area, no `admin-api`) and is the cheapest item in the roadmap — ownership, lock, persistence and repositioning already exist as primitives. It delivers perceivable value early. Then F3, the authorization foundation and the destination of F2's tag mapping; then F2; and F1 last, with no blocking risk since it depends on nothing.
 

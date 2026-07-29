@@ -181,6 +181,8 @@ Enforcement **nos dois lados** (defense-in-depth, como no P2): o front esconde/d
 
 ### Fases da ejeção (§8, adicionado 2026-07-24)
 
+> **Nota (2026-07-29):** a ejeção foi **promovida a feature própria (F5)** no [roadmap](../specs/0001-feature-roadmap.pt-BR.md), executada após o F3. O design continua sendo este §8; a E0 está entregue.
+
 | Fase | Escopo | Status |
 |---|---|---|
 | **E0** | Schema `ownerCanEject` (default `true`) na `lockableAreaPropertyData` + toggle no `LockableAreaPropertyEditor` (só admin/editor via map editor). | pendente |

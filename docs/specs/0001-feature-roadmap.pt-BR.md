@@ -13,6 +13,7 @@ Este documento especifica quatro features para o fork VirtualOffice do WorkAdven
 2. **Autenticação Azure** — adicionar o Azure Entra ID (Microsoft) como provedor de login, **mantendo** o provedor atual (OIDC mock/dev) em paralelo.
 3. **Dashboard e APIs de administração** — implementar a Admin API (contrato `AdminInterface`) com persistência própria e uma UI de administrador para gestão de membros, tags e permissões.
 4. **Dono da área abre/fecha sua área** — permitir que o usuário dono de uma **área** (seu escritório dentro do mapa compartilhado) a feche e reabra quando quiser (trava persistente, controlada pelo dono).
+5. **Ejeção de ocupantes pelo dono** *(promovida a feature própria em 2026-07-29)* — o dono remove ocupantes da sua área ("todos" ou individual), bloqueável pelo admin via flag por área. Design em [ADR-0001 §8](../adr/0001-area-owner-lock.pt-BR.md); fundação (E0: schema + `canEjectFromArea`) já entregue.
 
 **Ordem definida:** **F4 → F3 → F2 → F1** (revisada em 2026-07-23). O F4 foi confirmado **standalone** — a propriedade fica na área, sem depender do `admin-api` — e é o mais barato (**S**), então entrega valor visível primeiro. Depois vem a fundação (F3), a identidade sobre ela (F2) e, por fim, o F1.
 
@@ -248,14 +249,15 @@ Não quebrar a **trava efêmera existente**, que é outra feature em uso — se 
 ## Sequenciamento e dependências
 
 ```
-F4 (trava de área do dono) ── standalone, sem dependências  [1º]  ← ADR-0001
-F3 (admin-api) ──► fundação de AuthZ                        [2º]
+F4 (trava de área do dono) ── ✅ entregue (P0–P3 + toggle; falta P5 docs)  [1º]
+F3 (admin-api) ──► fundação de AuthZ — PRÓXIMA                             [2º]
       └── F2 liga identidade Azure sobre o F3;
-             após o F3 completo, mock aposentado             [3º]
-F1 (entidade animada) ── independente, sem dependências      [4º]
+             após o F3 completo, mock aposentado                            [3º]
+F5 (ejeção pelo dono) ── standalone; E0 pronta; posição após o F3          [4º]
+F1 (entidade animada) ── independente, sem dependências                     [5º]
 ```
 
-**Ordem definida: F4 → F3 → F2 → F1.**
+**Ordem definida: F4 ✅ → F3 → F2 → F5 → F1** *(revisada 2026-07-29: F4 entregue; ejeção promovida a F5, posição ajustável).*
 
 Razão: o F4 foi confirmado **standalone** (propriedade na área, sem `admin-api`) e é o mais barato do roadmap — propriedade, trava, persistência e reposicionamento já existem como primitivas. Entrega valor perceptível cedo. Em seguida o F3, fundação de autorização e destino do mapeamento de tags do F2; depois o F2; e o F1 por último, sem risco de bloqueio por não depender de nada.
 

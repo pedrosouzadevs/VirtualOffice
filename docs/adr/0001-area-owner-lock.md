@@ -181,6 +181,8 @@ Enforcement on **both sides** (defense-in-depth, as in P2): the front hides/disa
 
 ### Ejection phases (§8, added 2026-07-24)
 
+> **Note (2026-07-29):** ejection was **promoted to its own feature (F5)** in the [roadmap](../specs/0001-feature-roadmap.md), scheduled after F3. This §8 remains the design; E0 is delivered.
+
 | Phase | Scope | Status |
 |---|---|---|
 | **E0** | Schema `ownerCanEject` (default `true`) on `lockableAreaPropertyData` + toggle in `LockableAreaPropertyEditor` (admin/editor only, via the map editor). | pending |
