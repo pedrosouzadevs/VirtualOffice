@@ -107,6 +107,31 @@ export function canToggleAreaLock(area: AreaData, userTags: string[], userId: st
 }
 
 /**
+ * Whether a user passes through an area's lock as if it were open (ADR-0001). The owner of an
+ * owner-locked area is not blocked by their own lock: they can leave and re-enter freely while
+ * everyone else stays locked out. Ephemeral locks keep their legacy behaviour (nobody passes).
+ *
+ * @param area The locked area being entered.
+ * @param userId The entering user's identifier (uuid), or undefined for anonymous users.
+ * @returns true when the user is the owner of an owner-locked area.
+ */
+export function canPassAreaLock(area: AreaData, userId: string | undefined): boolean {
+    const lockable = area.properties.find(
+        (property): property is LockableAreaPropertyData => property.type === "lockableAreaPropertyData",
+    );
+    if (!lockable || lockable.lockMode !== "owner") {
+        return false;
+    }
+    const personalArea = area.properties.find(
+        (property): property is PersonalAreaPropertyData => property.type === "personalAreaPropertyData",
+    );
+    if (!personalArea || !personalArea.ownerId) {
+        return false;
+    }
+    return userId !== undefined && personalArea.ownerId === userId;
+}
+
+/**
  * Single source of truth for whether a user may eject occupants from an area (ADR-0001 §8).
  * Used by both the front (to show/enable the eject button) and the back (to enforce it).
  *

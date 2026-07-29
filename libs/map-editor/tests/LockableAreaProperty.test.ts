@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AreaData, LockableAreaPropertyData } from "../src/types";
-import { canEjectFromArea, canToggleAreaLock, isAreaOwnerLockValid } from "../src/Utils";
+import { canEjectFromArea, canPassAreaLock, canToggleAreaLock, isAreaOwnerLockValid } from "../src/Utils";
 
 /**
  * Regression tests for the owner lock mode added to the lockable area property (F4 / ADR-0001).
@@ -145,6 +145,50 @@ describe("canToggleAreaLock", () => {
 
     it("denies when the area has no lockable property", () => {
         expect(canToggleAreaLock(makeArea([personalArea("user-42")]), [], "user-42")).toBe(false);
+    });
+});
+
+describe("canPassAreaLock", () => {
+    const makeArea = (properties: unknown[]): AreaData =>
+        AreaData.parse({
+            id: "area-1",
+            x: 0,
+            y: 0,
+            width: 64,
+            height: 64,
+            visible: true,
+            name: "office",
+            properties,
+        });
+
+    const ownerLock = { id: "lock-1", type: "lockableAreaPropertyData", lockMode: "owner" };
+    const ephemeralLock = { id: "lock-1", type: "lockableAreaPropertyData", lockMode: "ephemeral" };
+    const personalArea = (ownerId: string | null) => ({
+        id: "personal-1",
+        type: "personalAreaPropertyData",
+        accessClaimMode: "dynamic",
+        ownerId,
+    });
+
+    it("lets the owner pass through their own owner lock (leave and re-enter freely)", () => {
+        expect(canPassAreaLock(makeArea([ownerLock, personalArea("user-42")]), "user-42")).toBe(true);
+    });
+
+    it("blocks a non-owner", () => {
+        expect(canPassAreaLock(makeArea([ownerLock, personalArea("user-42")]), "user-99")).toBe(false);
+    });
+
+    it("blocks an anonymous user", () => {
+        expect(canPassAreaLock(makeArea([ownerLock, personalArea("user-42")]), undefined)).toBe(false);
+    });
+
+    it("does not apply to ephemeral locks (legacy behaviour: nobody passes)", () => {
+        expect(canPassAreaLock(makeArea([ephemeralLock, personalArea("user-42")]), "user-42")).toBe(false);
+    });
+
+    it("does not apply when the owner lock has no claimed owner", () => {
+        expect(canPassAreaLock(makeArea([ownerLock, personalArea(null)]), "user-42")).toBe(false);
+        expect(canPassAreaLock(makeArea([ownerLock]), "user-42")).toBe(false);
     });
 });
 
