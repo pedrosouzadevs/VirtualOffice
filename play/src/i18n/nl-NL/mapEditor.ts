@@ -331,6 +331,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Tags die mogen vergrendelen/ontgrendelen",
             allowedTagsInfo:
                 "Alleen gebruikers met deze tags kunnen dit gebied vergrendelen of ontgrendelen. Laat leeg om iedereen toe te staan.",
+            ownerModeLabel: "Eigenaarsmodus (permanente vergrendeling)",
+            ownerModeInfo:
+                "Alleen de eigenaar van het persoonlijke gebied kan vergrendelen of ontgrendelen, en de vergrendeling blijft bestaan wanneer het gebied leeg raakt. Vereist een persoonlijk-gebied-eigenschap op ditzelfde gebied.",
         },
         noProperties: "Geen eigenschappen gedefinieerd",
     },

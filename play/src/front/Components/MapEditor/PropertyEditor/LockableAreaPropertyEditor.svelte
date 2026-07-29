@@ -5,6 +5,7 @@
     import type { InputTagOption } from "../../Input/InputTagOption";
     import { toTags } from "../../Input/InputTagOption";
     import InputRoomTags from "../../Input/InputRoomTags.svelte";
+    import InputSwitch from "../../Input/InputSwitch.svelte";
     import PropertyEditorBase from "./PropertyEditorBase.svelte";
 
     interface Props {
@@ -14,6 +15,15 @@
     }
 
     let { property = $bindable(), onchange, onclose }: Props = $props();
+
+    // The schema models the mode as an enum ("ephemeral" | "owner"); the switch exposes it
+    // as a boolean. Local state initialized once, same pattern as the tags below.
+    let ownerMode = $state(property.lockMode === "owner");
+
+    function handleOwnerModeChange() {
+        property.lockMode = ownerMode ? "owner" : "ephemeral";
+        onchange?.();
+    }
 
     // Local state for tags, initialized once from property (same pattern as PersonalAreaPropertyEditor).
     // No reactive sync from property to avoid overwriting user removals when parent re-renders with stale data.
@@ -46,14 +56,27 @@
     {/snippet}
     {#snippet content()}
         <span>
-            <div class="tags-input">
-                <InputRoomTags
-                    bind:value={_allowedTags}
-                    onchange={() => handleTagChange(_allowedTags)}
-                    label={$LL.mapEditor.properties.lockableAreaPropertyData.allowedTagsLabel()}
-                    info={$LL.mapEditor.properties.lockableAreaPropertyData.allowedTagsInfo()}
+            <div class="value-switch">
+                <InputSwitch
+                    id="ownerMode"
+                    label={$LL.mapEditor.properties.lockableAreaPropertyData.ownerModeLabel()}
+                    bind:value={ownerMode}
+                    onchange={handleOwnerModeChange}
                 />
+                <p class="text-xs opacity-50 p-0 m-0">
+                    {$LL.mapEditor.properties.lockableAreaPropertyData.ownerModeInfo()}
+                </p>
             </div>
+            {#if !ownerMode}
+                <div class="tags-input">
+                    <InputRoomTags
+                        bind:value={_allowedTags}
+                        onchange={() => handleTagChange(_allowedTags)}
+                        label={$LL.mapEditor.properties.lockableAreaPropertyData.allowedTagsLabel()}
+                        info={$LL.mapEditor.properties.lockableAreaPropertyData.allowedTagsInfo()}
+                    />
+                </div>
+            {/if}
         </span>
     {/snippet}
 </PropertyEditorBase>

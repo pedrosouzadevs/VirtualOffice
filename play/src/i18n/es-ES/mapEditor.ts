@@ -330,6 +330,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Etiquetas permitidas para bloquear/desbloquear",
             allowedTagsInfo:
                 "Solo los usuarios con estas etiquetas pueden bloquear o desbloquear esta zona. Déjelo vacío para permitir a todos.",
+            ownerModeLabel: "Modo propietario (bloqueo persistente)",
+            ownerModeInfo:
+                "Solo el propietario de la zona personal puede bloquear o desbloquear, y el bloqueo se mantiene cuando la zona se vacía. Requiere una propiedad de zona personal en esta misma zona.",
         },
         noProperties: "No hay propiedades definidas",
     },

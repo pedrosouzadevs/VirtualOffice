@@ -329,6 +329,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Toflicki, kótarež směju zawěriś/wótcyniś",
             allowedTagsInfo:
                 "Jano wužywarje z toś tymi toflickami mógu toś to wobcerje zawěriś abo wótcyniś. Wóstajśo prozne, aby wšym dowóliło.",
+            ownerModeLabel: "Modus wobsejźarja (trajne zawěrjenje)",
+            ownerModeInfo:
+                "Jano wobsejźaŕ wósobinskego wobcerja móžo zawěriś abo wótcyniś, a zawěrjenje wóstanjo, gaž wobcerje se wuproznijo. Trjeba kakosć wósobinskego wobcerja w toś tom samem wobcerju.",
         },
         noProperties: "Žedne kakosći njejsu definěrowane",
     },

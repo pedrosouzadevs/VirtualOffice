@@ -324,6 +324,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Tags, die zum Sperren/Entsperren berechtigt sind",
             allowedTagsInfo:
                 "Nur Benutzer mit diesen Tags können diesen Bereich sperren oder entsperren. Lassen Sie es leer, um allen zu erlauben.",
+            ownerModeLabel: "Besitzer-Modus (dauerhafte Sperre)",
+            ownerModeInfo:
+                "Nur der Besitzer des persönlichen Bereichs kann sperren oder entsperren, und die Sperre bleibt bestehen, wenn der Bereich leer wird. Erfordert eine Eigenschaft „Persönlicher Bereich“ in demselben Bereich.",
         },
         tldraw: {
             label: "tldraw öffnen",

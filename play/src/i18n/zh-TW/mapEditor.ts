@@ -319,6 +319,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             lockLabel: "鎖定區域",
             allowedTagsLabel: "允許鎖定／解鎖的標籤",
             allowedTagsInfo: "只有具有這些標籤的使用者才能鎖定或解鎖此區域。留空以允許所有人。",
+            ownerModeLabel: "擁有者模式（持久鎖定）",
+            ownerModeInfo:
+                "只有個人區域的擁有者才能鎖定或解鎖，區域清空後鎖定仍然保持。需要在同一區域上設定個人區域屬性。",
         },
         advancedOptions: "進階選項",
         chatEnabled: "關聯專用聊天頻道",

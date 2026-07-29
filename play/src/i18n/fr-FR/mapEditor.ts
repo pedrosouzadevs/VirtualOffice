@@ -331,6 +331,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Tags autorisés à verrouiller/déverrouiller",
             allowedTagsInfo:
                 "Seuls les utilisateurs avec ces tags peuvent verrouiller ou déverrouiller cette zone. Laissez vide pour autoriser tout le monde.",
+            ownerModeLabel: "Mode propriétaire (verrou persistant)",
+            ownerModeInfo:
+                "Seul le propriétaire de la zone personnelle peut verrouiller ou déverrouiller, et le verrou persiste quand la zone se vide. Nécessite une propriété de zone personnelle sur cette même zone.",
         },
         noProperties: "Aucune propriété définie",
     },

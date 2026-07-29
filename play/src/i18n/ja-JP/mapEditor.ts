@@ -328,6 +328,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "ロック/ロック解除を許可するタグ",
             allowedTagsInfo:
                 "これらのタグを持つユーザーのみがこのエリアをロックまたはロック解除できます。空のままにすると、すべてのユーザーに許可されます。",
+            ownerModeLabel: "オーナーモード（永続ロック）",
+            ownerModeInfo:
+                "パーソナルエリアのオーナーのみがロック/ロック解除でき、エリアが空になってもロックは維持されます。同じエリアにパーソナルエリアのプロパティが必要です。",
         },
         noProperties: "プロパティが定義されていません",
     },

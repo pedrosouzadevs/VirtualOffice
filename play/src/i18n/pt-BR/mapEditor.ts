@@ -331,6 +331,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Tags permitidas para bloquear/desbloquear",
             allowedTagsInfo:
                 "Apenas usuários com essas tags podem bloquear ou desbloquear esta área. Deixe vazio para permitir a todos.",
+            ownerModeLabel: "Modo dono (trava persistente)",
+            ownerModeInfo:
+                "Apenas o dono da área pessoal pode bloquear ou desbloquear, e a trava permanece quando a área esvazia. Requer uma propriedade de área pessoal nesta mesma área.",
         },
         noProperties: "Nenhuma propriedade definida",
     },
