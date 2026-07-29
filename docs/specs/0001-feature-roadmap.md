@@ -290,6 +290,7 @@ Reason: F4 was confirmed **standalone** (ownership on the area, no `admin-api`) 
 1. **F2/P2** — does the development environment keep the mock permanently, or will there be a dev Azure tenant? (decide before retiring the mock)
 2. **F3** — `admin-api` data model: confirm entities and relationships (members, tags, worlds, rooms, bans) in the ADR.
 3. ~~**F4** — ownership source, exit position, value of N, extend vs. new property, door art~~ → **all resolved** in [ADR-0001](../adr/0001-area-owner-lock.md). No art dependency: procedural walls with a standardized south opening. **No pending point blocks the start.**
+4. **Improvement (suggested 2026-07-29)** — in the editor, the personal area's "Allowed user" field (static mode) is useless without an Admin API: `LocalAdmin.searchMembers` rejects. Proposal: **list online users** as a fallback, so an owner can be assigned directly in the editor. Natural fit: alongside F3 (which brings real member search) or as a small standalone pusher item.
 
 ## Next artifacts
 
