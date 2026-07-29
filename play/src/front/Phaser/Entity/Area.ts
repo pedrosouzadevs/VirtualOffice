@@ -115,11 +115,19 @@ export class Area extends Rectangle {
     }
 
     public highLightArea(permanent = false) {
+        // While the locked tint is shown it owns the rectangle's style; a highlight (visit card,
+        // claim dialog, ...) would overwrite the red and its timeout would then hide the area.
+        if (this.lockedHighlight) {
+            return;
+        }
         this.setVisible(true);
         if (permanent === false) this.highlightTimeOut = setTimeout(() => this.setVisible(false), 1000);
     }
 
     public unHighLightArea() {
+        if (this.lockedHighlight) {
+            return;
+        }
         this.setVisible(false);
         if (this.highlightTimeOut) clearTimeout(this.highlightTimeOut);
     }
@@ -174,26 +182,29 @@ export class Area extends Rectangle {
      * @param locked - true to show the locked tint, false to clear it.
      */
     public setLockedHighlight(locked: boolean): void {
-        if (locked === this.lockedHighlight) {
+        if (!locked) {
+            if (this.lockedHighlight) {
+                this.lockedHighlight = false;
+                this.setVisible(false);
+            }
             return;
         }
-        this.lockedHighlight = locked;
 
-        if (locked) {
-            // Kill any in-flight flash tween: the lock button fires flashBlockedArea immediately,
-            // while the lock variable only comes back from the server an instant later. Left alive,
-            // the tween's completion would restore the pre-flash style and wipe this tint.
-            this.scene.tweens.killTweensOf(this);
-            // A pending flash fade-out would otherwise hide the tint after ~1s.
-            if (this.highlightTimeOut !== undefined) {
-                clearTimeout(this.highlightTimeOut);
-                this.highlightTimeOut = undefined;
-            }
-            this.setFillStyle(0xff6b6b, 0.25);
-            this.setVisible(true);
-        } else {
-            this.setVisible(false);
+        // Always (re)apply, even when already marked locked: other writers share this rectangle
+        // (collision flash, visit-card/claim highlights) and may have overwritten the style. This
+        // runs on every collision recalculation, so the tint self-heals.
+        this.lockedHighlight = true;
+        // Kill any in-flight flash tween: the lock button fires flashBlockedArea immediately,
+        // while the lock variable only comes back from the server an instant later. Left alive,
+        // the tween's completion would restore the pre-flash style and wipe this tint.
+        this.scene.tweens.killTweensOf(this);
+        // A pending flash fade-out would otherwise hide the tint after ~1s.
+        if (this.highlightTimeOut !== undefined) {
+            clearTimeout(this.highlightTimeOut);
+            this.highlightTimeOut = undefined;
         }
+        this.setFillStyle(0xff6b6b, 0.25);
+        this.setVisible(true);
     }
 
     private displayWarningMessageOnCollide() {
