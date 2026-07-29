@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type { AreaData, AtLeast, LockableAreaPropertyData } from "@workadventure/map-editor";
+import { hasEffectiveOwnerLock } from "@workadventure/map-editor/src/Utils";
 import { deepmergeIntoCustom, type DeepMergeLeafURI } from "deepmerge-ts";
 import { get } from "svelte/store";
 import type { GameScene } from "../Game/GameScene";
@@ -207,7 +208,10 @@ export class Area extends Rectangle {
             if (blockReason) {
                 switch (blockReason) {
                     case "locked":
-                        if (this.connection?.hasTag("admin")) {
+                        // Admins may unlock ephemeral locks on contact, but an effective owner
+                        // lock is sovereign (ADR-0001 decision #6): no admin bypass. The back
+                        // enforces this too; hiding the offer keeps the UI honest.
+                        if (this.connection?.hasTag("admin") && !hasEffectiveOwnerLock(this.areaData)) {
                             const lockableProperty = this.areaData.properties.find(
                                 (property): property is LockableAreaPropertyData =>
                                     property.type === "lockableAreaPropertyData",
