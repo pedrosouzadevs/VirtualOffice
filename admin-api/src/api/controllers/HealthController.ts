@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
 
 /**
  * A named probe for a subsystem `admin-api` depends on (Postgres, and later anything else).
@@ -52,8 +52,8 @@ export class HealthController {
      * Readiness: can the process serve traffic right now? Consults every registered subsystem.
      */
     private getReadyz(): void {
-        this.app.get("/readyz", (req: Request, res: Response) => {
-            void (async () => {
+        this.app.get("/readyz", (req: Request, res: Response, next: NextFunction) => {
+            (async () => {
                 const subsystems: Record<string, SubsystemStatus> = {};
 
                 const results = await Promise.all(
@@ -81,7 +81,10 @@ export class HealthController {
                     service: "admin-api",
                     checks: subsystems,
                 });
-            })();
+            })().catch((e) => {
+                console.error(`[${new Date().toISOString()}]`, e);
+                next(e);
+            });
         });
     }
 }
