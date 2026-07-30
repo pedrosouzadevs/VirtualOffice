@@ -96,7 +96,21 @@ Note the irony: **`canEdit` is optional in the schema** (`z.boolean().nullable()
 
 `MapDetailsData` requires **exactly one** field: `group` (`z.string().nullable()`, so `null` passes) — [`MapDetailsData.ts:163`](../../libs/messages/src/JsonMessages/MapDetailsData.ts). Every other field is `.optional()`, and since the object is not `.strict()`, unknown keys are dropped. The "~45 fields" figure describes the surface of the type, not the obligation.
 
-> That inverts where P0's risk sits. Satisfying `zod` is cheap; **functional** correctness is not. `mapUrl`/`wamUrl`, `editable` and the `/~/` routing are what make a map actually load — and [`LocalAdmin.fetchMapDetails`](../../play/src/pusher/services/LocalAdmin.ts) is the executable specification for all of it. **P0 is a faithful port of `LocalAdmin` onto Postgres**, not a payload written from scratch.
+> That inverts where P0's risk sits. Satisfying `zod` is cheap; **functional** correctness is not. `mapUrl`/`wamUrl` and the `/~/` routing are what make a map actually load — and [`LocalAdmin.fetchMapDetails`](../../play/src/pusher/services/LocalAdmin.ts) is the executable specification for all of it. **P0 is a faithful port of `LocalAdmin` onto Postgres**, not a payload written from scratch.
+
+#### Three fields `LocalAdmin` emits that the schema does not have (verified 2026-07-30)
+
+`isMapDetailsData` has no key for any of these, and the object is not `.strict()`, so `zod` silently drops them. Reproducing them would be dead weight; the port deliberately omits all three:
+
+| Field | Why it is not reproduced |
+|---|---|
+| `canEdit` | The map editor is unlocked by `/api/room/access`, whose value reaches the front through the protobuf `RoomJoinedMessage` ([`RoomConnection.ts:565`](../../play/src/front/Connection/RoomConnection.ts)). On `/api/map` it is read by nobody. |
+| `loadingCowebsiteLogo` | No such key in the schema. |
+| `opidUsernamePolicy` | An upstream typo for `opidWokaNamePolicy`. We emit the **correct** name. |
+
+Emitting the correctly-spelled `opidWokaNamePolicy` is safe rather than a behaviour change, because the front already falls back to its own environment variable when the field is absent — [`Room.ts:183`](../../play/src/front/Connection/Room.ts): `data.opidWokaNamePolicy ?? OPID_WOKA_NAME_POLICY` — and both sides read the same value.
+
+Note also that `editable` is in the schema but **nothing in `play` reads it**; `LocalAdmin` does not set it either. It is a SaaS-only field.
 
 ## Decision
 

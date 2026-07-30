@@ -11,5 +11,7 @@ import type { Capabilities } from "@workadventure/messages";
  * makes the phased delivery in ADR-0002 possible.
  */
 export const SUPPORTED_CAPABILITIES: Capabilities = {
-    // "api/woka/list": "v1"  <- added in P0/E3, together with the endpoint itself.
+    // Backed by WokaListController. Declared so the pusher takes its catalogue from the same file we validate
+    // character textures against on /api/room/access — see ADR-0002, Trap #3.
+    "api/woka/list": "v1",
 };

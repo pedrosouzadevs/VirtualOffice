@@ -1,9 +1,35 @@
 import type { Express } from "express";
+import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
 import { createServer, type ServerDependencies } from "../../src/api/server";
 import { startTestServer, type TestServer } from "./testServer";
 
 /** Any non-empty value works; tests assert on matching versus not matching, never on the value itself. */
 export const TEST_ADMIN_API_TOKEN = "test-admin-api-token";
+
+/**
+ * Mirrors the defaults a bare `.env` produces, so a test that cares about one flag only has to override that flag.
+ */
+export const TEST_MAP_DETAILS_CONFIGURATION: MapDetailsConfiguration = {
+    startRoomUrl: "/_/global/maps.workadventu.re/starter/map.json",
+    publicMapStorageUrl: "http://map-storage.workadventure.localhost",
+    disableAnonymous: false,
+    enableChat: true,
+    enableChatUpload: true,
+    enableChatOnlineList: true,
+    enableChatDisconnectedList: true,
+    enableSay: true,
+    enableIssueReport: true,
+    enableTutorial: true,
+    skipCameraPage: false,
+    bypassPwa: false,
+    defaultWokaName: undefined,
+    defaultWokaTexture: undefined,
+    provideDefaultWokaName: undefined,
+    provideDefaultWokaTexture: undefined,
+    opidWokaNamePolicy: "user_input",
+    matrixChatConfigured: false,
+    recordingConfigured: false,
+};
 
 /**
  * Servers started by the current test file, torn down by {@link closeStartedServers}.
@@ -19,7 +45,11 @@ const started: TestServer[] = [];
  * @returns the base URL of the running server.
  */
 export async function serveTestApp(overrides: Partial<ServerDependencies> = {}): Promise<string> {
-    const app: Express = createServer({ adminApiToken: TEST_ADMIN_API_TOKEN, ...overrides });
+    const app: Express = createServer({
+        adminApiToken: TEST_ADMIN_API_TOKEN,
+        mapDetailsConfiguration: TEST_MAP_DETAILS_CONFIGURATION,
+        ...overrides,
+    });
     const server = await startTestServer(app);
     started.push(server);
 

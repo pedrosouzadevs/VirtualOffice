@@ -96,7 +96,21 @@ Repare na ironia: **`canEdit` é opcional no schema** (`z.boolean().nullable().o
 
 O `MapDetailsData` exige **exatamente um** campo: `group` (`z.string().nullable()`, ou seja, `null` passa) — [`MapDetailsData.ts:163`](../../libs/messages/src/JsonMessages/MapDetailsData.ts). Todos os demais são `.optional()`, e como o objeto não é `.strict()`, chaves desconhecidas são descartadas. O número "~45 campos" descreve a superfície do tipo, não a obrigação.
 
-> Isso inverte onde mora o risco do P0. Satisfazer o `zod` é barato; a corretude **funcional** não é. `mapUrl`/`wamUrl`, `editable` e o roteamento `/~/` é que fazem um mapa realmente carregar — e o [`LocalAdmin.fetchMapDetails`](../../play/src/pusher/services/LocalAdmin.ts) é a especificação executável de tudo isso. **O P0 é um porte fiel do `LocalAdmin` sobre o Postgres**, não um payload escrito do zero.
+> Isso inverte onde mora o risco do P0. Satisfazer o `zod` é barato; a corretude **funcional** não é. `mapUrl`/`wamUrl` e o roteamento `/~/` é que fazem um mapa realmente carregar — e o [`LocalAdmin.fetchMapDetails`](../../play/src/pusher/services/LocalAdmin.ts) é a especificação executável de tudo isso. **O P0 é um porte fiel do `LocalAdmin` sobre o Postgres**, não um payload escrito do zero.
+
+#### Três campos que o `LocalAdmin` emite e o schema não tem (verificado em 2026-07-30)
+
+O `isMapDetailsData` não tem chave para nenhum deles, e o objeto não é `.strict()`, então o `zod` os descarta em silêncio. Reproduzi-los seria peso morto; o porte omite os três de propósito:
+
+| Campo | Por que não é reproduzido |
+|---|---|
+| `canEdit` | O editor de mapa é liberado pelo `/api/room/access`, cujo valor chega ao front pelo `RoomJoinedMessage` do protobuf ([`RoomConnection.ts:565`](../../play/src/front/Connection/RoomConnection.ts)). No `/api/map` ninguém o lê. |
+| `loadingCowebsiteLogo` | Não existe essa chave no schema. |
+| `opidUsernamePolicy` | Typo do upstream para `opidWokaNamePolicy`. Nós emitimos o nome **correto**. |
+
+Emitir o `opidWokaNamePolicy` com o nome certo é seguro, e não uma mudança de comportamento, porque o front já cai na própria variável de ambiente quando o campo falta — [`Room.ts:183`](../../play/src/front/Connection/Room.ts): `data.opidWokaNamePolicy ?? OPID_WOKA_NAME_POLICY` — e os dois lados leem o mesmo valor.
+
+Vale notar também que o `editable` está no schema mas **nada no `play` o lê**; o `LocalAdmin` também não o define. É campo só do SaaS.
 
 ## Decisão
 

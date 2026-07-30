@@ -21,8 +21,18 @@ Two verified traps, both documented in the ADR:
 
 ## Areas
 
-- `src/api/`: Express controllers and the server factory.
+- `src/Application/`: business logic, kept free of Express so it can be tested as plain functions.
+- `src/api/`: Express controllers, middlewares and the server factory.
 - `src/Enum/`: environment variables, validated with `zod` at startup.
+- `src/data/woka.json`: **a copy of** `play/src/pusher/data/woka.json`. `admin-api` is its own image in production
+  and cannot read `play`'s files, so this copy has to be refreshed whenever upstream changes theirs.
+
+## Configuration is shared with `play`
+
+Every variable in `EnvironmentVariableValidator.ts` is also read by `play`. Once `ADMIN_API_URL` is set, `/api/map` is
+built from **our** values and `play`'s copies stop applying to those fields — 40 variables in total. Compose
+interpolates both services from the repository-root `.env` so they cannot drift. Defaults here must match
+`play/src/pusher/enums/EnvironmentVariableValidator.ts` exactly.
 
 ## Common commands
 

@@ -1,8 +1,12 @@
 import type { Capabilities } from "@workadventure/messages";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
+import { WokaCatalogue } from "../Application/WokaCatalogue";
 import { SUPPORTED_CAPABILITIES } from "../Capabilities";
 import { CapabilitiesController } from "./controllers/CapabilitiesController";
 import { HealthController, type ReadinessCheck } from "./controllers/HealthController";
+import { MapController } from "./controllers/MapController";
+import { WokaListController } from "./controllers/WokaListController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
 
 export interface ServerDependencies {
@@ -12,11 +16,17 @@ export interface ServerDependencies {
      */
     adminApiToken: string;
 
+    /** Everything `/api/map` needs. Injected rather than read from the environment so tests can vary it. */
+    mapDetailsConfiguration: MapDetailsConfiguration;
+
     /** Subsystem probes consulted by `/readyz`. Empty until Postgres lands (ADR-0002, P0/E4). */
     readinessChecks?: readonly ReadinessCheck[];
 
     /** Overridable so tests can assert the negotiation without depending on how much of P0 is built. */
     capabilities?: Capabilities;
+
+    /** Overridable so tests can point at a fixture catalogue. */
+    wokaCatalogue?: WokaCatalogue;
 }
 
 /**
@@ -36,6 +46,8 @@ export function createServer(dependencies: ServerDependencies): Express {
 
     new HealthController(app, dependencies.readinessChecks ?? []);
     new CapabilitiesController(app, dependencies.capabilities ?? SUPPORTED_CAPABILITIES);
+    new MapController(app, dependencies.mapDetailsConfiguration);
+    new WokaListController(app, dependencies.wokaCatalogue ?? new WokaCatalogue());
 
     // Express's default 404 answers HTML. Every caller of this API parses responses as JSON with zod, so an
     // unimplemented path would surface as a confusing parse error instead of a plain "not found".
