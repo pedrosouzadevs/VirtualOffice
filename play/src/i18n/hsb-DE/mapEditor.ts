@@ -328,6 +328,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Toflicki, kotrež smědźa zawrjeć/wotewrić",
             allowedTagsInfo:
                 "Jenož wužiwarjo z tutymi toflickami móža tutón wokrjes zawrjeć abo wotewrić. Wostajće prózdne, zo by wšěm dowolili.",
+            ownerModeLabel: "Modus wobsedźerja (trajne zawrjenje)",
+            ownerModeInfo:
+                "Jenož wobsedźer wosobinskeho wokrjesa móže zawrjeć abo wotewrić, a zawrjenje wostanje, hdyž so wokrjes wupróznja. Trjeba kajkosć wosobinskeho wokrjesa w samsnym wokrjesu.",
         },
         noProperties: "Žane kajkosće njejsu definowane",
     },

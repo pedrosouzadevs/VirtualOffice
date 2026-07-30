@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type { AreaData, AtLeast, LockableAreaPropertyData } from "@workadventure/map-editor";
+import { hasEffectiveOwnerLock } from "@workadventure/map-editor/src/Utils";
 import { deepmergeIntoCustom, type DeepMergeLeafURI } from "deepmerge-ts";
 import { get } from "svelte/store";
 import type { GameScene } from "../Game/GameScene";
@@ -23,6 +24,7 @@ export class Area extends Rectangle {
     private userHasCollideWithArea = false;
     private highlightTimeOut: undefined | NodeJS.Timeout = undefined;
     private collideTimeOut: undefined | NodeJS.Timeout = undefined;
+    private lockedHighlight = false;
 
     constructor(
         public readonly scene: GameScene,
@@ -113,11 +115,19 @@ export class Area extends Rectangle {
     }
 
     public highLightArea(permanent = false) {
+        // While the locked tint is shown it owns the rectangle's style; a highlight (visit card,
+        // claim dialog, ...) would overwrite the red and its timeout would then hide the area.
+        if (this.lockedHighlight) {
+            return;
+        }
         this.setVisible(true);
         if (permanent === false) this.highlightTimeOut = setTimeout(() => this.setVisible(false), 1000);
     }
 
     public unHighLightArea() {
+        if (this.lockedHighlight) {
+            return;
+        }
         this.setVisible(false);
         if (this.highlightTimeOut) clearTimeout(this.highlightTimeOut);
     }
@@ -128,6 +138,12 @@ export class Area extends Rectangle {
      * @param duration - Duration of the fade-out in milliseconds (default: 800ms)
      */
     public flashBlockedArea(duration = 800): void {
+        // While the persistent locked tint is shown the flash is redundant — and its fade-out
+        // would restore the pre-flash style, wiping the tint (the "blinks then disappears" bug).
+        if (this.lockedHighlight) {
+            return;
+        }
+
         // Store original values
         const originalFillColor = this.fillColor;
         const originalFillAlpha = this.fillAlpha;
@@ -157,6 +173,40 @@ export class Area extends Rectangle {
         });
     }
 
+    /**
+     * Shows or clears a persistent, semi-transparent red tint while the area is locked, using the
+     * same colour as the blocked-collision flash ({@link flashBlockedArea}). Unlike the flash, it
+     * does not fade: the tint stays until the area is unlocked, so everyone (including the users
+     * inside) can see at a glance that the area is locked.
+     *
+     * @param locked - true to show the locked tint, false to clear it.
+     */
+    public setLockedHighlight(locked: boolean): void {
+        if (!locked) {
+            if (this.lockedHighlight) {
+                this.lockedHighlight = false;
+                this.setVisible(false);
+            }
+            return;
+        }
+
+        // Always (re)apply, even when already marked locked: other writers share this rectangle
+        // (collision flash, visit-card/claim highlights) and may have overwritten the style. This
+        // runs on every collision recalculation, so the tint self-heals.
+        this.lockedHighlight = true;
+        // Kill any in-flight flash tween: the lock button fires flashBlockedArea immediately,
+        // while the lock variable only comes back from the server an instant later. Left alive,
+        // the tween's completion would restore the pre-flash style and wipe this tint.
+        this.scene.tweens.killTweensOf(this);
+        // A pending flash fade-out would otherwise hide the tint after ~1s.
+        if (this.highlightTimeOut !== undefined) {
+            clearTimeout(this.highlightTimeOut);
+            this.highlightTimeOut = undefined;
+        }
+        this.setFillStyle(0xff6b6b, 0.25);
+        this.setVisible(true);
+    }
+
     private displayWarningMessageOnCollide() {
         // Get the reason why the area is blocked
         let message: string = get(LL).area.noAccess(); // Default message
@@ -169,7 +219,10 @@ export class Area extends Rectangle {
             if (blockReason) {
                 switch (blockReason) {
                     case "locked":
-                        if (this.connection?.hasTag("admin")) {
+                        // Admins may unlock ephemeral locks on contact, but an effective owner
+                        // lock is sovereign (ADR-0001 decision #6): no admin bypass. The back
+                        // enforces this too; hiding the offer keeps the UI honest.
+                        if (this.connection?.hasTag("admin") && !hasEffectiveOwnerLock(this.areaData)) {
                             const lockableProperty = this.areaData.properties.find(
                                 (property): property is LockableAreaPropertyData =>
                                     property.type === "lockableAreaPropertyData",

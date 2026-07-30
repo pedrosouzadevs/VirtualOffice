@@ -322,6 +322,9 @@ const mapEditor: BaseTranslation = {
             lockLabel: "Lock area",
             allowedTagsLabel: "Tags allowed to lock/unlock",
             allowedTagsInfo: "Only users with these tags can lock or unlock this area. Leave empty to allow everyone.",
+            ownerModeLabel: "Owner mode (persistent lock)",
+            ownerModeInfo:
+                "Only the personal-area owner can lock or unlock, and the lock persists when the area empties. Requires a personal area property on this same area.",
         },
         advancedOptions: "Advanced Options",
         chatEnabled: "Associate a dedicated chat channel",

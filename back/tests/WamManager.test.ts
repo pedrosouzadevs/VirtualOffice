@@ -22,6 +22,7 @@ function createInitialWam(): WAMFileFormat {
                         id: "lock-1",
                         type: "lockableAreaPropertyData",
                         allowedTags: ["admin"],
+                        lockMode: "ephemeral",
                     },
                 ],
             },

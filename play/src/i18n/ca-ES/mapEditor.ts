@@ -326,6 +326,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Etiquetes permeses per bloquejar/desbloquejar",
             allowedTagsInfo:
                 "Només els usuaris amb aquestes etiquetes poden bloquejar o desbloquejar aquesta àrea. Deixeu-ho buit per permetre a tothom.",
+            ownerModeLabel: "Mode propietari (bloqueig persistent)",
+            ownerModeInfo:
+                "Només el propietari de l'àrea personal pot bloquejar o desbloquejar, i el bloqueig es manté quan l'àrea es buida. Requereix una propietat d'àrea personal en aquesta mateixa àrea.",
         },
         advancedOptions: "Opcions avançades",
         chatEnabled: "Associar un canal de xat dedicat",

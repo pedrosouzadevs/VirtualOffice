@@ -8,6 +8,7 @@ import type {
     MaxUsersInAreaPropertyData,
 } from "@workadventure/map-editor";
 import { AreaPermissions } from "@workadventure/map-editor";
+import { canPassAreaLock } from "@workadventure/map-editor/src/Utils";
 import { Area } from "../../Entity/Area";
 import type { GameScene } from "../GameScene";
 import { mapEditorActivatedForThematics } from "../../../Stores/MenuStore";
@@ -203,6 +204,18 @@ export class AreasManager {
     }
 
     /**
+     * The owner of an owner-locked area passes through their own lock: they can leave and
+     * re-enter freely without unlocking, while everyone else stays blocked (ADR-0001).
+     */
+    private canCurrentPlayerPassAreaLock(areaId: string): boolean {
+        const area = this.gameMapAreas.getArea(areaId);
+        if (!area) {
+            return false;
+        }
+        return canPassAreaLock(area, localUserStore.getLocalUser()?.uuid);
+    }
+
+    /**
      * Checks if the maxUsersReached state is set for the specified area.
      * Returns undefined when the variable has not been initialized yet.
      */
@@ -258,13 +271,17 @@ export class AreasManager {
 
         // Check if area is locked
         const isLocked = this.isAreaLocked(areaId);
+        // Persistent red tint while locked, so everyone can see the area is closed (not just on
+        // collision). Applies to any locked area; the flash on collision still fires on top.
+        area.setLockedHighlight(isLocked);
         area.updateArea(area.areaData);
         // If area is locked (unlock when empty is handled by the back on user leave)
         if (isLocked) {
             // If area is locked and current player is not inside, block entry
             // Users already inside can still exit
             // Lock takes priority over access permissions
-            if (!isCurrentPlayerInside) {
+            // (the owner of an owner-locked area passes through their own lock)
+            if (!isCurrentPlayerInside && !this.canCurrentPlayerPassAreaLock(areaId)) {
                 if (area.updateCollision(true)) {
                     this.onCollisionStateChanged?.();
                 }
@@ -323,7 +340,8 @@ export class AreasManager {
 
         // If area is locked and current player is not inside, block entry
         // Lock takes priority over access permissions
-        if (isLocked && !isCurrentPlayerInside) {
+        // (the owner of an owner-locked area passes through their own lock)
+        if (isLocked && !isCurrentPlayerInside && !this.canCurrentPlayerPassAreaLock(areaId)) {
             return "locked";
         }
 

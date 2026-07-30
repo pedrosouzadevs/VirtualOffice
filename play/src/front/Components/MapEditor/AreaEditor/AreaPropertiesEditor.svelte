@@ -398,6 +398,8 @@
                     type,
                     // Note: lock state is stored in area property variables, not in the WAM
                     allowedTags: [],
+                    // New lockable areas default to the legacy ephemeral behaviour.
+                    lockMode: "ephemeral",
                 };
             default:
                 throw new Error(`Unknown property type ${type}`);

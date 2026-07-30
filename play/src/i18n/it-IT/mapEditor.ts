@@ -323,6 +323,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "Tag consentiti per bloccare/sbloccare",
             allowedTagsInfo:
                 "Solo gli utenti con questi tag possono bloccare o sbloccare quest'area. Lascia vuoto per consentire a tutti.",
+            ownerModeLabel: "Modalità proprietario (blocco persistente)",
+            ownerModeInfo:
+                "Solo il proprietario dell'area personale può bloccare o sbloccare, e il blocco persiste quando l'area si svuota. Richiede una proprietà area personale su questa stessa area.",
         },
         tldraw: {
             label: "Apri tldraw",

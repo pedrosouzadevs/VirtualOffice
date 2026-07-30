@@ -326,6 +326,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             allowedTagsLabel: "잠금/잠금 해제가 허용된 태그",
             allowedTagsInfo:
                 "이 태그를 가진 사용자만 이 영역을 잠금 또는 잠금 해제할 수 있습니다. 비워두면 모든 사용자에게 허용됩니다.",
+            ownerModeLabel: "소유자 모드 (지속 잠금)",
+            ownerModeInfo:
+                "개인 영역의 소유자만 잠금/잠금 해제할 수 있으며, 영역이 비어도 잠금이 유지됩니다. 같은 영역에 개인 영역 속성이 필요합니다.",
         },
         noProperties: "이 엔티티에는 설정된 속성이 없습니다",
     },

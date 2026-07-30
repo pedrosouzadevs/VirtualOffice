@@ -1,11 +1,15 @@
 import type { Subscription } from "rxjs";
 import type { AreaData } from "@workadventure/map-editor";
+import { hasEffectiveOwnerLock } from "@workadventure/map-editor/src/Utils";
 import type { GameRoom } from "../GameRoom";
 import type { AreaZoneTracker } from "../AreaZoneTracker";
 
 /**
  * The goal of this class is to listen to all the lockable areas in a GameRoom and to set the variable associated
  * to the lockable area to false as soon as the area is empty.
+ *
+ * This auto-unlock only applies to the legacy "ephemeral" lock mode. An "owner" lock (ADR-0001) is persistent:
+ * it stays locked when the area empties and is only released when the owner unlocks it.
  */
 export class LockableAreaManager {
     private enterSubscription: Subscription | undefined;
@@ -53,6 +57,15 @@ export class LockableAreaManager {
             // Let's look for the "lockableAreaPropertyData" property of the area and set its "lock" variable to false.
             const property = area.properties.find((p) => p.type === "lockableAreaPropertyData");
             if (!property) {
+                return;
+            }
+
+            // Owner-locked areas stay locked until the owner explicitly unlocks them; only the legacy
+            // ephemeral mode auto-unlocks when the area becomes empty. The owner mode only takes effect
+            // when a personal-area owner is actually claimed (hasEffectiveOwnerLock): an owner lock with
+            // no owner degrades to ephemeral here too, otherwise the area could stay locked forever with
+            // nobody able to unlock it.
+            if (hasEffectiveOwnerLock(area)) {
                 return;
             }
 
