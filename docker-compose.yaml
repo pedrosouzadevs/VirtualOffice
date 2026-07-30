@@ -321,6 +321,30 @@ services:
       - "traefik.http.routers.map-storage-ui.service=map-storage-ui"
       - "traefik.http.services.map-storage-ui.loadbalancer.server.port=8080"
 
+  # VirtualOffice Admin API (ADR-0002). Members, tags and permissions.
+  # NOTE: ADMIN_API_URL is deliberately NOT set on the "play" service yet. Pointing the pusher here before
+  # /api/map and /api/room/access exist would break login and map loading. It gets wired up in P0/E6.
+  admin-api:
+    image: ghcr.io/thecodingmachine/nodejs:v2-24-trixie
+    command: npm run start:dev
+    working_dir: /usr/src/app/admin-api
+    environment:
+      # @workadventure/messages re-exports generated protobuf code, so we must wait for it like the other services.
+      STARTUP_COMMAND_1: ../wait-proto.sh
+      STARTUP_COMMAND_2: ../npm-install.sh
+      NODE_ENV: development
+      ADMIN_API_PORT: "3000"
+    volumes:
+      - .:/usr/src/app
+    tmpfs: /tmp
+    ports:
+      - "9236:9229"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin-api.rule=Host(`admin-api.workadventure.localhost`)"
+      - "traefik.http.routers.admin-api.entryPoints=web"
+      - "traefik.http.services.admin-api.loadbalancer.server.port=3000"
+
   uploader:
     image: ghcr.io/thecodingmachine/nodejs:v2-24-trixie
     command: npm run dev
