@@ -231,7 +231,7 @@ Enquanto trancada, a área ganha uma **tinta vermelha semi-transparente persiste
 
 ### Plano faseado (revisado)
 
-- **P0** ✅ — Schema (`lockMode`; `doorGapTiles`/`gracePeriodSeconds` reservados) + validador (owner exige área pessoal).
+- **P0** ✅ — Schema (`lockMode`) + validador (owner exige área pessoal).
 - **P1** ✅ — Trava persistente: `back` não auto-destrava no modo `owner`.
 - **P2** ✅ — Restrição ao dono nos dois lados (`canToggleAreaLock`).
 - **P3** ✅ — Tinta vermelha persistente enquanto trancada.

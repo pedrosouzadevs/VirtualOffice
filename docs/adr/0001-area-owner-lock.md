@@ -37,14 +37,13 @@ export const LockableAreaPropertyData = PropertyBase.extend({
     allowedTags: z.array(z.string()).optional(),
     // NEW:
     lockMode: z.enum(["ephemeral", "owner"]).default("ephemeral"),
-    doorGapTiles: z.number().min(1).default(2),  // width of the south opening, in tiles
-    gracePeriodSeconds: z.number().min(0).max(300).default(300),
+    ownerCanEject: z.boolean().optional(), // F5, see section 8
 });
 ```
 
 The `default("ephemeral")` is the crux: **existing maps keep working with no migration**, because zod fills in the current mode. No ephemeral lock in use changes behavior.
 
-**No configurable `DoorData`:** the opening is **always south, centered** (see decision #3). Only its width (`doorGapTiles`) is tunable, defaulting to 2 tiles.
+**Historical note (2026-07-29):** P0 also introduced `doorGapTiles` and `gracePeriodSeconds` for the door/grace designs that were later **dropped** (sections 3 and 6). Left orphaned, they were **removed from the schema**. Maps saved in the meantime still carry those keys; since the schema is not `.strict()`, zod drops them on parse — no migration needed.
 
 ### 2. Ownership comes from the area (standalone, no `admin-api`)
 
@@ -88,7 +87,7 @@ The behavioral change is **one point in the `back`**: on the user-leave event, a
 | Reconnection | Treated as any entry: if still locked and not the owner, blocked at the boundary — **no grace** |
 | Administrator | **No exception** — does not bypass the lock |
 
-Consequence: the schema fields `doorGapTiles` and `gracePeriodSeconds` (added in P0 for the abandoned designs) are now **reserved/unused**. They stay in the schema (defaulted, harmless) and may be dropped in a future refactor if confirmed unnecessary. Only `lockMode` has an effect.
+Consequence: the schema fields `doorGapTiles` and `gracePeriodSeconds` (added in P0 for the abandoned designs) were left orphaned and **removed from the schema** on 2026-07-29. Only `lockMode` (and F5's `ownerCanEject`) have an effect.
 
 ### 7. Closing ≠ emptying
 
@@ -180,7 +179,7 @@ Found in field testing: proximity bubble formation was purely distance-based —
 
 | Phase | Scope | Status |
 |---|---|---|
-| **P0** | Schema: `lockMode` (+ `doorGapTiles`/`gracePeriodSeconds`, now reserved) + validation (owner requires a personal area). | ✅ done |
+| **P0** | Schema: `lockMode` + validation (owner requires a personal area). | ✅ done |
 | **P1** | `back`: auto-unlock conditional on `lockMode`. Ephemeral-mode regression test first. | ✅ done |
 | **P2** | Front + back: restrict locking to the owner in `owner` mode (pure `canToggleAreaLock`, enforced on both sides). | ✅ done |
 | **P3** | Front: **persistent red tint** while locked (`Area.setLockedHighlight`, driven by `AreasManager`). | ✅ done |

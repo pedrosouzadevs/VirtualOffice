@@ -25,8 +25,6 @@ describe("LockableAreaPropertyData - owner lock mode", () => {
         const parsed = LockableAreaPropertyData.parse(baseLockable);
 
         expect(parsed.lockMode).toBe("ephemeral");
-        expect(parsed.doorGapTiles).toBe(2);
-        expect(parsed.gracePeriodSeconds).toBe(300);
     });
 
     it("accepts the owner lock mode", () => {
@@ -39,15 +37,19 @@ describe("LockableAreaPropertyData - owner lock mode", () => {
         expect(() => LockableAreaPropertyData.parse({ ...baseLockable, lockMode: "public" })).toThrow();
     });
 
-    it("caps the grace period at 5 minutes (300s)", () => {
-        expect(LockableAreaPropertyData.parse({ ...baseLockable, gracePeriodSeconds: 300 }).gracePeriodSeconds).toBe(
-            300,
-        );
-        expect(() => LockableAreaPropertyData.parse({ ...baseLockable, gracePeriodSeconds: 301 })).toThrow();
-    });
+    // Maps saved while the abandoned door/grace design was in the schema still carry those keys.
+    // The schema is not strict, so they are dropped on parse instead of failing validation.
+    it("drops the retired doorGapTiles/gracePeriodSeconds keys from already-saved maps", () => {
+        const parsed = LockableAreaPropertyData.parse({
+            ...baseLockable,
+            lockMode: "owner",
+            doorGapTiles: 2,
+            gracePeriodSeconds: 300,
+        });
 
-    it("requires a door gap of at least one tile", () => {
-        expect(() => LockableAreaPropertyData.parse({ ...baseLockable, doorGapTiles: 0 })).toThrow();
+        expect(parsed.lockMode).toBe("owner");
+        expect(parsed).not.toHaveProperty("doorGapTiles");
+        expect(parsed).not.toHaveProperty("gracePeriodSeconds");
     });
 });
 

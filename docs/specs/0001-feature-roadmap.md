@@ -231,7 +231,7 @@ While locked, the area gets a **persistent, semi-transparent red tint** (same co
 
 ### Phased plan (revised)
 
-- **P0** ✅ — Schema (`lockMode`; `doorGapTiles`/`gracePeriodSeconds` reserved) + validator (owner requires a personal area).
+- **P0** ✅ — Schema (`lockMode`) + validator (owner requires a personal area).
 - **P1** ✅ — Persistent lock: the `back` does not auto-unlock in `owner` mode.
 - **P2** ✅ — Owner-only restriction on both sides (`canToggleAreaLock`).
 - **P3** ✅ — Persistent red tint while locked.

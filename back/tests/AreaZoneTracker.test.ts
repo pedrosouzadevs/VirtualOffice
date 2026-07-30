@@ -18,8 +18,6 @@ function lockableProperty(id = "lock-1"): AreaData["properties"][number] {
         type: "lockableAreaPropertyData",
         allowedTags: ["admin"],
         lockMode: "ephemeral",
-        doorGapTiles: 2,
-        gracePeriodSeconds: 300,
     };
 }
 

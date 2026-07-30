@@ -37,14 +37,13 @@ export const LockableAreaPropertyData = PropertyBase.extend({
     allowedTags: z.array(z.string()).optional(),
     // NOVOS:
     lockMode: z.enum(["ephemeral", "owner"]).default("ephemeral"),
-    doorGapTiles: z.number().min(1).default(2),  // largura da abertura ao sul, em tiles
-    gracePeriodSeconds: z.number().min(0).max(300).default(300),
+    ownerCanEject: z.boolean().optional(), // F5, ver §8
 });
 ```
 
 O `default("ephemeral")` é o ponto central: **mapas existentes continuam funcionando sem migração**, porque o zod preenche o modo atual. Nenhuma trava efêmera em uso muda de comportamento.
 
-**Sem `DoorData` configurável:** a porta é **sempre no sul, centralizada** (ver decisão #3). Só a largura da abertura (`doorGapTiles`) é parametrizável, com default de 2 tiles.
+**Nota histórica (2026-07-29):** o P0 também introduziu `doorGapTiles` e `gracePeriodSeconds`, para os desenhos de porta/carência que foram depois **descartados** (§3 e §6). Ficaram órfãos e foram **removidos do schema**. Mapas salvos no intervalo ainda carregam essas chaves; como o schema não é `.strict()`, o zod as descarta no parse — sem migração necessária.
 
 ### 2. Dono vem da área (standalone, sem `admin-api`)
 
@@ -88,7 +87,7 @@ A mudança de comportamento é **um ponto no `back`**: no evento de saída de us
 | Reconexão | Tratada como qualquer entrada: se ainda trancada e não é dono, é barrado na borda — **sem carência** |
 | Administrador | **Sem exceção** — não fura a trava |
 
-Consequência: os campos de schema `doorGapTiles` e `gracePeriodSeconds` (introduzidos no P0 para os desenhos abandonados) ficam **reservados/sem uso** por ora. Mantidos no schema (têm default, não quebram nada); podem ser removidos num refactor futuro se confirmadamente desnecessários. Só `lockMode` tem efeito.
+Consequência: os campos de schema `doorGapTiles` e `gracePeriodSeconds` (introduzidos no P0 para os desenhos abandonados) ficaram órfãos e foram **removidos do schema** em 2026-07-29. Só `lockMode` (e o `ownerCanEject` do F5) têm efeito.
 
 ### 7. Fechar ≠ esvaziar
 
@@ -180,7 +179,7 @@ Descoberto em teste de campo: a formação de bolha de proximidade era puramente
 
 | Fase | Escopo | Status |
 |---|---|---|
-| **P0** | Schema: `lockMode` (+ `doorGapTiles`/`gracePeriodSeconds`, hoje reservados) + validação (owner exige área pessoal). | ✅ feito |
+| **P0** | Schema: `lockMode` + validação (owner exige área pessoal). | ✅ feito |
 | **P1** | `back`: auto-destravar condicional ao `lockMode`. Teste de regressão do modo efêmero primeiro. | ✅ feito |
 | **P2** | Front + back: restringir trava ao dono no modo `owner` (função pura `canToggleAreaLock`, enforcement nos dois lados). | ✅ feito |
 | **P3** | Front: **tinta vermelha persistente** enquanto trancada (`Area.setLockedHighlight`, dirigido pelo `AreasManager`). | ✅ feito |

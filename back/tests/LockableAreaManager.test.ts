@@ -14,8 +14,6 @@ function createArea(areaId: string, lockMode: LockMode | undefined, ownerId?: st
             type: "lockableAreaPropertyData",
             allowedTags: [],
             ...(lockMode !== undefined ? { lockMode } : {}),
-            doorGapTiles: 2,
-            gracePeriodSeconds: 300,
         } as AreaData["properties"][number],
     ];
 

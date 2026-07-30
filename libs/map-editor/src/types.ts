@@ -228,16 +228,6 @@ export const LockableAreaPropertyData = PropertyBase.extend({
      */
     lockMode: AreaLockMode.default("ephemeral"),
     /**
-     * Width, in tiles, of the visual opening drawn on the south wall when an owner-locked
-     * area is unlocked. The opening is always centered on the south wall.
-     */
-    doorGapTiles: z.number().min(1).default(2),
-    /**
-     * Grace period, in seconds, during which a non-owner who dropped their connection may
-     * reconnect into a closed area before being repositioned outside. Capped at 5 minutes.
-     */
-    gracePeriodSeconds: z.number().min(0).max(300).default(300),
-    /**
      * Whether the area owner may eject occupants (ADR-0001 §8). Editable only via the map editor
      * (admin/editor), so an admin can revoke it for an owner who abuses it. `undefined` is treated
      * as allowed; only an explicit `false` blocks ejection. Kept optional (not defaulted) so
