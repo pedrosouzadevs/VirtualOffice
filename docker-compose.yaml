@@ -334,6 +334,8 @@ services:
       STARTUP_COMMAND_2: ../npm-install.sh
       NODE_ENV: development
       ADMIN_API_PORT: "3000"
+      # Same value the pusher sends. Interpolated from the repository-root .env so both sides cannot drift apart.
+      ADMIN_API_TOKEN: "$ADMIN_API_TOKEN"
     volumes:
       - .:/usr/src/app
     tmpfs: /tmp

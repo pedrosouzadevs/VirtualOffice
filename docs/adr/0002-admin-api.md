@@ -39,6 +39,10 @@ Authorization: <ADMIN_API_TOKEN>
 
 The token is sent **raw, with no `Bearer` prefix** (`headers: { Authorization: \`${ADMIN_API_TOKEN}\` }`). A server requiring `Bearer <token>` rejects every call. `Accept-Language` is also sent, carrying the user's locale.
 
+**Exception — `/api/capabilities` carries no token at all** (verified 2026-07-30). [`AdminApi.ts:208`](../../play/src/pusher/services/AdminApi.ts) issues `axios.get(ADMIN_API_URL + "/api/capabilities")` with **no request config**: no headers, no `Authorization`. Every other endpoint passes one.
+
+So the token guard must exempt that path. Answering it with 403 throws inside `initialise()`, which retries forever — the pusher hangs exactly as it does on a 404 (Trap #2), just through a different door. Mount the guard so everything under `/api` is protected **by default** and opening a path is a deliberate act, then exempt this one.
+
 ### Endpoints
 
 | Endpoint | Method | Criticality | Role |
@@ -203,8 +207,9 @@ Why this does not become a trap: `world` stays part of the response from day one
 2. End-to-end login with `ADMIN_API_URL` on.
 3. `canEdit` true/false according to the member's tags.
 4. **`/api/capabilities` answers `200` even with no capability at all** (`{}` is a valid body). ⚠️ *This replaces the original test #4 — "a 404 does not take `play` down" — which asserted a behaviour that does not exist: a 404 hangs the pusher (Trap #2).*
-5. Wrong token → 403 on every endpoint.
+5. Wrong token → 403 on every endpoint **except `/api/capabilities`**, which must answer 200 with no token, and must reject a token wrapped in `Bearer`.
 6. An unknown member on `/api/room/access` gets in with `tags: []` and `canEdit: false` — **never an error**, otherwise no new visitor can ever enter.
+7. Any unimplemented path answers JSON, never Express's default HTML: every caller parses our responses with `zod`.
 
 ## Corrections (2026-07-30)
 
@@ -216,6 +221,12 @@ The contract was re-read against the code before starting P0. Four claims in the
 | 2 | `/api/woka/list` is blocking | Capability-gated at [`WokaService.ts:10`](../../play/src/pusher/services/WokaService.ts); without the capability the pusher uses its local catalogue | Downgraded to 🟡 — but stays in P0 for reason #3 |
 | 3 | *(not mentioned)* | `/api/room/access` must resolve `characterTextureIds` → `WokaDetail[]`, so the Woka catalogue is ours regardless (Trap #3) | `/api/woka/list` enters P0 as the single source of that catalogue |
 | 4 | `MapDetailsData` has "~45 fields" to get right | The `zod` schema requires exactly one: `group`, nullable | P0's risk is functional, not schema-shaped: it is a faithful port of `LocalAdmin` |
+
+A fifth surfaced while implementing E2:
+
+| # | Draft said | Code says | Effect on P0 |
+|---|---|---|---|
+| 5 | `Authorization: <token>` on every endpoint | `/api/capabilities` is called with **no request config**, so no header at all ([`AdminApi.ts:208`](../../play/src/pusher/services/AdminApi.ts)) | The token guard must exempt that path, or a 403 hangs the pusher just like a 404 |
 
 Plus one omission: the side effect of turning `admin-api` on covers **40 environment variables**, not just `MAP_EDITOR_ALLOW_ALL_USERS` (see *Important side effect*).
 

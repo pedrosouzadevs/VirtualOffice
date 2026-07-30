@@ -28,3 +28,4 @@ if (!envChecking.success) {
 const env = envChecking.data;
 
 export const ADMIN_API_PORT = env.ADMIN_API_PORT;
+export const ADMIN_API_TOKEN = env.ADMIN_API_TOKEN;

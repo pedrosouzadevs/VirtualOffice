@@ -16,6 +16,14 @@ const numberOrDefault = (defaultValue: number) =>
 export const EnvironmentVariables = z.object({
     /** Port the HTTP server listens on. */
     ADMIN_API_PORT: numberOrDefault(3000),
+
+    /**
+     * Shared secret the pusher sends in the `Authorization` header — raw, with no `Bearer` prefix.
+     *
+     * Must match `ADMIN_API_TOKEN` on the `play` side. Required: starting without it would leave the API either open
+     * or permanently unreachable, and both are worse than failing loudly at boot.
+     */
+    ADMIN_API_TOKEN: z.string().min(1, "ADMIN_API_TOKEN is required and must not be empty"),
 });
 
 export type EnvironmentVariables = z.infer<typeof EnvironmentVariables>;
