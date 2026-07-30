@@ -294,5 +294,5 @@ Razão: o F4 foi confirmado **standalone** (propriedade na área, sem `admin-api
 
 ## Próximos artefatos
 
-- **ADR do F3** (`docs/adr/`) — desenho do `admin-api`: contrato, modelo de dados, autenticação, faseamento. É o próximo documento a escrever.
+- **ADR do F3** ✅ escrito: [ADR-0002](../adr/0002-admin-api.pt-BR.md) — contrato verificado, faseamento P0–P4, testes de contrato obrigatórios.
 - ADR do F1 quando a fila chegar nele.

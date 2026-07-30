@@ -294,5 +294,5 @@ Reason: F4 was confirmed **standalone** (ownership on the area, no `admin-api`) 
 
 ## Next artifacts
 
-- **F3 ADR** (`docs/adr/`) — `admin-api` design: contract, data model, authentication, phasing. This is the next document to write.
+- **F3 ADR** ✅ written: [ADR-0002](../adr/0002-admin-api.md) — verified contract, P0–P4 phasing, mandatory contract tests.
 - F1 ADR when the queue reaches it.
