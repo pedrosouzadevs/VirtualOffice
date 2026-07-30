@@ -75,6 +75,38 @@ Its own front (Next.js), authenticated for admins only, consuming `admin-api`'s 
 
 P0 is a "skeleton that answers correctly": the 3 blocking endpoints served from Postgres, with `play` working end to end. Only then members/tags/UI.
 
+### 5. Member identity: internal PK + external identifiers (decided 2026-07-29)
+
+**Constraint verified in the code:** the pusher uses the **email** as the identifier. In [`AuthenticateController.ts:318`](../../play/src/pusher/controllers/AuthenticateController.ts) it calls `createAuthToken(email, …)`, and `JWTTokenManager` documents the field as *"will be a email if logged in or an uuid if anonymous"*. `OpenIDClient` **does** hold the `sub`, but **never forwards it**. So the `userIdentifier` arriving at `/api/room/access` is the email.
+
+Consequence: **keying the table on the OIDC `sub` is not viable** without patching the pusher — and patching it would create upstream divergence on every merge.
+
+**Decision (answering "whatever is best for Azure later"):**
+
+```
+member
+  id          uuid  PK      -- ours, internal; never an external identifier
+  email       text  UNIQUE  -- lookup key (this is what the pusher sends)
+  oidc_sub    text  UNIQUE NULL  -- filled when available; ready for Azure
+  ...
+```
+
+Rationale: the value `sub` would bring — surviving an email change without losing tags and area ownership — is delivered by the **internal PK**. If someone's email changes, we update the column and everything else (tags, areas, bans) keeps pointing at the same `id`. `oidc_sub` stands ready for F2: when Azure lands, we store the `oid`/`sub` on first login (linking via the existing email account), giving us the option to migrate the lookup later with no data migration.
+
+What **not** to do: use the email as a foreign key in other tables. That is the mistake that makes an email change painful.
+
+### 6. First-admin bootstrap: idempotent seed (decided 2026-07-29)
+
+The first administrator comes from an **idempotent seed** (`ON CONFLICT DO NOTHING`, the project pattern), with the email supplied by an environment variable (e.g. `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL`) so it is neither hardcoded nor committed. It runs on `admin-api` startup; if the member already exists, nothing happens.
+
+Accepted alternative for development: a manual `INSERT` in Postgres.
+
+### 7. Single world in P0 (decided 2026-07-29)
+
+The `world` field exists in the `/api/room/access` response and will be returned as a **fixed** value in P0. No `world` table and no per-world relationships for now.
+
+Why this does not become a trap: `world` stays part of the response from day one (the contract does not change when multi-world arrives), and tags are already per-member. Introducing worlds later means adding a table and scoping tags — not rewriting the model.
+
 ## Alternatives considered
 
 ### A. Keep going without an Admin API (env vars)
@@ -126,11 +158,13 @@ P0 is a "skeleton that answers correctly": the 3 blocking endpoints served from 
 4. A missing `/api/capabilities` (404) does not take `play` down.
 5. Wrong token → 403 on every endpoint.
 
-## Points to validate before coding
+## Points confirmed (2026-07-29)
 
-1. **Identity source:** the `userIdentifier` arriving at `/api/room/access` is the email (confirmed in dev). Should the member model key on email, or on the OIDC `sub`? Affects the primary key.
-2. **First-admin bootstrap:** how does the first administrator get dashboard access before anyone exists to grant them the tag? (initial seed or environment variable).
-3. **Worlds:** do we model `world` from P0 (the field exists in the response) or assume a single world for now?
+1. ✅ **Identity** — internal PK + `email` as the lookup key + `oidc_sub` staged for Azure (decision #5). Keying on `sub` alone is not viable: the pusher does not send it.
+2. ✅ **Bootstrap** — idempotent seed with the first admin's email from an env var (decision #6).
+3. ✅ **Worlds** — single world in P0; `world` returned as a fixed value (decision #7).
+
+No pending point blocks the start of P0.
 
 ## References
 

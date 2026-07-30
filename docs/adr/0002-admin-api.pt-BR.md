@@ -75,6 +75,38 @@ Front próprio (Next.js), autenticado só para administradores, consumindo a API
 
 O P0 é um "esqueleto que responde certo": os 3 endpoints bloqueantes servindo dados do Postgres, com o `play` funcionando ponta a ponta. Só então vêm membros/tags/UI.
 
+### 5. Identidade do membro: PK interna + identificadores externos (decidido 2026-07-29)
+
+**Restrição verificada no código:** o pusher usa o **e-mail** como identificador. Em [`AuthenticateController.ts:318`](../../play/src/pusher/controllers/AuthenticateController.ts) ele chama `createAuthToken(email, …)`, e o `JWTTokenManager` documenta o campo como *"will be a email if logged in or an uuid if anonymous"*. O `OpenIDClient` **tem** o `sub` em mãos, mas **não o repassa**. Logo, `userIdentifier` chegando em `/api/room/access` é o e-mail.
+
+Consequência: **chavear a tabela pelo `sub` do OIDC é inviável** sem alterar o pusher — e alterá-lo criaria divergência com o upstream a cada merge.
+
+**Decisão (respondendo "o que for melhor para o Azure"):**
+
+```
+member
+  id          uuid  PK      -- nossa, interna; nunca um identificador externo
+  email       text  UNIQUE  -- chave de lookup (é o que o pusher envia)
+  oidc_sub    text  UNIQUE NULL  -- preenchida quando disponível; preparada para o Azure
+  ...
+```
+
+Racional: o valor que o `sub` traria — sobreviver a uma troca de e-mail sem perder tags e propriedade de área — é entregue pela **PK interna**. Se o e-mail de alguém mudar, atualiza-se a coluna e todo o resto (tags, áreas, bans) continua apontando para o mesmo `id`. O `oidc_sub` fica pronto para o F2: quando o Azure entrar, gravamos o `oid`/`sub` no primeiro login (vinculando pela conta de e-mail existente) e ganhamos a opção de migrar o lookup depois, sem migração de dados.
+
+O que **não** fazer: usar o e-mail como chave estrangeira nas demais tabelas. Esse é o erro que torna a troca de e-mail dolorosa.
+
+### 6. Bootstrap do primeiro admin: seed idempotente (decidido 2026-07-29)
+
+O primeiro administrador nasce de um **seed idempotente** (`ON CONFLICT DO NOTHING`, padrão do projeto), com o e-mail vindo de uma variável de ambiente (ex. `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL`) para não ficar hardcoded nem versionado. Roda na inicialização do `admin-api`; se o membro já existir, nada acontece.
+
+Alternativa aceita para desenvolvimento: `INSERT` manual no Postgres.
+
+### 7. Mundo único no P0 (decidido 2026-07-29)
+
+O campo `world` existe na resposta de `/api/room/access` e será devolvido com um valor **fixo** no P0. Nada de tabela `world` nem relacionamentos por mundo agora.
+
+Como isso não vira armadilha: `world` continua sendo um campo da resposta desde o primeiro dia (o contrato não muda quando multi-mundo chegar), e as tags já nascem por membro. Introduzir mundos depois é acrescentar uma tabela e um escopo às tags — não reescrever o modelo.
+
 ## Alternativas consideradas
 
 ### A. Continuar sem Admin API (env vars)
@@ -126,11 +158,13 @@ O P0 é um "esqueleto que responde certo": os 3 endpoints bloqueantes servindo d
 4. `/api/capabilities` ausente (404) não derruba o `play`.
 5. Token errado → 403 em todos os endpoints.
 
-## Pontos a validar antes do código
+## Pontos confirmados (2026-07-29)
 
-1. **Fonte de identidade:** o `userIdentifier` que chega no `/api/room/access` é o e-mail (confirmado no dev). O modelo de membro deve casar por e-mail, ou por `sub` do OIDC? Impacta a chave primária.
-2. **Bootstrap do primeiro admin:** como o primeiro administrador ganha acesso ao dashboard antes de existir alguém para lhe dar a tag? (seed inicial ou variável de ambiente).
-3. **Mundos:** modelamos `world` desde o P0 (o campo existe na resposta) ou assumimos mundo único por ora?
+1. ✅ **Identidade** — PK interna + `email` como chave de lookup + `oidc_sub` preparada para o Azure (decisão #5). Chavear por `sub` puro é inviável: o pusher não o envia.
+2. ✅ **Bootstrap** — seed idempotente com o e-mail do primeiro admin vindo de env var (decisão #6).
+3. ✅ **Mundos** — mundo único no P0; `world` devolvido como valor fixo (decisão #7).
+
+Nenhum ponto pendente bloqueia o início do P0.
 
 ## Referências
 
