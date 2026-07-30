@@ -1,7 +1,7 @@
 # ADR-0002: Our own Admin API (`admin-api`) for members, tags and permissions
 
-- **Status:** Proposed
-- **Date:** 2026-07-29
+- **Status:** Accepted
+- **Date:** 2026-07-29 — contract re-verified against the code on 2026-07-30 (see *Corrections*)
 - **Deciders:** VirtualOffice team
 - **Languages:** [0002-admin-api.pt-BR.md](0002-admin-api.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
 - **Source spec:** [Spec 0001 — Feature Roadmap](../specs/0001-feature-roadmap.md), Feature 3.
@@ -14,9 +14,20 @@ The pusher already knows how to talk to an Admin API: when `ADMIN_API_URL` is se
 
 > ⚠️ **Central risk of this feature:** the contract is consumed at runtime with `zod` validation. A missing field or wrong type on `/api/map` or `/api/room/access` **breaks login and map loading**. This ADR therefore documents the contract **as verified in the code**, not as documented (the docs are incomplete).
 
-### Important side effect
+### Important side effect — and it is far wider than one variable
 
 With `ADMIN_API_URL` set, `MAP_EDITOR_ALLOW_ALL_USERS` is **ignored** — `admin-api` takes over map-editor access. In other words: **the day we turn `admin-api` on, today's env-var configuration stops applying.** `canEdit` starts coming from our response.
+
+That is not one variable, it is **40** (verified 2026-07-30). [`LocalAdmin`](../../play/src/pusher/services/LocalAdmin.ts) builds its two payloads out of `play`'s environment:
+
+| Consumer | Count | Examples |
+|---|---|---|
+| `fetchMapDetails` → `/api/map` | **28** | `START_ROOM_URL`, `PUBLIC_MAP_STORAGE_URL`, `DISABLE_ANONYMOUS`, `ENABLE_CHAT*` (4), `ENABLE_SAY`, `ENABLE_ISSUE_REPORT`, `MATRIX_*` (5), `DEFAULT_WOKA_*` (2), `PROVIDE_DEFAULT_WOKA_*` (2), `SKIP_CAMERA_PAGE`, `BYPASS_PWA`, `ENABLE_TUTORIAL`, `OPID_WOKA_NAME_POLICY`, `LIVEKIT_RECORDING_S3_*` (5) |
+| `fetchMemberDataByUuid` → `/api/room/access` | **+12** | `MAP_EDITOR_ALLOW_ALL_USERS`, `MAP_EDITOR_ALLOWED_USERS`, and the 10 application flags (`KLAXOON_ENABLED`, `YOUTUBE_ENABLED`, `GOOGLE_*_ENABLED` ×4, `ERASER_ENABLED`, `EXCALIDRAW_ENABLED`, `CARDS_ENABLED`, `TLDRAW_ENABLED`) |
+
+Once those two endpoints are ours, all 40 are read from **`admin-api`'s** environment and `play`'s copies become dead configuration for those fields. Duplicating them across two `.env` files means they diverge silently, and the failure mode is not an error — it is *"the chat disappeared after we turned on admin-api"*.
+
+**Decision:** `docker-compose.yaml` has no `env_file`; it interpolates each variable from the repository-root `.env` (e.g. `ENABLE_MAP_EDITOR: "$ENABLE_MAP_EDITOR"`). The `admin-api` service declares **the same variables interpolated from that same root `.env`** — one value, two consumers, no new mechanism. Variables that are genuinely `admin-api`-only take the `ADMIN_API_` prefix.
 
 ## Verified contract (source: `AdminApi.ts`)
 
@@ -32,10 +43,10 @@ The token is sent **raw, with no `Bearer` prefix** (`headers: { Authorization: \
 
 | Endpoint | Method | Criticality | Role |
 |---|---|---|---|
-| `/api/capabilities` | GET | **Negotiation** | Returns supported capabilities. **404 is acceptable** — the pusher falls back to the default set. This is what makes phased delivery possible. |
+| `/api/capabilities` | GET | 🔴 **Blocking** | Returns supported capabilities. ⚠️ **A 404 hangs the pusher** — see Trap #2. Answering `200 {}` is valid and is what makes phased delivery possible. |
 | `/api/map` | GET | 🔴 **Blocking** | `?playUri&userId?&accessToken?` → `MapDetailsData` \| `RoomRedirect` \| `ErrorApiData`. Without it, no map loads. |
 | `/api/room/access` | GET | 🔴 **Blocking** | `?userIdentifier&playUri&ipAddress&characterTextureIds&companionTextureId&accessToken&isLogged&chatID` → member data (includes `tags` and `canEdit`). Without it, nobody enters. |
-| `/api/woka/list` | GET | 🔴 **Blocking** | The world's avatar (Woka) list. |
+| `/api/woka/list` | GET | 🟡 **In P0 anyway** | Not blocking on its own — it is capability-gated. But `/api/room/access` forces us to own the Woka catalogue regardless: see Trap #3. |
 | `/api/companion/list` | GET | 🟡 | Companion list. |
 | `/api/members`, `/api/members/{uuid}` | GET | 🟡 | Member search and detail. |
 | `/api/world/tags`, `/api/room/tags` | GET | 🟡 | Available tags (feeds the editor's pickers). |
@@ -43,25 +54,61 @@ The token is sent **raw, with no `Bearer` prefix** (`headers: { Authorization: \
 | `/api/save-name`, `/api/save-textures`, `/api/save-companion-texture` | POST | ⚪ Optional | Capability-gated. |
 | `/api/room/same`, `/api/chat/members`, `/api/login-url/{token}` | GET | ⚪ Optional | Worlds, chat, token login. |
 
+### Trap #2 — a 404 on `/api/capabilities` hangs the pusher (verified 2026-07-30)
+
+The official documentation, and the first draft of this ADR, said a 404 was acceptable. **The code says otherwise:**
+
+- [`AdminApi.ts:161`](../../play/src/pusher/services/AdminApi.ts) — `queryCapabilities` catches **any** exception (a 404 included: there is no custom `validateStatus`, so axios rejects on it) and reschedules itself via `setTimeout` with **no retry cap**. The enclosing promise never settles.
+- [`app.ts:193`](../../play/src/pusher/app.ts) — `await adminApi.initialise()` runs inside `init()`. The surrounding `try/catch` never fires: the promise does not reject, it simply never resolves.
+- [`server.ts:52`](../../play/src/server.ts) — `await app.init()` runs **before** `listenWebServer`.
+
+Consequence: with `ADMIN_API_URL` set and `/api/capabilities` answering 404, the pusher retries forever and **never opens its HTTP/WS port**. It does not crash, and it logs one warning — it hangs. The 404 tolerance only holds when `ADMIN_API_URL` is empty, because then the call is never made.
+
+So `/api/capabilities` is the **most** blocking endpoint of the three, not an optional negotiation. What enables phased delivery is answering **`200` with an empty object** — declaring no capability at all is perfectly valid.
+
+### Trap #3 — `characterTextures` pulls the Woka catalogue into P0 (verified 2026-07-30)
+
+`/api/woka/list` is **not** blocking on its own: [`WokaService.ts:10`](../../play/src/pusher/services/WokaService.ts) selects `adminWokaService` only when `capabilities["api/woka/list"] === "v1"`; otherwise the pusher keeps serving its local catalogue. The same gating applies to `/api/companion/list`.
+
+But `/api/room/access` must return `characterTextures` — the `WokaDetail[]` resolved from the `characterTextureIds` it receives — together with `isCharacterTexturesValid`. An empty array or a false flag sends the user to the Woka selection page. `LocalAdmin` resolves this through [`LocalWokaService`](../../play/src/pusher/services/LocalWokaService.ts), which reads `play/src/pusher/data/woka.json`.
+
+So `admin-api` needs the catalogue either way. If we skip `/api/woka/list`, the pusher serves the list from `play`'s copy while we validate against ours — two sources of truth, whose divergence shows up as a **login loop**: the user is bounced to Woka selection, picks a texture we do not know, and is bounced again.
+
+**Decision: implement `/api/woka/list` in P0**, serving the very catalogue used for texture resolution. The original ADR reached the right conclusion for the wrong reason — it is in P0 because of `/api/room/access`, not because the endpoint is blocking.
+
 ### Response shapes (exact fields)
 
-**`/api/room/access`** → `status: "ok"` plus:
+**`/api/room/access`** → exactly **10 required** fields ([`AdminApi.ts:58`](../../play/src/pusher/services/AdminApi.ts)):
 ```
-email, username?, userUuid, tags[], visitCardUrl,
-isCharacterTexturesValid, characterTextures, isCompanionTextureValid, companionTexture,
-messages, userRoomToken, activatedInviteUser, applications, canEdit, world, chatID, canRecord
+status ("ok"), email (nullable), userUuid, tags[], visitCardUrl (nullable),
+isCharacterTexturesValid, characterTextures[], isCompanionTextureValid,
+messages[], world
 ```
-`canEdit` is the field that **unlocks the map editor** — this is where tag management becomes a practical effect.
+Optional: `username`, `companionTexture`, `userRoomToken`, `activatedInviteUser`, `applications`, `canEdit`, `chatID`, `canRecord`.
 
-**`/api/map`** → `MapDetailsData` (~45 fields: `mapUrl`, `wamUrl`, `group`, `authenticationMandatory`, `editable`, `enableChat*`, `metatags`, `modules`, …), **or** `RoomRedirect` (`{ redirectUrl }`), **or** `ErrorApiData`.
+Note the irony: **`canEdit` is optional in the schema** (`z.boolean().nullable().optional()`) and yet it is the field that **unlocks the map editor** — where tag management becomes a practical effect. Omitting it is silently falsy, which is exactly the bug we would ship without noticing.
 
-> The sheer size of `MapDetailsData` is why P0 below exists: getting that payload right is half the integration work.
+**`/api/map`** → `MapDetailsData`, **or** `RoomRedirect` (`{ redirectUrl }`), **or** `ErrorApiData`.
+
+`MapDetailsData` requires **exactly one** field: `group` (`z.string().nullable()`, so `null` passes) — [`MapDetailsData.ts:163`](../../libs/messages/src/JsonMessages/MapDetailsData.ts). Every other field is `.optional()`, and since the object is not `.strict()`, unknown keys are dropped. The "~45 fields" figure describes the surface of the type, not the obligation.
+
+> That inverts where P0's risk sits. Satisfying `zod` is cheap; **functional** correctness is not. `mapUrl`/`wamUrl`, `editable` and the `/~/` routing are what make a map actually load — and [`LocalAdmin.fetchMapDetails`](../../play/src/pusher/services/LocalAdmin.ts) is the executable specification for all of it. **P0 is a faithful port of `LocalAdmin` onto Postgres**, not a payload written from scratch.
 
 ## Decision
 
 ### 1. New `admin-api` service, Clean Architecture, dedicated PostgreSQL
 
 Domain → Application → Infrastructure/API. Its own Postgres (spec decision #3), no corporate-database integration in this phase.
+
+**Stack: TypeScript, as a workspace inside this monorepo** (decided 2026-07-30), following the `map-storage` pattern — Express 5 + `tsx` + Vitest.
+
+The deciding argument is mandatory test #1 below: *reuse the `zod` schemas from `@workadventure/messages`, do not retype them*. That is only literally possible in TypeScript. A .NET service — the house default in our general engineering standard — would force us to hand-retype `MapDetailsData` and `FetchMemberDataByUuidResponse` in C#, and upstream contract drift would then become invisible until it breaks login at runtime. Importing the schemas instead makes drift a **compile/test-time** failure on every `npm ci`.
+
+Secondary gains: one `docker compose up`, one toolchain, one CI pipeline, and `libs/*` available for reuse.
+
+What we give up: divergence from the .NET reference stack, and no EF Core. **Bet:** the contract-drift protection is worth more than stack uniformity for this specific service, because this service's entire job *is* the contract.
+
+**ORM: Drizzle.** Schema declared in TypeScript (matches the repo's `strict` settings), forward-only migrations via `drizzle-kit`, SQL-first with no query-engine binary. Prisma would add a codegen step and ~50 MB to the image for three tables. The idempotent seed from decision #6 stays plain SQL with `ON CONFLICT DO NOTHING`.
 
 ### 2. Phasing driven by capabilities
 
@@ -144,7 +191,7 @@ Why this does not become a trap: `world` stays part of the response from day one
 
 | Phase | Scope |
 |---|---|
-| **P0 — Skeleton that answers correctly** | `admin-api` + Postgres + the 3 blocking endpoints (`/api/map`, `/api/room/access`, `/api/woka/list`) + `/api/capabilities` declaring the minimum. Goal: `ADMIN_API_URL` on and `play` working exactly as today. |
+| **P0 — Skeleton that answers correctly** | `admin-api` + Postgres + **4** endpoints: `/api/capabilities` (always `200`), `/api/map`, `/api/room/access`, `/api/woka/list` (Trap #3). Goal: `ADMIN_API_URL` on and `play` working exactly as today. |
 | **P1 — Members and tags** | Member CRUD, tag assignment, `canEdit` derived from tags. Endpoints `/api/members*`, `/api/world/tags`, `/api/room/tags`. |
 | **P2 — Dashboard** | Admin UI: list/search members, assign tags, view rooms. |
 | **P3 — Moderation** | `/api/ban`, `/api/report`, worlds, `/api/room/same`. |
@@ -152,25 +199,50 @@ Why this does not become a trap: `world` stays part of the response from day one
 
 ### Mandatory tests
 
-1. **Contract test** per blocking endpoint: the response validates against the very same `zod` schema the pusher uses (`isMapDetailsData`, `isFetchMemberDataByUuidSuccessResponse`). *Reuse the schemas from `@workadventure/messages` — do not retype them.*
+1. **Contract test** per endpoint: the response validates against the very same `zod` schema the pusher uses (`isCapabilities`, `isMapDetailsData`, `isRoomRedirect`, `isFetchMemberDataByUuidResponse`, `wokaList`). *Reuse the schemas from `@workadventure/messages` — do not retype them.*
 2. End-to-end login with `ADMIN_API_URL` on.
 3. `canEdit` true/false according to the member's tags.
-4. A missing `/api/capabilities` (404) does not take `play` down.
+4. **`/api/capabilities` answers `200` even with no capability at all** (`{}` is a valid body). ⚠️ *This replaces the original test #4 — "a 404 does not take `play` down" — which asserted a behaviour that does not exist: a 404 hangs the pusher (Trap #2).*
 5. Wrong token → 403 on every endpoint.
+6. An unknown member on `/api/room/access` gets in with `tags: []` and `canEdit: false` — **never an error**, otherwise no new visitor can ever enter.
 
-## Points confirmed (2026-07-29)
+## Corrections (2026-07-30)
+
+The contract was re-read against the code before starting P0. Four claims in the 2026-07-29 draft were wrong:
+
+| # | Draft said | Code says | Effect on P0 |
+|---|---|---|---|
+| 1 | `/api/capabilities`: "404 is acceptable" | 404 → infinite retry → the pusher never opens its port (Trap #2) | Promoted to **blocking**; test #4 inverted |
+| 2 | `/api/woka/list` is blocking | Capability-gated at [`WokaService.ts:10`](../../play/src/pusher/services/WokaService.ts); without the capability the pusher uses its local catalogue | Downgraded to 🟡 — but stays in P0 for reason #3 |
+| 3 | *(not mentioned)* | `/api/room/access` must resolve `characterTextureIds` → `WokaDetail[]`, so the Woka catalogue is ours regardless (Trap #3) | `/api/woka/list` enters P0 as the single source of that catalogue |
+| 4 | `MapDetailsData` has "~45 fields" to get right | The `zod` schema requires exactly one: `group`, nullable | P0's risk is functional, not schema-shaped: it is a faithful port of `LocalAdmin` |
+
+Plus one omission: the side effect of turning `admin-api` on covers **40 environment variables**, not just `MAP_EDITOR_ALLOW_ALL_USERS` (see *Important side effect*).
+
+## Points confirmed
+
+**2026-07-29**
 
 1. ✅ **Identity** — internal PK + `email` as the lookup key + `oidc_sub` staged for Azure (decision #5). Keying on `sub` alone is not viable: the pusher does not send it.
 2. ✅ **Bootstrap** — idempotent seed with the first admin's email from an env var (decision #6).
 3. ✅ **Worlds** — single world in P0; `world` returned as a fixed value (decision #7).
 
+**2026-07-30**
+
+4. ✅ **Stack** — TypeScript workspace inside the monorepo, Express 5 + Vitest, Drizzle for persistence (decision #1). Driven by mandatory test #1: the `zod` schemas must be imported, not retyped.
+5. ✅ **Configuration** — `admin-api` reads the same repository-root `.env` that `play` interpolates from, so the 40 shared variables have a single value.
+
 No pending point blocks the start of P0.
 
 ## References
 
-- [`play/src/pusher/services/AdminApi.ts`](../../play/src/pusher/services/AdminApi.ts) — **the contract's source of truth**
+- [`play/src/pusher/services/AdminApi.ts`](../../play/src/pusher/services/AdminApi.ts) — **the contract's source of truth** (calls, headers, `zod` parsing, the `initialise()` retry loop)
 - [`play/src/pusher/services/AdminInterface.ts`](../../play/src/pusher/services/AdminInterface.ts) — TypeScript interface
-- [`play/src/pusher/services/LocalAdmin.ts`](../../play/src/pusher/services/LocalAdmin.ts) — default behaviour with no Admin API
+- [`play/src/pusher/services/LocalAdmin.ts`](../../play/src/pusher/services/LocalAdmin.ts) — default behaviour with no Admin API; **the executable spec for P0**
+- [`play/src/pusher/services/WokaService.ts`](../../play/src/pusher/services/WokaService.ts) — capability gating for the Woka list (Trap #3)
+- [`play/src/pusher/services/LocalWokaService.ts`](../../play/src/pusher/services/LocalWokaService.ts) — texture resolution and the `woka.json` catalogue
+- [`play/src/pusher/app.ts`](../../play/src/pusher/app.ts) and [`play/src/server.ts`](../../play/src/server.ts) — the startup sequence that Trap #2 blocks
+- [`libs/messages/src/JsonMessages/MapDetailsData.ts`](../../libs/messages/src/JsonMessages/MapDetailsData.ts) — the schema to import in the contract tests
 - [Official doc: implement your own Admin API](../others/self-hosting/adminAPI.md)
 - Reference Swagger: `https://play.workadventu.re/swagger-ui/`
 - [Spec 0001 — Roadmap](../specs/0001-feature-roadmap.md) (Feature 3)
