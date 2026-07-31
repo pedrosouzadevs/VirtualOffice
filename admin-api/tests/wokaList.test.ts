@@ -58,14 +58,26 @@ describe("WokaCatalogue", () => {
         expect(await catalogue.resolveTextures([])).toEqual([]);
     });
 
-    it("preserves the caller's order, because the front layers the textures in sequence", async () => {
-        const list = await catalogue.getWokaList();
-        const bodyId = list.body?.collections[0]?.textures[0]?.id;
-        expect(bodyId).toBeDefined();
+    it("returns textures in wokaPartNames order, not the order they were asked for", async () => {
+        // Regression: resolveTextures used to echo the caller's order. The front layers these sprites in array order
+        // (CharacterLayerManager.wokaBase64 -> getSprites), so hair asked for before body was painted underneath it
+        // and the avatar rendered wrong. LocalWokaService orders by catalogue part; we must match.
+        const resolved = await catalogue.resolveTextures(["hair1", "body1", "eyes1"]);
 
-        const resolved = await catalogue.resolveTextures(["male1", bodyId as string]);
+        expect(resolved?.map((texture) => texture.id)).toEqual(["body1", "eyes1", "hair1"]);
+    });
 
-        expect(resolved?.map((texture) => texture.id)).toEqual(["male1", bodyId]);
+    it("orders by part even when the request is already sorted differently", async () => {
+        const resolved = await catalogue.resolveTextures(["accessory1", "male1"]);
+
+        // "woka" comes first in wokaPartNames, "accessory" last.
+        expect(resolved?.map((texture) => texture.id)).toEqual(["male1", "accessory1"]);
+    });
+
+    it("returns only the two fields WokaDetail carries, like LocalWokaService", async () => {
+        const resolved = await catalogue.resolveTextures(["male1"]);
+
+        expect(Object.keys(resolved?.[0] ?? {}).sort()).toEqual(["id", "url"]);
     });
 
     it("serves the same catalogue it validates against, so the list and the check cannot disagree", async () => {
@@ -76,6 +88,7 @@ describe("WokaCatalogue", () => {
 
         const resolved = await catalogue.resolveTextures([firstWoka!.id]);
 
-        expect(resolved?.[0]).toEqual(firstWoka);
+        // Only id and url: those are the two fields WokaDetail carries, and the pusher's zod strips the rest anyway.
+        expect(resolved?.[0]).toEqual({ id: firstWoka!.id, url: firstWoka!.url });
     });
 });

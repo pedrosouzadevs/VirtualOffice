@@ -6,8 +6,7 @@ import { buildRoomAccess, type RoomAccessConfiguration } from "../../Application
 import type { WokaCatalogue } from "../../Application/WokaCatalogue";
 
 /**
- * `characterTextureIds` arrives as a repeated query parameter, which Express parses as a string when there is one
- * value and an array when there are several. Both shapes have to be accepted.
+ * A repeated query parameter, which arrives as a string when there is one value and an array when there are several.
  */
 const StringOrArray = z
     .union([z.string(), z.array(z.string())])
@@ -17,16 +16,28 @@ const StringOrArray = z
         return Array.isArray(value) ? value : [value];
     });
 
-const RoomAccessQuery = z.object({
-    userIdentifier: z.string().min(1),
-    playUri: z.string().min(1),
-    ipAddress: z.string().optional(),
-    characterTextureIds: StringOrArray,
-    companionTextureId: z.string().optional(),
-    accessToken: z.string().optional(),
-    isLogged: z.string().optional(),
-    chatID: z.string().optional(),
-});
+const RoomAccessQuery = z
+    .object({
+        userIdentifier: z.string().min(1),
+        playUri: z.string().min(1),
+        ipAddress: z.string().optional(),
+        characterTextureIds: StringOrArray,
+        /**
+         * The bracketed spelling axios produces for arrays. The `extended` query parser folds it into
+         * `characterTextureIds`, so this is belt and braces — but the failure mode it guards against is silent
+         * (empty textures reported as valid, avatars rendering blank), which is exactly when a second layer earns
+         * its keep.
+         */
+        "characterTextureIds[]": StringOrArray,
+        companionTextureId: z.string().optional(),
+        accessToken: z.string().optional(),
+        isLogged: z.string().optional(),
+        chatID: z.string().optional(),
+    })
+    .transform(({ "characterTextureIds[]": bracketed, characterTextureIds, ...rest }) => ({
+        ...rest,
+        characterTextureIds: characterTextureIds.length > 0 ? characterTextureIds : bracketed,
+    }));
 
 /**
  * `GET /api/room/access` — decides who gets in, with which tags, and whether they may edit the map.

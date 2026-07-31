@@ -39,6 +39,12 @@ export class WokaCatalogue {
     /**
      * Resolves texture ids into the details `/api/room/access` must return.
      *
+     * ⚠️ **Order is the rendering order, not the request order.** The front layers these sprites in array order
+     * (`CharacterLayerManager.wokaBase64` → `getSprites`), so the result must follow `wokaPartNames` — body, then
+     * eyes, then hair, and so on. Returning the caller's order paints hair underneath the body and the avatar comes
+     * out wrong. `LocalWokaService.fetchWokaDetails` gets this right by accident, because it collects into a Map
+     * while walking the catalogue; we do the same deliberately.
+     *
      * @returns `undefined` when **any** id is unknown, which is the signal to send the user to the Woka selection
      * page. Partial resolution is deliberately not an option: it would let a user keep an avatar we cannot render.
      */
@@ -46,6 +52,7 @@ export class WokaCatalogue {
         const catalogue = await this.load();
         const resolved = new Map<string, WokaDetail>();
 
+        // Walking parts in wokaPartNames order is what puts the result in layering order: Map preserves insertion.
         for (const partName of wokaPartNames) {
             const part = catalogue[partName];
             if (!part) {
@@ -55,7 +62,8 @@ export class WokaCatalogue {
             for (const collection of part.collections) {
                 for (const texture of collection.textures) {
                     if (textureIds.includes(texture.id) && !resolved.has(texture.id)) {
-                        resolved.set(texture.id, texture);
+                        // Narrowed to the two fields WokaDetail carries, exactly like LocalWokaService.
+                        resolved.set(texture.id, { id: texture.id, url: texture.url });
                     }
                 }
             }
@@ -65,9 +73,6 @@ export class WokaCatalogue {
             return undefined;
         }
 
-        // Preserve the caller's order: the front composes the avatar by layering these in sequence.
-        return textureIds
-            .map((id) => resolved.get(id))
-            .filter((texture): texture is WokaDetail => texture !== undefined);
+        return [...resolved.values()];
     }
 }

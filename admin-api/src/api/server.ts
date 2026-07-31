@@ -52,6 +52,12 @@ export interface ServerDependencies {
 export function createServer(dependencies: ServerDependencies): Express {
     const app = express();
 
+    // Express 5 defaults to the "simple" query parser, which leaves `a[]=1&a[]=2` as the literal key `a[]`. axios —
+    // which is what the pusher uses — serialises array parameters exactly that way, so `characterTextureIds` would
+    // silently arrive as undefined and every user would render with a blank avatar. "extended" (qs) folds the
+    // bracketed form back into a real array.
+    app.set("query parser", "extended");
+
     // The pusher only ever issues GETs and small JSON POSTs against this API; there is no reason to accept a large body.
     app.use(express.json({ limit: "100kb" }));
 

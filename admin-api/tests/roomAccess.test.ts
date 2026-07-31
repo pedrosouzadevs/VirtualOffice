@@ -181,6 +181,36 @@ describe("GET /api/room/access", () => {
             expect(await response.json()).toMatchObject({ isCharacterTexturesValid: false, characterTextures: [] });
         });
 
+        it("accepts the bracketed array spelling axios produces", async () => {
+            // Regression: axios serialises arrays as `characterTextureIds[]=a&characterTextureIds[]=b`, and Express 5's
+            // default "simple" parser leaves that as the literal key `characterTextureIds[]`. The ids were dropped,
+            // so every user got characterTextures: [] with isCharacterTexturesValid: true — a blank avatar, and no
+            // redirect to Woka selection because we had just declared the (empty) selection valid.
+            const url = await serveTestApp();
+
+            const response = await fetch(
+                `${url}/api/room/access?userIdentifier=a%40b.c&playUri=${encodeURIComponent(EDITABLE_ROOM)}` +
+                    `&characterTextureIds%5B%5D=male1&characterTextureIds%5B%5D=body1`,
+                { headers: { Authorization: TEST_ADMIN_API_TOKEN } },
+            );
+
+            const body = await bodyOf(response);
+            expect(body.isCharacterTexturesValid).toBe(true);
+            expect(body.characterTextures).toHaveLength(2);
+        });
+
+        it("reports invalid when the bracketed ids are unknown, instead of silently returning none", async () => {
+            const url = await serveTestApp();
+
+            const response = await fetch(
+                `${url}/api/room/access?userIdentifier=a%40b.c&playUri=${encodeURIComponent(EDITABLE_ROOM)}` +
+                    `&characterTextureIds%5B%5D=no-such-texture`,
+                { headers: { Authorization: TEST_ADMIN_API_TOKEN } },
+            );
+
+            expect(await bodyOf(response)).toMatchObject({ isCharacterTexturesValid: false });
+        });
+
         it("accepts a single texture id, which Express parses as a string rather than an array", async () => {
             const url = await serveTestApp();
 
