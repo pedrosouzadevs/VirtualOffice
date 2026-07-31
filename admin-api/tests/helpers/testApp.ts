@@ -1,10 +1,11 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
 import type { TagRepository } from "../../src/Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
 import { normalizeEmail, type Member, type MemberSummary } from "../../src/Domain/Member";
 import { createServer, type ServerDependencies } from "../../src/api/server";
+import { StubOidcAuthenticator, TEST_DASHBOARD_CONFIGURATION } from "./adminDashboard";
 import { startTestServer, type TestServer } from "./testServer";
 
 /** Any non-empty value works; tests assert on matching versus not matching, never on the value itself. */
@@ -47,7 +48,17 @@ export const TEST_ROOM_ACCESS_CONFIGURATION: RoomAccessConfiguration = {
  * The database behaviour is covered against a real Postgres in `tests/integration`.
  */
 export class StubMemberRepository implements MemberRepository {
-    constructor(private readonly known: readonly Member[] = []) {}
+    constructor(private known: readonly Member[] = []) {}
+
+    /**
+     * Replaces the whole set mid-test.
+     *
+     * The point is ADR-0004's mandatory test #4: revoking the `admin` tag has to deny the *next* request on a session
+     * that is already open, which cannot be shown without changing the database under a live cookie.
+     */
+    replaceAll(members: readonly Member[]): void {
+        this.known = members;
+    }
 
     findByEmail(email: string): Promise<Member | undefined> {
         return Promise.resolve(this.known.find((member) => member.email === normalizeEmail(email)));
@@ -153,4 +164,53 @@ export async function serveTestApp(overrides: Partial<ServerDependencies> = {}):
 
 export async function closeStartedServers(): Promise<void> {
     await Promise.all(started.splice(0).map((server) => server.close()));
+}
+
+/** The app with the dashboard mounted, plus handles on everything a test may need to move under it. */
+export interface DashboardTestApp {
+    readonly url: string;
+    /** Mutate with `replaceAll` to revoke a tag while a session is open. */
+    readonly members: StubMemberRepository;
+    readonly authenticator: StubOidcAuthenticator;
+    /** Moves the server's clock, which is how expiry and renewal are exercised without waiting. */
+    setNow(now: Date): void;
+}
+
+/**
+ * Serves the real application with `/admin` enabled.
+ *
+ * The identity provider is stubbed and the clock is injectable; everything else — the barrier, the cookies, the CSRF
+ * check, the 404 and error handlers — is the production wiring, because that is what the mandatory tests are about.
+ */
+export async function serveDashboardTestApp(
+    options: {
+        members?: readonly Member[];
+        /** Email the stub provider will authenticate as. */
+        loginAs?: string;
+        now?: Date;
+        rateLimit?: RequestHandler;
+    } = {},
+): Promise<DashboardTestApp> {
+    const members = new StubMemberRepository(options.members ?? []);
+    const authenticator = new StubOidcAuthenticator(options.loginAs ?? "john.doe@example.com");
+    let now = options.now ?? new Date();
+
+    const url = await serveTestApp({
+        memberRepository: members,
+        adminDashboard: {
+            configuration: TEST_DASHBOARD_CONFIGURATION,
+            authenticator,
+            now: () => now,
+            rateLimit: options.rateLimit,
+        },
+    });
+
+    return {
+        url,
+        members,
+        authenticator,
+        setNow: (value: Date) => {
+            now = value;
+        },
+    };
 }

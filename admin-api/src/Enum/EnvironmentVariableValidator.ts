@@ -67,6 +67,53 @@ export const EnvironmentVariables = z.object({
      */
     ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: optionalString(),
 
+    // --- Admin dashboard (ADR-0004) ------------------------------------------------------------------------------
+
+    /**
+     * Public origin the dashboard is served from, e.g. `http://admin-api.workadventure.localhost`.
+     *
+     * The OIDC redirect URI is `${ADMIN_API_PUBLIC_URL}/admin/callback`, so this has to be the URL a **browser** uses,
+     * never the in-network one: the identity provider redirects the person, not us.
+     */
+    ADMIN_API_PUBLIC_URL: optionalString(),
+
+    /**
+     * Signs the dashboard session cookie. Distinct from {@link ADMIN_API_TOKEN} on purpose: that one is shared with
+     * the pusher, and a secret that both serves machines and mints human sessions turns one leak into full
+     * impersonation (ADR-0004, decision #2).
+     *
+     * Optional here so a missing value disables the dashboard instead of stopping the service — refusing to boot
+     * would take `/api/*` down with it and hang `play`. Enforced at 32 characters where it is consumed.
+     */
+    ADMIN_API_SESSION_SECRET: optionalString(),
+
+    /**
+     * Express's `trust proxy` setting, which decides whether `X-Forwarded-For` is believed.
+     *
+     * Defaults to one hop because every documented deployment of this repository sits behind Traefik, and without it
+     * the login rate limiter sees the proxy's address on every request — so one client's attempts would exhaust
+     * everybody's budget. **Set this to `false` if the service is ever exposed directly**, otherwise a caller can
+     * forge the header and rotate through the limit at will.
+     *
+     * Accepts `true`/`false`, a hop count, or the comma-separated address list Express understands.
+     */
+    ADMIN_API_TRUST_PROXY: z
+        .string()
+        .optional()
+        .transform((value) => (value === undefined || value.trim() === "" ? "1" : value.trim())),
+
+    // The OIDC client. Same deprecated-then-current fallback chain the pusher applies, so one `.env` configures both.
+    OPENID_CLIENT_ID: optionalString(),
+    OPID_CLIENT_ID: optionalString(),
+    OPENID_CLIENT_SECRET: optionalString(),
+    OPID_CLIENT_SECRET: optionalString(),
+    OPENID_CLIENT_ISSUER: optionalString(),
+    OPID_CLIENT_ISSUER: optionalString(),
+    OPENID_SCOPE: optionalString(),
+    OPID_SCOPE: optionalString(),
+    OPENID_PROMPT: optionalString(),
+    OPID_PROMPT: optionalString(),
+
     // --- Map routing ---------------------------------------------------------------------------------------------
 
     /** Where a request to `/` is redirected. Same default as the pusher. */

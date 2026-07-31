@@ -66,10 +66,20 @@ The flow:
 Authentication answers *who*; **our database** answers *what they may do* — the same separation the roadmap draws
 between F2 and F3.
 
-`openid-client@5.7.1` is already a dependency of `play`, so there is nothing new to evaluate. In development the mock
-registers `RedirectUris: ["http://*.workadventure.localhost", ...]`, so `http://admin-api.workadventure.localhost/admin/callback`
-is already allowed and **no new client registration is needed**. Azure Entra ID will need that redirect URI added
+`openid-client@5.7.1` is already a dependency of `play`, so there is nothing new to evaluate. Azure Entra ID will need
+`http://admin-api.workadventure.localhost/admin/callback` — or its production equivalent — added as a redirect URI
 when F2 lands.
+
+> **Correction (2026-07-31, during G0).** This ADR originally claimed the development mock's
+> `RedirectUris: ["http://*.workadventure.localhost", ...]` already covered our callback, so that **no new client
+> registration was needed**. That is false, and the reason is worth writing down: the mock's wildcard does not match a
+> **hyphen** in the hostname. `http://adminapi.workadventure.localhost/...` is accepted; `admin-api` and
+> `map-storage` are rejected, whatever the path. The failure surfaces as `invalid_request / Invalid redirect_uri` on
+> the provider's own error page, which reads like our misconfiguration and is not.
+>
+> The callback is therefore registered explicitly in
+> [`contrib/oidc-server-mock/clients-config.json`](../../contrib/oidc-server-mock/clients-config.json). Explicit is
+> what production requires anyway, so the two environments now differ by one hostname rather than by a mechanism.
 
 > **The circularity is deliberate.** The dashboard that manages tags is protected by a tag it manages. That is exactly
 > what ADR-0002's decision #6 — the idempotent bootstrap — exists to break: a fresh environment always has one

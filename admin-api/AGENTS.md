@@ -19,10 +19,33 @@ Two verified traps, both documented in the ADR:
 - `/api/room/access` must resolve `characterTextureIds` into `WokaDetail[]`. Returning an empty array bounces the user
   to the Woka selection page — forever, if our catalogue disagrees with the one `play` serves.
 
+## Two route spaces, two credentials, no overlap
+
+| Space | Consumer | Credential | Guard |
+|---|---|---|---|
+| `/api/*` | the pusher | `ADMIN_API_TOKEN`, raw in `Authorization` | `adminApiTokenAuthentication` |
+| `/admin/*` | the dashboard | signed session cookie | `adminSessionAuthentication` |
+
+Neither credential is accepted in the other's space, and that has a test in both directions (ADR-0004, decision #3).
+Each guard has an explicit allowlist — `/capabilities` on one side, `/login`, `/callback` and `/logout` on the other —
+because everything else must be protected by default.
+
+Three rules the dashboard cannot bend:
+
+- **Authorisation is re-read from the database on every request.** The session cookie says *who*, never *what they may
+  do*. That is what makes a revoked administrator lose access on their next click rather than an hour later.
+- **The dashboard is optional.** Missing configuration disables `/admin/*` with a 503 and leaves `/api/*` alone. It
+  must never stop the process: a dead `admin-api` hangs `play`.
+- **Mutations are POST/PATCH/DELETE and carry `X-CSRF-Token`.** The session cookie is `SameSite=Lax`, not `Strict`,
+  because `Strict` is withheld on the cross-site redirect back from the identity provider.
+
 ## Areas
 
-- `src/Application/`: business logic, kept free of Express so it can be tested as plain functions.
+- `src/Application/`: business logic, kept free of Express so it can be tested as plain functions. `AdminSession.ts`
+  and `AdminLoginTransaction.ts` are pure token handling — the session rules are unit-testable without HTTP.
 - `src/api/`: Express controllers, middlewares and the server factory.
+- `src/Infrastructure/Oidc/`: the `openid-client` adapter behind `Application/Ports/OidcAuthenticator.ts`, so the
+  barrier's tests never need a live identity provider.
 - `src/Enum/`: environment variables, validated with `zod` at startup.
 - `src/data/woka.json`: **a copy of** `play/src/pusher/data/woka.json`. `admin-api` is its own image in production
   and cannot read `play`'s files, so this copy has to be refreshed whenever upstream changes theirs.

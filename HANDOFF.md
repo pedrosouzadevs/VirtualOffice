@@ -10,7 +10,7 @@ nos documentos linkados.
 
 ## Current Status
 
-**P0 e P1 entregues, verificados e commitados. P2 desenhada e aprovada, sem implementação.**
+**P0, P1 e a fatia G0 da P2 entregues e verificados. G0 ainda não commitada — está na árvore de trabalho.**
 
 O `play` já consome o `admin-api` de verdade: tags e `canEdit` vêm do Postgres, e não mais da claim OIDC. O ambiente
 de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versionado).
@@ -19,10 +19,12 @@ de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-com
 |---|---|---|
 | P0 (E1–E6) | 4 endpoints bloqueantes, Postgres, bootstrap idempotente, `play` ligado | ✅ entregue |
 | P1 (F0–F3) | `/api/members*`, `/api/*/tags`, CLI de gestão, docs, e2e | ✅ entregue |
-| P2 (G0–G4) | Dashboard de administração | 📐 ADR aceito, **zero código** |
+| **P2 / G0** | **Espinha de segurança do dashboard: login OIDC, sessão, barreira, CSRF** | ✅ **entregue, não commitado** |
+| P2 (G1–G4) | `/admin/api/*`, UI Svelte, visão de salas, auditoria | 📐 ADR aceito, **zero código** |
 
-**Verificação atual:** 109 testes unitários, 53 de integração (Postgres real), 7 e2e (Playwright, executados contra a
-stack rodando). `typecheck`, `eslint` e `prettier` limpos.
+**Verificação atual:** 188 testes unitários, 53 de integração (Postgres real), 7 e2e (Playwright, executados contra a
+stack rodando). `typecheck`, `eslint` e `prettier` limpos. O fluxo de login foi exercido ponta a ponta no navegador
+contra o mock OIDC real, incluindo revogar a tag pela CLI e ver a sessão aberta ser negada na requisição seguinte.
 
 ### Onde a leitura deve começar
 
@@ -68,6 +70,24 @@ docker compose exec admin-api npm run tag:list
 Efeito visível: o campo "usuário permitido" da área pessoal (modo estático) **passou a funcionar** — era a pendência
 #4 do Spec 0001, e é o que torna a propriedade de área do F4 atribuível por tela.
 
+### G0 — a espinha de segurança do dashboard
+
+`/admin/*` existe, é protegido por padrão, e não tem UI de propósito. Quatro rotas: `GET /admin/login` (com limite de
+taxa), `GET /admin/callback`, `POST /admin/logout` e `GET /admin/me`. As três primeiras são allowlist explícita
+dentro da barreira, do mesmo jeito que o `/api/capabilities`.
+
+O que sustenta a fatia:
+
+- **Sessão em JWT assinado (`jose`)**, cookie `HttpOnly` + `SameSite=Lax` + `Path=/admin`, `Secure` derivado do
+  esquema do `ADMIN_API_PUBLIC_URL`. Uma hora deslizante, renovada quando resta menos da metade, teto absoluto de 12h.
+- **A tag `admin` é relida do Postgres a cada requisição.** O cookie responde *quem*; nunca *o que pode*.
+- **CSRF por token no header `X-CSRF-Token`**, comparado com uma claim dentro do JWT. O cookie `admin_csrf` existe só
+  para o G2 conseguir ler o valor.
+- **O dashboard é opcional.** Configuração faltando desliga `/admin/*` com 503 e não encosta no `/api/*` — porque
+  matar o `admin-api` pendura o `play`.
+
+Dependências novas no `admin-api`: `jose`, `openid-client`, `cookie-parser` — todas já presentes no monorepo.
+
 ### Correções de contrato encontradas lendo o código
 
 Seis afirmações da documentação do WorkAdventure não correspondem ao código. Estão detalhadas no ADR-0002; as duas
@@ -85,13 +105,17 @@ que mais custam:
 
 Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md). Fatias:
 
-| Fatia | Escopo |
-|---|---|
-| **G0** | Espinha de segurança: login OIDC, callback, cookie de sessão assinado, barreira da tag `admin`, `/admin/logout`, `GET /admin/me`. **Sem UI de propósito.** |
-| **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1. |
-| **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui` |
-| **G3** | Visão de salas, lendo o `/maps` do `map-storage` |
-| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play` |
+| Fatia | Escopo | Estado |
+|---|---|---|
+| **G0** | Espinha de segurança: login OIDC, callback, cookie de sessão assinado, barreira da tag `admin`, `/admin/logout`, `GET /admin/me` | ✅ entregue |
+| **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1. **Próximo.** | pendente |
+| **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui` | pendente |
+| **G3** | Visão de salas, lendo o `/maps` do `map-storage` | pendente |
+| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play` | pendente |
+
+Os testes obrigatórios #1 a #5, #8 e #9 do ADR-0004 estão cobertos. Faltam o **#6** (toda mutação escreve auditoria),
+o **#7** (conceder tag muda o `canEdit` ponta a ponta) e o **#10** (um admin promove outro, que consegue entrar) —
+todos dependem do G1/G4, que é onde as mutações passam a existir.
 
 ### Fora da P2, em aberto no roadmap
 
@@ -132,6 +156,23 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
    cd tests && node ../node_modules/@playwright/test/cli.js test tests/admin_api.spec.ts --project=chromium --reporter=list
    ```
 
+5. **O `npm install` do host não funciona no `admin-api`.** O mount 9p do Windows força `uid=0`, e a `node_modules` da
+   raiz é root. Instalar dependência exige `-u root` e cache fora do bind mount; depois é preciso devolver a
+   permissão, ou o Vitest morre com `EACCES` ao escrever `.vite-temp`:
+   ```bash
+   docker compose exec -T -u root admin-api sh -c 'cd /usr/src/app/admin-api && npm install --cache /tmp/npm-cache'
+   docker compose exec -T -u root admin-api chmod -R a+rwX /usr/src/app/admin-api/node_modules
+   ```
+
+### O wildcard do mock OIDC não casa com hífen
+
+Custou tempo e o ADR-0004 afirmava o contrário. O `RedirectUris: ["http://*.workadventure.localhost"]` do mock **não
+casa hostname com hífen** — `adminapi` passa, `admin-api` e `map-storage` não, qualquer que seja o caminho. Aparece
+como `invalid_request / Invalid redirect_uri` na página de erro do próprio provedor, o que parece erro nosso.
+
+O callback do dashboard está registrado explicitamente em `contrib/oidc-server-mock/clients-config.json`. **Mudou o
+`ADMIN_API_PUBLIC_URL`? Registre o novo callback lá e recrie o mock.** A correção está anotada no ADR-0004.
+
 ### Pré-requisitos que não são óbvios
 
 - **Entrada no hosts** (já adicionada nesta máquina): `127.0.0.1 admin-api.workadventure.localhost`. Navegadores e
@@ -154,23 +195,21 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
 
 ## Next Step
 
-**G0 — a espinha de segurança do dashboard.** Primeiro e sem UI de propósito: a fronteira deve existir e estar
-testada antes de haver qualquer coisa atrás dela.
+**Commitar o G0**, que está inteiro na árvore de trabalho e verde. Lembrando das armadilhas: `--no-verify`, e conferir
+`git diff --stat` antes (o `contrib/oidc-server-mock/clients-config.json` já foi reescrito uma vez por CRLF nesta
+fatia). **Não incluir** `messages/package-lock.json` nem `maps/assets/*` — já estavam sujos antes e não são desta
+feature.
 
-Entregar:
+**Depois, G1 — `/admin/api/*`.** Handlers finos sobre os repositórios que o P1 já construiu, atrás da barreira que
+agora existe. Listar e buscar membros, detalhe, conceder e revogar tag, definir nome, listar tags.
 
-1. Rotas `/admin/login`, `/admin/callback`, `/admin/logout` — não autenticadas, por allowlist explícita, do mesmo
-   jeito que o `/api/capabilities` já é tratado em
-   [`adminApiTokenAuthentication.ts`](admin-api/src/api/middlewares/adminApiTokenAuthentication.ts)
-2. Cliente OIDC com `openid-client@5.7.1` (já é dependência do `play`; ver
-   [`OpenIDClient.ts`](play/src/pusher/services/OpenIDClient.ts)). Em dev **não precisa registrar client novo** — o
-   mock tem `RedirectUris: ["http://*.workadventure.localhost"]`
-3. Sessão em JWT assinado, cookie `HttpOnly` + `SameSite` + `Secure` em produção. **1 hora deslizante, teto absoluto
-   de 12 horas**
-4. Barreira que **reverifica a tag `admin` a cada requisição**, sem confiar na cópia dentro do token
-5. `GET /admin/me`
-6. Testes obrigatórios #1 a #5 e #8 a #9 do ADR-0004 — em especial: **o `ADMIN_API_TOKEN` não abre `/admin/*` e o
-   cookie de sessão não abre `/api/*`**, nos dois sentidos
+Três coisas já estão prontas para o G1 e vale não reconstruir:
+
+1. **A barreira já anexa o ator.** `req.adminMember` traz o `Member` do banco, lido nesta requisição — é o que o log
+   de auditoria do G4 vai nomear, e evita uma segunda consulta por handler.
+2. **Toda mutação já está coberta por CSRF e pela recusa a GET.** Basta registrar as rotas como POST/PATCH/DELETE sob
+   `/admin/api/` e a barreira faz o resto.
+3. **`/admin/api/*` já responde 401 em JSON quando anônimo**, nunca redirect — é o que faz o `fetch` do G2 funcionar.
 
 ---
 
@@ -208,6 +247,23 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
 
 10. **Os schemas `zod` são importados de `@workadventure/messages`, nunca redigitados.** O do `/api/room/access` foi
     movido para lá justamente para isso, e é re-exportado do `AdminApi.ts` — **nenhum import do `play` mudou**.
+
+11. **O `ADMIN_API_TOKEN` não abre `/admin/*`, e o cookie de sessão não abre `/api/*`.** Nos dois sentidos, cada um
+    com teste. A barreira do `/admin` **nunca** lê o header `Authorization`; é isso que garante o primeiro sentido.
+
+12. **A tag `admin` é relida do banco a cada requisição, nunca do token.** É o que faz um administrador revogado
+    perder acesso no clique seguinte em vez de uma hora depois — e é o que torna a sessão deslizante segura.
+
+13. **O `ADMIN_API_SESSION_SECRET` não é o `ADMIN_API_TOKEN`.** Reaproveitar o segredo do pusher para assinar sessão
+    faz um vazamento virar personificação de qualquer administrador.
+
+14. **O cookie de sessão é `SameSite=Lax`, não `Strict`.** Parece o contrário do certo, e não é: navegadores retêm
+    cookies `Strict` em requisições que chegam por cadeia de redirect cross-site, que é exatamente a volta do
+    provedor de identidade. `Strict` produz um login que parece funcionar e volta ao provedor em laço. A defesa CSRF
+    é o token no header, não o atributo do cookie.
+
+15. **`/admin/*` sem configuração responde 503 e o processo sobe assim mesmo.** Fazer o `admin-api` morrer por causa
+    do dashboard pendura o `play` — é o item 1 desta lista por outro caminho.
 
 ### Também não mexer sem conversar
 

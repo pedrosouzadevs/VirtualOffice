@@ -154,6 +154,71 @@ O que o provedor de identidade coloca no token — é o que o pusher nos envia. 
 O `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL` tem `john.doe@example.com` como padrão exatamente por isso: um clone novo já vem
 com administrador funcionando, sem ninguém editar arquivo.
 
+## Dashboard de administração (ADR-0004, G0)
+
+Só a espinha de segurança. **Ainda não há interface** — isso é o G2, e a fronteira é construída e testada antes de
+propósito.
+
+| Rota | Método | Quem |
+|---|---|---|
+| `/admin/login` | GET | qualquer um (com limite de taxa) |
+| `/admin/callback` | GET | o provedor de identidade |
+| `/admin/logout` | POST | qualquer um; exige o token CSRF quando há sessão |
+| `/admin/me` | GET | um administrador |
+| todo o resto sob `/admin` | — | um administrador |
+
+### Configuração
+
+Quatro variáveis, todas com padrão funcional de desenvolvimento no `docker-compose.yaml`:
+
+| Variável | Padrão | Observação |
+|---|---|---|
+| `ADMIN_API_PUBLIC_URL` | `http://admin-api.workadventure.localhost` | O endereço que o **navegador** usa. Vazio desliga o dashboard. |
+| `ADMIN_API_SESSION_SECRET` | um valor só de desenvolvimento | No mínimo 32 caracteres. **Troque fora do ambiente local.** |
+| `ADMIN_API_TRUST_PROXY` | `1` | Use `false` se o `admin-api` for exposto sem proxy na frente. |
+| `OPENID_CLIENT_ID` / `_SECRET` / `_ISSUER` | o client do mock | O mesmo provedor que o `play` usa. |
+
+O segredo de sessão deliberadamente **não** é o `ADMIN_API_TOKEN`. Aquele é compartilhado com o pusher, e um segredo
+que ao mesmo tempo serve máquinas e emite sessões de gente transforma um único vazamento em personificação completa.
+
+Faltando qualquer parte, o `/admin/*` responde `503 ADMIN_DASHBOARD_DISABLED` e o log de inicialização diz o que
+está ausente. O serviço sobe do mesmo jeito e o `/api/*` fica intacto — configuração errada do dashboard nunca pode
+virar indisponibilidade do `play`.
+
+### Verificação
+
+```bash
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.workadventure.localhost/admin/me
+```
+
+Espere `302` para `/admin/login?returnTo=%2Fadmin%2Fme`. Depois abra
+`http://admin-api.workadventure.localhost/admin/login` no navegador, entre como `User1` / `pwd`, e você cai em
+`/admin/` — que responde um `404` em JSON, porque o G2 ainda não construiu a tela. O `/admin/me` então devolve seu
+e-mail, nome e tags.
+
+Duas propriedades que valem conferir na mão, porque são o objetivo desta fatia:
+
+```bash
+# O token do pusher não abre o dashboard: continua redirecionando para o login.
+curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: $ADMIN_API_TOKEN" \
+  http://admin-api.workadventure.localhost/admin/me
+
+# Um administrador revogado é recusado na requisição seguinte, com o mesmo cookie.
+docker compose exec admin-api npm run member:revoke -- john.doe@example.com admin
+# recarregue /admin/me no navegador -> 403 ADMIN_FORBIDDEN
+docker compose exec admin-api npm run member:grant  -- john.doe@example.com admin
+# recarregue de novo -> 200
+```
+
+### Ficou trancado do lado de fora?
+
+Remover a própria tag `admin` é permitido, inclusive sendo o último administrador. O bootstrap roda em **toda**
+inicialização, então reiniciar restaura o `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL`:
+
+```bash
+docker compose restart admin-api
+```
+
 ## Voltando atrás
 
 Esvazie o `ADMIN_API_URL` no seu `.env` e recrie o `play`. O pusher volta ao `LocalAdmin` na hora:
@@ -178,6 +243,24 @@ Esta é a parte que costuma surpreender.
   `.env` da raiz para que não divirjam.
 
 ## Solução de problemas
+
+**`invalid_request / Invalid redirect_uri` na página de erro do provedor ao entrar no dashboard.** Parece configuração
+errada nossa e não é. O wildcard do mock de desenvolvimento, `http://*.workadventure.localhost`, **não casa com hífen
+no hostname** — `adminapi` é aceito, `admin-api` e `map-storage` não, qualquer que seja o caminho. É por isso que
+`http://admin-api.workadventure.localhost/admin/callback` está registrado explicitamente em
+[`contrib/oidc-server-mock/clients-config.json`](../contrib/oidc-server-mock/clients-config.json). Se você mudar o
+`ADMIN_API_PUBLIC_URL`, acrescente o novo callback lá e recrie o mock:
+
+```bash
+docker compose up -d --force-recreate oidc-server-mock
+```
+
+**`503 ADMIN_DASHBOARD_DISABLED` em toda rota `/admin`.** Falta configuração, ou ela está incompleta. O log de
+inicialização diz qual:
+
+```bash
+docker compose logs admin-api | grep "dashboard is disabled"
+```
 
 **502 Bad Gateway logo após subir.** Quase sempre ainda é boot: o `play` leva minutos (só o Vite pode gastar 150 s) e
 o Traefik fica sem upstream até o pusher escutar. Acompanhe `docker compose logs -f play` esperando por

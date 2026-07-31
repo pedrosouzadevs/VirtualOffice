@@ -2,8 +2,16 @@ import {
     ADMIN_API_BOOTSTRAP_ADMIN_EMAIL,
     ADMIN_API_DATABASE_URL,
     ADMIN_API_PORT,
+    ADMIN_API_PUBLIC_URL,
+    ADMIN_API_SESSION_SECRET,
     ADMIN_API_TOKEN,
+    ADMIN_API_TRUST_PROXY,
     ADMIN_API_WORLD_NAME,
+    OPID_CLIENT_ID,
+    OPID_CLIENT_ISSUER,
+    OPID_CLIENT_SECRET,
+    OPID_PROMPT,
+    OPID_SCOPE,
     BYPASS_PWA,
     CARDS_ENABLED,
     ENABLE_MAP_EDITOR,
@@ -43,9 +51,11 @@ import {
     SKIP_CAMERA_PAGE,
     START_ROOM_URL,
 } from "./Enum/EnvironmentVariable";
+import { resolveAdminDashboardConfiguration } from "./Application/AdminDashboardConfiguration";
 import { buildApplications } from "./Application/ApplicationsCatalogue";
 import { bootstrapAdmin } from "./Application/BootstrapAdminService";
 import type { MapDetailsConfiguration } from "./Application/MapDetailsService";
+import { OpenIdConnectAuthenticator } from "./Infrastructure/Oidc/OpenIdConnectAuthenticator";
 import { createDatabaseConnection } from "./Infrastructure/Database/connection";
 import { runMigrations } from "./Infrastructure/Database/migrate";
 import { PostgresReadinessCheck } from "./Infrastructure/Database/PostgresReadinessCheck";
@@ -90,6 +100,29 @@ const mapDetailsConfiguration: MapDetailsConfiguration = {
 };
 
 /**
+ * The dashboard is a separate concern from the pusher-facing API, and stays that way when it is misconfigured.
+ *
+ * A missing or half-filled configuration disables `/admin/*` and is reported loudly here; it never stops the process.
+ * Exiting would take `/api/*` down with it, and the pusher's uncapped retry loop turns that into a `play` that never
+ * opens its port (ADR-0002, Trap #2).
+ */
+const dashboard = resolveAdminDashboardConfiguration({
+    publicUrl: ADMIN_API_PUBLIC_URL,
+    sessionSecret: ADMIN_API_SESSION_SECRET,
+    issuer: OPID_CLIENT_ISSUER,
+    clientId: OPID_CLIENT_ID,
+    clientSecret: OPID_CLIENT_SECRET,
+    scope: OPID_SCOPE,
+    prompt: OPID_PROMPT,
+});
+
+if (!dashboard.enabled) {
+    console.warn(
+        `The administration dashboard is disabled: /admin/* will answer 503. Missing configuration: ${dashboard.missing.join(", ")}.`,
+    );
+}
+
+/**
  * Migrate, bootstrap, then serve — in that order and before binding the port.
  *
  * Answering requests against a schema that has not been migrated would mean serving errors to the pusher, and the
@@ -127,6 +160,13 @@ async function start(): Promise<void> {
         memberRepository,
         tagRepository,
         readinessChecks: [new PostgresReadinessCheck(connection.sql)],
+        trustProxy: ADMIN_API_TRUST_PROXY,
+        adminDashboard: dashboard.enabled
+            ? {
+                  configuration: dashboard.configuration,
+                  authenticator: new OpenIdConnectAuthenticator(dashboard.configuration),
+              }
+            : undefined,
     });
 
     app.listen(ADMIN_API_PORT, () => {

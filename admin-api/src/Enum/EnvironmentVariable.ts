@@ -32,6 +32,38 @@ export const ADMIN_API_TOKEN = env.ADMIN_API_TOKEN;
 export const ADMIN_API_DATABASE_URL = env.ADMIN_API_DATABASE_URL;
 export const ADMIN_API_BOOTSTRAP_ADMIN_EMAIL = env.ADMIN_API_BOOTSTRAP_ADMIN_EMAIL;
 
+// --- Admin dashboard (ADR-0004) ------------------------------------------------------------------------------------
+
+export const ADMIN_API_PUBLIC_URL = env.ADMIN_API_PUBLIC_URL;
+export const ADMIN_API_SESSION_SECRET = env.ADMIN_API_SESSION_SECRET;
+
+/**
+ * Normalised for `app.set("trust proxy", …)`, which treats a boolean, a hop count and an address list differently.
+ * Passing the raw string through would make `"false"` a truthy address list rather than a way to switch it off.
+ */
+export const ADMIN_API_TRUST_PROXY: boolean | number | string = (() => {
+    const raw = env.ADMIN_API_TRUST_PROXY;
+
+    if (raw.toLowerCase() === "true") {
+        return true;
+    }
+
+    if (raw.toLowerCase() === "false") {
+        return false;
+    }
+
+    return /^\d+$/.test(raw) ? Number(raw) : raw;
+})();
+
+// Same order the pusher resolves these in, so a single `.env` configures both sides identically.
+export const OPID_CLIENT_ID = env.OPENID_CLIENT_ID ?? env.OPID_CLIENT_ID;
+export const OPID_CLIENT_SECRET = env.OPENID_CLIENT_SECRET ?? env.OPID_CLIENT_SECRET;
+export const OPID_CLIENT_ISSUER = env.OPENID_CLIENT_ISSUER ?? env.OPID_CLIENT_ISSUER;
+
+/** `openid` and `email` are what the dashboard actually needs: the email is the key our members are stored under. */
+export const OPID_SCOPE = env.OPENID_SCOPE ?? env.OPID_SCOPE ?? "openid email profile";
+export const OPID_PROMPT = env.OPENID_PROMPT ?? env.OPID_PROMPT;
+
 export const START_ROOM_URL = env.START_ROOM_URL;
 export const PUBLIC_MAP_STORAGE_URL = env.PUBLIC_MAP_STORAGE_URL;
 

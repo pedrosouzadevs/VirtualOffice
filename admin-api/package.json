@@ -34,12 +34,16 @@
     },
     "dependencies": {
         "@workadventure/messages": "1.0.0",
+        "cookie-parser": "^1.4.7",
         "drizzle-orm": "^0.45.2",
         "express": "^5.2.1",
+        "jose": "^6.2.3",
+        "openid-client": "^5.7.1",
         "postgres": "^3.4.9",
         "zod": "^3.23.8"
     },
     "devDependencies": {
+        "@types/cookie-parser": "^1.4.10",
         "@types/express": "^5.0.6",
         "drizzle-kit": "^0.31.10",
         "@types/node": "^25.9.1",

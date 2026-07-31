@@ -1,5 +1,8 @@
 import type { Capabilities } from "@workadventure/messages";
-import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import cookieParser from "cookie-parser";
+import express, { type Express, type NextFunction, type Request, type RequestHandler, type Response } from "express";
+import type { AdminDashboardConfiguration } from "../Application/AdminDashboardConfiguration";
+import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
 import { CompanionCatalogue } from "../Application/CompanionCatalogue";
 import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
@@ -15,7 +18,10 @@ import { MembersController } from "./controllers/MembersController";
 import { RoomAccessController } from "./controllers/RoomAccessController";
 import { TagsController } from "./controllers/TagsController";
 import { WokaListController } from "./controllers/WokaListController";
+import { AdminAuthController } from "./controllers/AdminAuthController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
+import { adminSessionAuthentication } from "./middlewares/adminSessionAuthentication";
+import { loginRateLimit } from "./middlewares/loginRateLimit";
 
 export interface ServerDependencies {
     /**
@@ -47,6 +53,86 @@ export interface ServerDependencies {
 
     /** Overridable so tests can point at a fixture catalogue. */
     companionCatalogue?: CompanionCatalogue;
+
+    /**
+     * The administration dashboard (ADR-0004).
+     *
+     * Absent means it is not configured: `/admin/*` answers a uniform 503 and **nothing about `/api/*` changes**.
+     * Optional rather than required precisely so a dashboard misconfiguration can never stop the pusher-facing API,
+     * whose failure hangs `play` (ADR-0002, Trap #2).
+     */
+    adminDashboard?: AdminDashboardDependencies;
+
+    /**
+     * Express's `trust proxy`. Only the login rate limiter reads it today, through `req.ip`.
+     */
+    trustProxy?: boolean | number | string;
+}
+
+export interface AdminDashboardDependencies {
+    readonly configuration: AdminDashboardConfiguration;
+
+    /** Injected rather than constructed here so the barrier's tests never need a live identity provider. */
+    readonly authenticator: OidcAuthenticator;
+
+    /** Overridable so the sliding-window and absolute-cap tests can drive the clock. */
+    readonly now?: () => Date;
+
+    /** Overridable so a test can assert the limit without issuing the production number of requests. */
+    readonly rateLimit?: RequestHandler;
+}
+
+/**
+ * Mounts `/admin`, or a uniform 503 in its place.
+ *
+ * Registered as one step so there is exactly one answer to "is the dashboard on?", and so the guard is mounted
+ * before any route that sits behind it — Express matches in registration order, and a barrier registered after the
+ * route it protects protects nothing.
+ */
+function mountAdminDashboard(app: Express, dependencies: ServerDependencies): void {
+    const dashboard = dependencies.adminDashboard;
+
+    if (dashboard === undefined) {
+        app.use("/admin", (req: Request, res: Response) => {
+            // Deliberately vague. Which variable is missing is in the startup log, where an operator can see it;
+            // repeating it to an anonymous caller on a publicly reachable host would not be.
+            res.status(503).json({
+                status: "error",
+                type: "error",
+                code: "ADMIN_DASHBOARD_DISABLED",
+                title: "Dashboard unavailable",
+                subtitle: "",
+                details: "The administration dashboard is not configured on this deployment.",
+            });
+        });
+        return;
+    }
+
+    const cookieOptions = { secure: dashboard.configuration.publicUrl.startsWith("https://") };
+
+    // Scoped to /admin: /api/* has no cookies to read, and keeping the parser off that path is one less thing
+    // running in front of the endpoints the pusher depends on.
+    app.use("/admin", cookieParser());
+
+    app.use(
+        "/admin",
+        adminSessionAuthentication({
+            sessionSecret: dashboard.configuration.sessionSecret,
+            members: dependencies.memberRepository,
+            cookieOptions,
+            now: dashboard.now,
+        }),
+    );
+
+    new AdminAuthController(app, {
+        authenticator: dashboard.authenticator,
+        members: dependencies.memberRepository,
+        sessionSecret: dashboard.configuration.sessionSecret,
+        cookieOptions,
+        publicUrl: dashboard.configuration.publicUrl,
+        rateLimit: dashboard.rateLimit ?? loginRateLimit(),
+        now: dashboard.now,
+    });
 }
 
 /**
@@ -63,6 +149,9 @@ export function createServer(dependencies: ServerDependencies): Express {
     // silently arrive as undefined and every user would render with a blank avatar. "extended" (qs) folds the
     // bracketed form back into a real array.
     app.set("query parser", "extended");
+
+    // Decides whether `X-Forwarded-For` is believed, and so which address the login rate limiter counts against.
+    app.set("trust proxy", dependencies.trustProxy ?? 1);
 
     // The pusher only ever issues GETs and small JSON POSTs against this API; there is no reason to accept a large body.
     app.use(express.json({ limit: "100kb" }));
@@ -87,6 +176,8 @@ export function createServer(dependencies: ServerDependencies): Express {
         companionCatalogue,
         dependencies.roomAccessConfiguration,
     );
+
+    mountAdminDashboard(app, dependencies);
 
     // Express's default 404 answers HTML. Every caller of this API parses responses as JSON with zod, so an
     // unimplemented path would surface as a confusing parse error instead of a plain "not found".

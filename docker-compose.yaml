@@ -26,6 +26,7 @@ services:
           - "room-api.workadventure.localhost"
           - "maps.workadventure.localhost"
           - "oidc.workadventure.localhost"
+          - "admin-api.workadventure.localhost"
           - "map-storage.workadventure.localhost"
           - "xmpp.workadventure.localhost"
           - "matrix.workadventure.localhost"
@@ -365,6 +366,19 @@ services:
       # identity so a fresh clone has a working administrator, and so the e2e suite can rely on it. Override in .env
       # for anything but local development.
       ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL:-john.doe@example.com}"
+      # Administration dashboard (ADR-0004). Empty ADMIN_API_PUBLIC_URL in .env to switch /admin off; the dashboard
+      # then answers 503 and /api — the surface "play" depends on — is untouched.
+      ADMIN_API_PUBLIC_URL: "${ADMIN_API_PUBLIC_URL:-http://admin-api.workadventure.localhost}"
+      # Development-only default so a fresh clone has a working dashboard. Override it in .env for anything else.
+      ADMIN_API_SESSION_SECRET: "${ADMIN_API_SESSION_SECRET:-dev-only-admin-dashboard-session-secret-change-me}"
+      ADMIN_API_TRUST_PROXY: "${ADMIN_API_TRUST_PROXY:-1}"
+      # The same OIDC client the pusher uses. No new registration is needed in development: the mock allows
+      # http://*.workadventure.localhost as a redirect URI, which already covers /admin/callback.
+      # "tags-scope" is deliberately absent — authorisation comes from our database, never from an OIDC claim.
+      OPENID_CLIENT_ID: authorization-code-client-id
+      OPENID_CLIENT_SECRET: authorization-code-client-secret
+      OPENID_CLIENT_ISSUER: http://oidc.workadventure.localhost
+      OPENID_SCOPE: openid email profile
       # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
       # copies stop applying to those fields, so both services must read the same .env (ADR-0002).
       START_ROOM_URL: "$START_ROOM_URL"
