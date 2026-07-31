@@ -76,30 +76,61 @@ menu do mapa.
 
 ## Gerenciando permissões
 
-Enquanto o dashboard não chega (ADR-0002, P2), as tags são gerenciadas por SQL. Existem duas: `admin` e `editor`;
-qualquer uma libera o editor de mapa, e só em salas `/~/` — mapas externos `/_/` nunca são editáveis.
+Enquanto o dashboard não chega (ADR-0002, P2), as permissões são geridas por uma CLI que roda dentro do container.
+Ela usa as credenciais de banco do próprio serviço e não acrescenta superfície de rede — é justamente por isso que é
+CLI e não endpoint HTTP (ADR-0003, decisão #3).
+
+Duas tags já vêm prontas: `admin` e `editor`. Qualquer uma libera o editor de mapa, e só em salas `/~/` — mapas
+externos `/_/` nunca são editáveis.
 
 Ver quem tem o quê:
 
 ```bash
-docker compose exec admin-api-db psql -U admin_api -d admin_api -c "SELECT m.email, coalesce(string_agg(t.name,','),'(sem tags)') AS tags FROM member m LEFT JOIN member_tag mt ON mt.member_id=m.id LEFT JOIN tag t ON t.id=mt.tag_id GROUP BY m.email ORDER BY m.email;"
+docker compose exec admin-api npm run member:list
 ```
 
 Conceder uma tag. Idempotente — rodar duas vezes não é erro:
 
 ```bash
-docker compose exec -T admin-api-db psql -U admin_api -d admin_api -c "INSERT INTO member (email) VALUES (lower('alguem@exemplo.com')) ON CONFLICT (email) DO NOTHING; INSERT INTO member_tag (member_id, tag_id) SELECT m.id, t.id FROM member m, tag t WHERE m.email=lower('alguem@exemplo.com') AND t.name='editor' ON CONFLICT DO NOTHING;"
+docker compose exec admin-api npm run member:grant -- alguem@exemplo.com editor
 ```
 
 Revogar:
 
 ```bash
-docker compose exec -T admin-api-db psql -U admin_api -d admin_api -c "DELETE FROM member_tag mt USING member m, tag t WHERE mt.member_id=m.id AND mt.tag_id=t.id AND m.email=lower('alguem@exemplo.com') AND t.name='editor';"
+docker compose exec admin-api npm run member:revoke -- alguem@exemplo.com editor
+```
+
+Definir o nome que o seletor de membros do editor mostra no lugar do e-mail cru:
+
+```bash
+docker compose exec admin-api npm run member:set-name -- alguem@exemplo.com "Fulano de Tal"
+```
+
+Listar o catálogo de tags:
+
+```bash
+docker compose exec admin-api npm run tag:list
 ```
 
 A mudança vale no **próximo login** da pessoa: o `canEdit` é resolvido quando ela entra na sala, não continuamente.
 
-E-mails são gravados e comparados em minúsculo, então `Alguem@Exemplo.com` e `alguem@exemplo.com` são a mesma pessoa.
+Três comportamentos que vale conhecer:
+
+- **E-mails são gravados e comparados em minúsculo**, então `Alguem@Exemplo.com` e `alguem@exemplo.com` são a mesma
+  pessoa.
+- **O `member:grant` cria a tag se ela não existir**, porque os seletores do editor de mapa aceitam texto livre e uma
+  tag arbitrária é coisa legítima para restringir uma área. Ele imprime um aviso listando as tags que já existiam,
+  então um typo como `editr` é pego no prompt e não no login de alguém dias depois.
+- **O `member:set-name` recusa membro inexistente** em vez de criar um — um typo ali produziria uma conta em que
+  ninguém nunca loga. Conceda uma tag antes, ou deixe a pessoa logar uma vez.
+
+Não existe `member:delete`. Remover membro é destrutivo e raro o bastante para merecer ser feito deliberadamente em
+SQL:
+
+```bash
+docker compose exec -T admin-api-db psql -U admin_api -d admin_api -c "DELETE FROM member WHERE email=lower('alguem@exemplo.com');"
+```
 
 ### Qual e-mail?
 

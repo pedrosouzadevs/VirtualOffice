@@ -53,4 +53,24 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
 
         await expect(page.getByText("Map editor")).toBeHidden();
     });
+
+    test("member search answers with the bootstrapped administrator @oidc", async ({ request }) => {
+        // Backs the picker exercised in map_editor/personal_area_owner_picker.spec.ts, at the HTTP boundary.
+        const response = await request.get("http://admin-api.workadventure.localhost/api/members", {
+            params: { searchText: "john.doe" },
+            headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
+        });
+
+        expect(response.status()).toBe(200);
+        expect(await response.json()).toContainEqual(expect.objectContaining({ id: "john.doe@example.com" }));
+    });
+
+    test("tag search answers with the tags the bootstrap creates @oidc", async ({ request }) => {
+        const response = await request.get("http://admin-api.workadventure.localhost/api/world/tags", {
+            headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
+        });
+
+        expect(response.status()).toBe(200);
+        expect(await response.json()).toEqual(expect.arrayContaining(["admin", "editor"]));
+    });
 });
