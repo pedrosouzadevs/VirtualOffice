@@ -1,0 +1,215 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { grantTag, listMembers, listTags, revokeTag, setMemberName, type CommandContext } from "../../src/Cli/commands";
+import type { DatabaseConnection } from "../../src/Infrastructure/Database/connection";
+import { DrizzleMemberRepository } from "../../src/Infrastructure/Repositories/DrizzleMemberRepository";
+import { DrizzleTagRepository } from "../../src/Infrastructure/Repositories/DrizzleTagRepository";
+import { setupTestDatabase, truncateAll } from "./helpers/testDatabase";
+
+let connection: DatabaseConnection;
+let context: CommandContext;
+let output: string[];
+
+beforeAll(async () => {
+    connection = await setupTestDatabase();
+});
+
+afterAll(async () => {
+    await connection.close();
+});
+
+beforeEach(async () => {
+    await truncateAll(connection);
+    output = [];
+    context = {
+        members: new DrizzleMemberRepository(connection.db),
+        tags: new DrizzleTagRepository(connection.db),
+        out: (line) => output.push(line),
+    };
+});
+
+const printed = () => output.join("\n");
+
+/**
+ * The CLI is exercised against a real Postgres rather than stubs: what these commands promise is idempotence, and
+ * that promise lives in ON CONFLICT DO NOTHING and in a DELETE that matches nothing — neither of which a fake proves.
+ */
+describe("member:grant", () => {
+    it("creates the member and the tag when both are new", async () => {
+        const result = await grantTag(context, "alice@example.com", "editor");
+
+        expect(result.exitCode).toBe(0);
+        expect(await context.members.findByEmail("alice@example.com")).toMatchObject({ tags: ["editor"] });
+    });
+
+    it("is idempotent: granting twice leaves one grant and succeeds both times", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        const second = await grantTag(context, "alice@example.com", "editor");
+
+        expect(second.exitCode).toBe(0);
+        const rows = await connection.sql`select count(*)::int as count from "member_tag"`;
+        expect(rows[0]?.count).toBe(1);
+    });
+
+    it("warns when it invents a tag, so a typo is visible immediately", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        output = [];
+
+        await grantTag(context, "alice@example.com", "editr");
+
+        expect(printed()).toContain('the tag "editr" did not exist and was created');
+        expect(printed()).toContain("Existing tags: editor");
+    });
+
+    it("says nothing about creation when the tag already exists", async () => {
+        await context.members.ensureTag("editor");
+        output = [];
+
+        await grantTag(context, "alice@example.com", "editor");
+
+        expect(printed()).not.toContain("did not exist");
+    });
+
+    it("normalises the email, so casing cannot create a second member", async () => {
+        await grantTag(context, "Alice@Example.com", "editor");
+        await grantTag(context, "alice@example.com", "admin");
+
+        const rows = await connection.sql`select count(*)::int as count from "member"`;
+        expect(rows[0]?.count).toBe(1);
+    });
+
+    it("rejects a missing argument rather than acting on an empty value", async () => {
+        expect((await grantTag(context, "", "editor")).exitCode).toBe(1);
+        expect((await grantTag(context, "alice@example.com", "")).exitCode).toBe(1);
+    });
+});
+
+describe("member:revoke", () => {
+    it("removes the grant", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        output = [];
+
+        const result = await revokeTag(context, "alice@example.com", "editor");
+
+        expect(result.exitCode).toBe(0);
+        expect(await context.members.findByEmail("alice@example.com")).toMatchObject({ tags: [] });
+    });
+
+    it("is idempotent: revoking twice succeeds and says so the second time", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        await revokeTag(context, "alice@example.com", "editor");
+        output = [];
+
+        const second = await revokeTag(context, "alice@example.com", "editor");
+
+        expect(second.exitCode).toBe(0);
+        expect(printed()).toContain('did not hold "editor"');
+    });
+
+    it("does not delete the tag itself, only the grant", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        await revokeTag(context, "alice@example.com", "editor");
+
+        expect(await context.tags.listAll()).toContain("editor");
+    });
+
+    it("fails on an unknown member", async () => {
+        await context.members.ensureTag("editor");
+
+        const result = await revokeTag(context, "nobody@example.com", "editor");
+
+        expect(result.exitCode).toBe(1);
+        expect(printed()).toContain("No member with email");
+    });
+
+    it("fails on an unknown tag instead of creating it", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        output = [];
+
+        const result = await revokeTag(context, "alice@example.com", "nonexistent");
+
+        expect(result.exitCode).toBe(1);
+        expect(await context.tags.listAll()).not.toContain("nonexistent");
+    });
+});
+
+describe("member:set-name", () => {
+    it("sets the name shown by the member picker", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        output = [];
+
+        const result = await setMemberName(context, "alice@example.com", "Alice Smith");
+
+        expect(result.exitCode).toBe(0);
+        expect(await context.members.findByEmail("alice@example.com")).toMatchObject({ username: "Alice Smith" });
+    });
+
+    it("clears the name when given an empty one", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        await setMemberName(context, "alice@example.com", "Alice");
+
+        await setMemberName(context, "alice@example.com", "");
+
+        expect(await context.members.findByEmail("alice@example.com")).toMatchObject({ username: null });
+    });
+
+    it("refuses an unknown member rather than creating a ghost account from a typo", async () => {
+        const result = await setMemberName(context, "nobody@example.com", "Nobody");
+
+        expect(result.exitCode).toBe(1);
+        const rows = await connection.sql`select count(*)::int as count from "member"`;
+        expect(rows[0]?.count).toBe(0);
+    });
+
+    it("is idempotent: setting the same name twice succeeds", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        await setMemberName(context, "alice@example.com", "Alice");
+
+        expect((await setMemberName(context, "alice@example.com", "Alice")).exitCode).toBe(0);
+    });
+});
+
+describe("member:list and tag:list", () => {
+    it("say so plainly when there is nothing to show", async () => {
+        expect((await listMembers(context)).exitCode).toBe(0);
+        expect(printed()).toContain("No members yet.");
+
+        output = [];
+        expect((await listTags(context)).exitCode).toBe(0);
+        expect(printed()).toContain("No tags yet.");
+    });
+
+    it("lists members with their tags, and a member with none", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        await grantTag(context, "alice@example.com", "admin");
+        await context.members.ensureMember("bob@example.com");
+        output = [];
+
+        await listMembers(context);
+
+        expect(printed()).toContain("alice@example.com");
+        expect(printed()).toContain("admin, editor");
+        expect(printed()).toContain("bob@example.com");
+        expect(printed()).toContain("2 member(s).");
+    });
+
+    it("keeps a member's tags together instead of truncating them under the limit", async () => {
+        // The limit applies to members, not to joined rows: applying it to the join would cut a member's tag list.
+        await grantTag(context, "alice@example.com", "editor");
+        await grantTag(context, "alice@example.com", "admin");
+
+        const listed = await context.members.listAll(1);
+
+        expect(listed).toHaveLength(1);
+        expect(listed[0]?.tags.slice().sort()).toEqual(["admin", "editor"]);
+    });
+
+    it("lists the tag catalogue", async () => {
+        await grantTag(context, "alice@example.com", "editor");
+        await grantTag(context, "alice@example.com", "admin");
+        output = [];
+
+        await listTags(context);
+
+        expect(printed()).toBe("admin\neditor");
+    });
+});

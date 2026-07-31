@@ -1,4 +1,4 @@
-import { asc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, eq, ilike, or } from "drizzle-orm";
 import type { MemberRepository } from "../../Application/Ports/MemberRepository";
 import { normalizeEmail, type Member, type MemberSummary } from "../../Domain/Member";
 import type { Database } from "../Database/connection";
@@ -84,5 +84,63 @@ export class DrizzleMemberRepository implements MemberRepository {
 
     async grantTag(memberId: string, tagId: string): Promise<void> {
         await this.db.insert(memberTag).values({ memberId, tagId }).onConflictDoNothing();
+    }
+
+    async revokeTag(memberId: string, tagId: string): Promise<void> {
+        // Deleting a row that is not there affects zero rows, which is exactly the idempotence we want.
+        await this.db.delete(memberTag).where(and(eq(memberTag.memberId, memberId), eq(memberTag.tagId, tagId)));
+    }
+
+    async setUsername(email: string, username: string | null): Promise<Member | undefined> {
+        const normalizedEmail = normalizeEmail(email);
+
+        const updated = await this.db
+            .update(member)
+            .set({ username, updatedAt: new Date() })
+            .where(eq(member.email, normalizedEmail))
+            .returning({ id: member.id });
+
+        if (updated.length === 0) {
+            return undefined;
+        }
+
+        return this.findByEmail(normalizedEmail);
+    }
+
+    async listAll(limit: number): Promise<Member[]> {
+        const rows = await this.db
+            .select({
+                id: member.id,
+                email: member.email,
+                oidcSub: member.oidcSub,
+                username: member.username,
+                tagName: tag.name,
+            })
+            .from(member)
+            .leftJoin(memberTag, eq(memberTag.memberId, member.id))
+            .leftJoin(tag, eq(tag.id, memberTag.tagId))
+            .orderBy(asc(member.email), asc(tag.name));
+
+        // The join yields one row per tag, so fold them back into one entry per member. The limit is applied after
+        // folding: applying it to the join would truncate a member's tags rather than the member list.
+        const byEmail = new Map<string, { member: Omit<Member, "tags">; tags: string[] }>();
+
+        for (const row of rows) {
+            const existing = byEmail.get(row.email);
+            const target = existing ?? {
+                member: { id: row.id, email: row.email, oidcSub: row.oidcSub, username: row.username },
+                tags: [],
+            };
+
+            if (row.tagName !== null) {
+                target.tags.push(row.tagName);
+            }
+
+            byEmail.set(row.email, target);
+        }
+
+        return [...byEmail.values()]
+            .slice(0, limit)
+            .map(({ member: found, tags: names }) => ({ ...found, tags: names }));
     }
 }

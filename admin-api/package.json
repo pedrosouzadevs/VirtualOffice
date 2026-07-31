@@ -18,6 +18,11 @@
         "test:watch": "vitest --watch",
         "test:cov": "vitest --coverage",
         "test:integration": "vitest --config vitest.integration.config.ts",
+        "member:list": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts member:list",
+        "member:grant": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts member:grant",
+        "member:revoke": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts member:revoke",
+        "member:set-name": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts member:set-name",
+        "tag:list": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts tag:list",
         "db:generate": "drizzle-kit generate",
         "db:migrate": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Infrastructure/Database/runMigrations.ts"
     },

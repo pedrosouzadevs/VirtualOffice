@@ -24,6 +24,20 @@ export interface MemberRepository {
      */
     search(searchText: string, limit: number): Promise<MemberSummary[]>;
 
+    /** Every member with their tags, ordered by email. Bounded because it feeds a terminal, not a paginated screen. */
+    listAll(limit: number): Promise<Member[]>;
+
+    /** Removes a grant. Idempotent: revoking a tag the member does not hold is not an error. */
+    revokeTag(memberId: string, tagId: string): Promise<void>;
+
+    /**
+     * Sets a member's display name.
+     *
+     * @returns the updated member, or `undefined` when no member has that email. Creating one here would turn a typo
+     * into a ghost account.
+     */
+    setUsername(email: string, username: string | null): Promise<Member | undefined>;
+
     /** Creates the member if the email is new, otherwise leaves the existing row untouched. Idempotent. */
     ensureMember(email: string, username?: string): Promise<Member>;
 

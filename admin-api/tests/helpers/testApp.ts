@@ -69,6 +69,18 @@ export class StubMemberRepository implements MemberRepository {
         );
     }
 
+    listAll(): Promise<Member[]> {
+        return Promise.resolve([...this.known]);
+    }
+
+    revokeTag(): Promise<void> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
+    setUsername(): Promise<Member | undefined> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
     ensureMember(): Promise<Member> {
         return Promise.reject(new Error("Not needed by these tests."));
     }
@@ -99,6 +111,10 @@ export class StubTagRepository implements TagRepository {
 
     listAll(): Promise<string[]> {
         return Promise.resolve(this.known.slice().sort((a, b) => a.localeCompare(b)));
+    }
+
+    findByName(name: string): Promise<{ id: string; name: string } | undefined> {
+        return Promise.resolve(this.known.includes(name) ? { id: `tag-${name}`, name } : undefined);
     }
 }
 

@@ -15,4 +15,12 @@ export interface TagRepository {
 
     /** Every tag, ordered by name. */
     listAll(): Promise<string[]>;
+
+    /**
+     * Looks a tag up by exact name.
+     *
+     * @returns `undefined` when it does not exist. Revoking needs this rather than `ensureTag`, which would create
+     * the very tag it is about to remove.
+     */
+    findByName(name: string): Promise<{ id: string; name: string } | undefined>;
 }

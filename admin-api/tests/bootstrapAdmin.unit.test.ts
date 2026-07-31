@@ -23,6 +23,18 @@ class InMemoryMemberRepository implements MemberRepository {
         return Promise.reject(new Error("Not needed by these tests."));
     }
 
+    listAll(): Promise<Member[]> {
+        return Promise.resolve([...this.members.values()]);
+    }
+
+    revokeTag(): Promise<void> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
+    setUsername(): Promise<Member | undefined> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
     ensureMember(email: string, username?: string): Promise<Member> {
         const normalized = normalizeEmail(email);
         const existing = this.members.get(normalized);

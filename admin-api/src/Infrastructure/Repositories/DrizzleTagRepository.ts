@@ -1,4 +1,4 @@
-import { asc, ilike } from "drizzle-orm";
+import { asc, eq, ilike } from "drizzle-orm";
 import type { TagRepository } from "../../Application/Ports/TagRepository";
 import type { Database } from "../Database/connection";
 import { tag } from "../Database/schema";
@@ -27,5 +27,11 @@ export class DrizzleTagRepository implements TagRepository {
         const rows = await this.db.select({ name: tag.name }).from(tag).orderBy(asc(tag.name));
 
         return rows.map((row) => row.name);
+    }
+
+    async findByName(name: string): Promise<{ id: string; name: string } | undefined> {
+        const rows = await this.db.select({ id: tag.id, name: tag.name }).from(tag).where(eq(tag.name, name)).limit(1);
+
+        return rows[0];
     }
 }
