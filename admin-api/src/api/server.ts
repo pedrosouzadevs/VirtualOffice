@@ -10,6 +10,7 @@ import { CapabilitiesController } from "./controllers/CapabilitiesController";
 import { CompanionListController } from "./controllers/CompanionListController";
 import { HealthController, type ReadinessCheck } from "./controllers/HealthController";
 import { MapController } from "./controllers/MapController";
+import { MembersController } from "./controllers/MembersController";
 import { RoomAccessController } from "./controllers/RoomAccessController";
 import { WokaListController } from "./controllers/WokaListController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
@@ -72,6 +73,7 @@ export function createServer(dependencies: ServerDependencies): Express {
     new MapController(app, dependencies.mapDetailsConfiguration);
     new WokaListController(app, wokaCatalogue);
     new CompanionListController(app, companionCatalogue);
+    new MembersController(app, dependencies.memberRepository);
     new RoomAccessController(
         app,
         dependencies.memberRepository,

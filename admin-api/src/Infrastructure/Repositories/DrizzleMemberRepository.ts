@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { asc, eq, ilike, or } from "drizzle-orm";
 import type { MemberRepository } from "../../Application/Ports/MemberRepository";
-import { normalizeEmail, type Member } from "../../Domain/Member";
+import { normalizeEmail, type Member, type MemberSummary } from "../../Domain/Member";
 import type { Database } from "../Database/connection";
 import { member, memberTag, tag } from "../Database/schema";
 
@@ -34,6 +34,24 @@ export class DrizzleMemberRepository implements MemberRepository {
             username: first.username,
             tags: rows.map((row) => row.tagName).filter((name): name is string => name !== null),
         };
+    }
+
+    async search(searchText: string, limit: number): Promise<MemberSummary[]> {
+        const trimmed = searchText.trim();
+        if (trimmed === "") {
+            return [];
+        }
+
+        // `%` and `_` are LIKE wildcards, and `\` escapes them. Escaping the backslash first matters: doing it last
+        // would re-escape the backslashes introduced by the other two replacements.
+        const pattern = `%${trimmed.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
+
+        return this.db
+            .select({ id: member.id, email: member.email, username: member.username })
+            .from(member)
+            .where(or(ilike(member.email, pattern), ilike(member.username, pattern)))
+            .orderBy(asc(member.email))
+            .limit(limit);
     }
 
     async ensureMember(email: string, username?: string): Promise<Member> {

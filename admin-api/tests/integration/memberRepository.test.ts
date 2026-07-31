@@ -103,6 +103,67 @@ describe("DrizzleMemberRepository", () => {
         });
     });
 
+    describe("search", () => {
+        it("matches a fragment of the email, case-insensitively", async () => {
+            await repository.ensureMember("Alice.Smith@Example.com");
+
+            expect((await repository.search("ALICE", 20)).map((m) => m.email)).toEqual(["alice.smith@example.com"]);
+            expect((await repository.search("smith", 20)).map((m) => m.email)).toEqual(["alice.smith@example.com"]);
+        });
+
+        it("matches the username too, so the picker finds people by name once names exist", async () => {
+            await repository.ensureMember("someone@example.com", "Roberta");
+
+            expect((await repository.search("robe", 20)).map((m) => m.email)).toEqual(["someone@example.com"]);
+        });
+
+        it("returns nothing for an empty search rather than the whole table", async () => {
+            await repository.ensureMember("alice@example.com");
+
+            expect(await repository.search("", 20)).toEqual([]);
+            expect(await repository.search("   ", 20)).toEqual([]);
+        });
+
+        it("honours the limit, because the picker renders every result", async () => {
+            await repository.ensureMember("aaa@example.com");
+            await repository.ensureMember("aab@example.com");
+            await repository.ensureMember("aac@example.com");
+
+            expect(await repository.search("example.com", 2)).toHaveLength(2);
+        });
+
+        it("orders by email so the dropdown does not reshuffle between keystrokes", async () => {
+            await repository.ensureMember("carol@example.com");
+            await repository.ensureMember("alice@example.com");
+            await repository.ensureMember("bob@example.com");
+
+            expect((await repository.search("example.com", 20)).map((m) => m.email)).toEqual([
+                "alice@example.com",
+                "bob@example.com",
+                "carol@example.com",
+            ]);
+        });
+
+        it("treats LIKE wildcards as literal characters", async () => {
+            // Without escaping, searching "%" would match everyone and "_" would match any single character.
+            await repository.ensureMember("alice@example.com");
+            await repository.ensureMember("bob%percent@example.com");
+            await repository.ensureMember("carol_underscore@example.com");
+
+            expect((await repository.search("%", 20)).map((m) => m.email)).toEqual(["bob%percent@example.com"]);
+            expect((await repository.search("l_u", 20)).map((m) => m.email)).toEqual(["carol_underscore@example.com"]);
+        });
+
+        it("returns members with no tags: MemberData carries none, so the join is not paid for", async () => {
+            await repository.ensureMember("plain@example.com");
+
+            const found = await repository.search("plain", 20);
+
+            expect(found[0]).toMatchObject({ email: "plain@example.com", username: null });
+            expect(found[0]).not.toHaveProperty("tags");
+        });
+    });
+
     describe("referential integrity", () => {
         it("drops a member's grants when the member is deleted, leaving no dangling rows", async () => {
             const created = await repository.ensureMember("gone@example.com");

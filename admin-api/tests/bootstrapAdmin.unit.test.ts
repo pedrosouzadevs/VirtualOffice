@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { bootstrapAdmin } from "../src/Application/BootstrapAdminService";
 import type { MemberRepository } from "../src/Application/Ports/MemberRepository";
-import { normalizeEmail, type Member } from "../src/Domain/Member";
+import { normalizeEmail, type Member, type MemberSummary } from "../src/Domain/Member";
 
 /**
  * In-memory stand-in for the repository.
@@ -17,6 +17,10 @@ class InMemoryMemberRepository implements MemberRepository {
 
     findByEmail(email: string): Promise<Member | undefined> {
         return Promise.resolve(this.members.get(normalizeEmail(email)));
+    }
+
+    search(): Promise<MemberSummary[]> {
+        return Promise.reject(new Error("Not needed by these tests."));
     }
 
     ensureMember(email: string, username?: string): Promise<Member> {

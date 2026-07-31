@@ -1,14 +1,22 @@
 /**
+ * A member without their tags loaded.
+ *
+ * Enough to build a `MemberData`, which carries no tags, so searches do not pay for a join they cannot use.
+ */
+export interface MemberSummary {
+    readonly id: string;
+    readonly email: string;
+    readonly username: string | null;
+}
+
+/**
  * A member of the world, as the rest of the application sees them.
  *
  * `id` is ours and internal; `email` and `oidcSub` are external identifiers that may change over a person's lifetime
  * without changing who they are (ADR-0002, decision #5).
  */
-export interface Member {
-    readonly id: string;
-    readonly email: string;
+export interface Member extends MemberSummary {
     readonly oidcSub: string | null;
-    readonly username: string | null;
     /** Authorisation labels, e.g. `admin`, `editor`. */
     readonly tags: readonly string[];
 }

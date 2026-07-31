@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
-import { normalizeEmail, type Member } from "../../src/Domain/Member";
+import { normalizeEmail, type Member, type MemberSummary } from "../../src/Domain/Member";
 import { createServer, type ServerDependencies } from "../../src/api/server";
 import { startTestServer, type TestServer } from "./testServer";
 
@@ -50,6 +50,22 @@ export class StubMemberRepository implements MemberRepository {
 
     findByEmail(email: string): Promise<Member | undefined> {
         return Promise.resolve(this.known.find((member) => member.email === normalizeEmail(email)));
+    }
+
+    search(searchText: string, limit: number): Promise<MemberSummary[]> {
+        const needle = searchText.trim().toLowerCase();
+        if (needle === "") {
+            return Promise.resolve([]);
+        }
+
+        return Promise.resolve(
+            this.known
+                .filter(
+                    (member) =>
+                        member.email.includes(needle) || (member.username?.toLowerCase().includes(needle) ?? false),
+                )
+                .slice(0, limit),
+        );
     }
 
     ensureMember(): Promise<Member> {

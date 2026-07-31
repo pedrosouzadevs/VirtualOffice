@@ -1,4 +1,4 @@
-import type { Member } from "../../Domain/Member";
+import type { Member, MemberSummary } from "../../Domain/Member";
 
 /**
  * Persistence the application needs, declared here so the dependency points inward: Application owns the contract,
@@ -12,6 +12,17 @@ export interface MemberRepository {
      * error: `/api/room/access` has to let unknown people in with no tags, otherwise no new user could ever enter.
      */
     findByEmail(email: string): Promise<Member | undefined>;
+
+    /**
+     * Finds members whose email or name contains `searchText`, case-insensitively.
+     *
+     * Feeds the map editor's member picker, which searches as the user types. Bounded by `limit` because that picker
+     * renders every result: an unbounded answer would be a slow query *and* an unusable dropdown.
+     *
+     * An empty `searchText` returns nothing rather than everyone — the picker asks on every keystroke, including the
+     * one that clears the field.
+     */
+    search(searchText: string, limit: number): Promise<MemberSummary[]>;
 
     /** Creates the member if the email is new, otherwise leaves the existing row untouched. Idempotent. */
     ensureMember(email: string, username?: string): Promise<Member>;
