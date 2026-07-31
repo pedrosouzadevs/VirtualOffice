@@ -321,6 +321,24 @@ services:
       - "traefik.http.routers.map-storage-ui.service=map-storage-ui"
       - "traefik.http.services.map-storage-ui.loadbalancer.server.port=8080"
 
+  # Dedicated Postgres for the Admin API (ADR-0002, spec decision #3). Not shared with any other service:
+  # admin-api owns identity and authorisation, and nothing else should be able to write to them.
+  admin-api-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "${ADMIN_API_DB_USER:-admin_api}"
+      POSTGRES_PASSWORD: "${ADMIN_API_DB_PASSWORD:-admin_api}"
+      POSTGRES_DB: "${ADMIN_API_DB_NAME:-admin_api}"
+    volumes:
+      - admin-api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Without this, admin-api races the database on a cold start and dies applying migrations.
+      test: ["CMD-SHELL", "pg_isready -U ${ADMIN_API_DB_USER:-admin_api} -d ${ADMIN_API_DB_NAME:-admin_api}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   # VirtualOffice Admin API (ADR-0002). Members, tags and permissions.
   # NOTE: ADMIN_API_URL is deliberately NOT set on the "play" service yet. Pointing the pusher here before
   # /api/map and /api/room/access exist would break login and map loading. It gets wired up in P0/E6.
@@ -336,6 +354,10 @@ services:
       ADMIN_API_PORT: "3000"
       # Same value the pusher sends. Interpolated from the repository-root .env so both sides cannot drift apart.
       ADMIN_API_TOKEN: "$ADMIN_API_TOKEN"
+      ADMIN_API_DATABASE_URL: "postgres://${ADMIN_API_DB_USER:-admin_api}:${ADMIN_API_DB_PASSWORD:-admin_api}@admin-api-db:5432/${ADMIN_API_DB_NAME:-admin_api}"
+      # Granted the "admin" tag by the idempotent bootstrap on every startup. Optional: with no value the service
+      # still starts, it simply has no administrator yet.
+      ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL:-}"
       # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
       # copies stop applying to those fields, so both services must read the same .env (ADR-0002).
       START_ROOM_URL: "$START_ROOM_URL"
@@ -356,16 +378,21 @@ services:
       PROVIDE_DEFAULT_WOKA_TEXTURE: "$PROVIDE_DEFAULT_WOKA_TEXTURE"
       OPENID_WOKA_NAME_POLICY: "${OPENID_WOKA_NAME_POLICY:-}"
       OPID_WOKA_NAME_POLICY: "$OPID_WOKA_NAME_POLICY"
-      MATRIX_PUBLIC_URI: "${MATRIX_PUBLIC_URI:-}"
-      MATRIX_API_URI: "${MATRIX_API_URI:-}"
-      MATRIX_ADMIN_USER: "${MATRIX_ADMIN_USER:-}"
-      MATRIX_ADMIN_PASSWORD: "${MATRIX_ADMIN_PASSWORD:-}"
-      MATRIX_DOMAIN: "${MATRIX_DOMAIN:-}"
+      # Hardcoded to the very values the "play" service above uses. These are NOT in .env, so interpolating them
+      # would yield empty strings here and enableMatrixChat would be false for us and true for play.
+      MATRIX_API_URI: http://synapse:8008/
+      MATRIX_PUBLIC_URI: http://matrix.workadventure.localhost
+      MATRIX_ADMIN_USER: admin
+      MATRIX_ADMIN_PASSWORD: MySecretPassword
+      MATRIX_DOMAIN: matrix.workadventure.localhost
       LIVEKIT_RECORDING_S3_ENDPOINT: "${LIVEKIT_RECORDING_S3_ENDPOINT:-}"
       LIVEKIT_RECORDING_S3_BUCKET: "${LIVEKIT_RECORDING_S3_BUCKET:-}"
       LIVEKIT_RECORDING_S3_ACCESS_KEY: "${LIVEKIT_RECORDING_S3_ACCESS_KEY:-}"
       LIVEKIT_RECORDING_S3_SECRET_KEY: "${LIVEKIT_RECORDING_S3_SECRET_KEY:-}"
       LIVEKIT_RECORDING_S3_REGION: "${LIVEKIT_RECORDING_S3_REGION:-}"
+    depends_on:
+      admin-api-db:
+        condition: service_healthy
     volumes:
       - .:/usr/src/app
     tmpfs: /tmp
@@ -616,3 +643,8 @@ services:
 #    network_mode: host
 #volumes:
 #  synapsedata:
+
+volumes:
+  # Postgres data for the Admin API. Named so "docker compose down" keeps members and tags;
+  # only "down -v" discards them.
+  admin-api-db-data:

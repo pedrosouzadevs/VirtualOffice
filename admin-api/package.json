@@ -16,7 +16,10 @@
         "precommit": "lint-staged",
         "test": "vitest",
         "test:watch": "vitest --watch",
-        "test:cov": "vitest --coverage"
+        "test:cov": "vitest --coverage",
+        "test:integration": "vitest --config vitest.integration.config.ts",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Infrastructure/Database/runMigrations.ts"
     },
     "lint-staged": {
         "*.ts": [
@@ -26,11 +29,14 @@
     },
     "dependencies": {
         "@workadventure/messages": "1.0.0",
+        "drizzle-orm": "^0.45.2",
         "express": "^5.2.1",
+        "postgres": "^3.4.9",
         "zod": "^3.23.8"
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
+        "drizzle-kit": "^0.31.10",
         "@types/node": "^25.9.1",
         "@workadventure/eslint-config": "1.0.0",
         "eslint": "^9.39.4",

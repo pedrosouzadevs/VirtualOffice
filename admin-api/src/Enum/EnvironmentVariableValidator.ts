@@ -56,6 +56,17 @@ export const EnvironmentVariables = z.object({
      */
     ADMIN_API_TOKEN: z.string().min(1, "ADMIN_API_TOKEN is required and must not be empty"),
 
+    /** Connection string for the Admin API's own Postgres. `admin-api`-only, hence the prefix. */
+    ADMIN_API_DATABASE_URL: z.string().min(1, "ADMIN_API_DATABASE_URL is required and must not be empty"),
+
+    /**
+     * Email granted the `admin` tag by the idempotent bootstrap on every startup (ADR-0002, decision #6).
+     *
+     * Optional: with no value the tags are still created and the service starts, it simply has no administrator yet.
+     * Refusing to boot would be worse — it would make a fresh environment unusable rather than merely unmanaged.
+     */
+    ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: optionalString(),
+
     // --- Map routing ---------------------------------------------------------------------------------------------
 
     /** Where a request to `/` is redirected. Same default as the pusher. */

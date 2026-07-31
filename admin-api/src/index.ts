@@ -1,4 +1,6 @@
 import {
+    ADMIN_API_BOOTSTRAP_ADMIN_EMAIL,
+    ADMIN_API_DATABASE_URL,
     ADMIN_API_PORT,
     ADMIN_API_TOKEN,
     BYPASS_PWA,
@@ -29,7 +31,12 @@ import {
     SKIP_CAMERA_PAGE,
     START_ROOM_URL,
 } from "./Enum/EnvironmentVariable";
+import { bootstrapAdmin } from "./Application/BootstrapAdminService";
 import type { MapDetailsConfiguration } from "./Application/MapDetailsService";
+import { createDatabaseConnection } from "./Infrastructure/Database/connection";
+import { runMigrations } from "./Infrastructure/Database/migrate";
+import { PostgresReadinessCheck } from "./Infrastructure/Database/PostgresReadinessCheck";
+import { DrizzleMemberRepository } from "./Infrastructure/Repositories/DrizzleMemberRepository";
 import { createServer } from "./api/server";
 
 /**
@@ -68,8 +75,32 @@ const mapDetailsConfiguration: MapDetailsConfiguration = {
     recordingConfigured,
 };
 
-const app = createServer({ adminApiToken: ADMIN_API_TOKEN, mapDetailsConfiguration });
+/**
+ * Migrate, bootstrap, then serve — in that order and before binding the port.
+ *
+ * Answering requests against a schema that has not been migrated would mean serving errors to the pusher, and the
+ * pusher's retry loop turns our errors into a hung `play`. Failing to start is the safer failure.
+ */
+async function start(): Promise<void> {
+    const connection = createDatabaseConnection(ADMIN_API_DATABASE_URL);
 
-app.listen(ADMIN_API_PORT, () => {
-    console.info(`VirtualOffice admin-api listening on port ${ADMIN_API_PORT}`);
+    await runMigrations(connection.db);
+
+    const memberRepository = new DrizzleMemberRepository(connection.db);
+    await bootstrapAdmin(memberRepository, ADMIN_API_BOOTSTRAP_ADMIN_EMAIL);
+
+    const app = createServer({
+        adminApiToken: ADMIN_API_TOKEN,
+        mapDetailsConfiguration,
+        readinessChecks: [new PostgresReadinessCheck(connection.sql)],
+    });
+
+    app.listen(ADMIN_API_PORT, () => {
+        console.info(`VirtualOffice admin-api listening on port ${ADMIN_API_PORT}`);
+    });
+}
+
+start().catch((error: unknown) => {
+    console.error("admin-api failed to start.", error);
+    process.exit(1);
 });

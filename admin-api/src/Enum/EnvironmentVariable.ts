@@ -29,6 +29,8 @@ const env = envChecking.data;
 
 export const ADMIN_API_PORT = env.ADMIN_API_PORT;
 export const ADMIN_API_TOKEN = env.ADMIN_API_TOKEN;
+export const ADMIN_API_DATABASE_URL = env.ADMIN_API_DATABASE_URL;
+export const ADMIN_API_BOOTSTRAP_ADMIN_EMAIL = env.ADMIN_API_BOOTSTRAP_ADMIN_EMAIL;
 
 export const START_ROOM_URL = env.START_ROOM_URL;
 export const PUBLIC_MAP_STORAGE_URL = env.PUBLIC_MAP_STORAGE_URL;
