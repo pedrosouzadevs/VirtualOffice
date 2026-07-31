@@ -59,6 +59,7 @@ import { OpenIdConnectAuthenticator } from "./Infrastructure/Oidc/OpenIdConnectA
 import { createDatabaseConnection } from "./Infrastructure/Database/connection";
 import { runMigrations } from "./Infrastructure/Database/migrate";
 import { PostgresReadinessCheck } from "./Infrastructure/Database/PostgresReadinessCheck";
+import { DrizzleAuditLogRepository } from "./Infrastructure/Repositories/DrizzleAuditLogRepository";
 import { DrizzleMemberRepository } from "./Infrastructure/Repositories/DrizzleMemberRepository";
 import { DrizzleTagRepository } from "./Infrastructure/Repositories/DrizzleTagRepository";
 import { createServer } from "./api/server";
@@ -165,6 +166,7 @@ async function start(): Promise<void> {
             ? {
                   configuration: dashboard.configuration,
                   authenticator: new OpenIdConnectAuthenticator(dashboard.configuration),
+                  auditLog: new DrizzleAuditLogRepository(connection.db),
               }
             : undefined,
     });

@@ -44,7 +44,8 @@ Three rules the dashboard cannot bend:
 - `src/Application/`: business logic, kept free of Express so it can be tested as plain functions. `AdminSession.ts`
   and `AdminLoginTransaction.ts` are pure token handling — the session rules are unit-testable without HTTP.
   `MemberAdministrationService.ts` owns what granting and revoking *mean*, and is called by both the CLI and
-  `/admin/api/*`: two surfaces that hand out permissions must not be able to disagree.
+  `/admin/api/*`: two surfaces that hand out permissions must not be able to disagree. It also writes the audit
+  entry, for the same reason — a surface that could forget to log is a gap in the only record there is.
 - `src/api/`: Express controllers, middlewares and the server factory.
 - `src/Infrastructure/Oidc/`: the `openid-client` adapter behind `Application/Ports/OidcAuthenticator.ts`, so the
   barrier's tests never need a live identity provider.
@@ -74,6 +75,10 @@ correct a mistake with a new migration, never by editing an applied one.
 
 Foreign keys point at `member.id`, never at `email`. That is what makes an email change a one-column update instead of
 a migration (ADR-0002, decision #5). Emails are stored and looked up lower-cased.
+
+`audit_log` is the one exception, and deliberately so: it has **no foreign keys** and stores emails as snapshots. An
+entry has to keep naming who someone was at the time, after they are renamed or deleted — a reference would either
+cascade the history away or quietly rewrite it. Nothing updates or deletes a row there.
 
 The server migrates and runs the idempotent bootstrap before binding its port: answering the pusher against an
 unmigrated schema would feed its retry loop and hang `play`.

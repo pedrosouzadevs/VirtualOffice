@@ -61,5 +61,7 @@ export async function setupTestDatabase(): Promise<DatabaseConnection> {
 
 /** Empties every table between tests. CASCADE handles member_tag's foreign keys. */
 export async function truncateAll(connection: DatabaseConnection): Promise<void> {
-    await connection.sql`truncate table "member_tag", "member", "tag" cascade`;
+    // `audit_log` is listed explicitly because nothing references it — the cascade from the other tables would not
+    // reach it, and a test asserting "one entry was written" would see everything the previous test wrote too.
+    await connection.sql`truncate table "member_tag", "member", "tag", "audit_log" cascade`;
 }

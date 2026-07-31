@@ -1,8 +1,9 @@
 import { ADMIN_API_DATABASE_URL } from "../Enum/EnvironmentVariable";
 import { createDatabaseConnection } from "../Infrastructure/Database/connection";
+import { DrizzleAuditLogRepository } from "../Infrastructure/Repositories/DrizzleAuditLogRepository";
 import { DrizzleMemberRepository } from "../Infrastructure/Repositories/DrizzleMemberRepository";
 import { DrizzleTagRepository } from "../Infrastructure/Repositories/DrizzleTagRepository";
-import { grantTag, listMembers, listTags, revokeTag, setMemberName, type CommandContext } from "./commands";
+import { grantTag, listAudit, listMembers, listTags, revokeTag, setMemberName, type CommandContext } from "./commands";
 
 const USAGE = `Manage Admin API members and tags.
 
@@ -11,8 +12,12 @@ const USAGE = `Manage Admin API members and tags.
   npm run member:revoke    -- <email> <tag>
   npm run member:set-name  -- <email> <name>
   npm run tag:list
+  npm run audit:list       -- [email]
 
-Every command is idempotent: running it twice changes nothing the second time.`;
+Every command is idempotent: running it twice changes nothing the second time.
+
+Changes made here are recorded in the audit log as "cli": a command run inside the container has no logged-in
+identity, so the entry says somebody with shell access did it rather than naming a person.`;
 
 /**
  * Entry point for the management commands (ADR-0003, decision #3).
@@ -34,6 +39,7 @@ async function main(): Promise<number> {
     const context: CommandContext = {
         members: new DrizzleMemberRepository(connection.db),
         tags: new DrizzleTagRepository(connection.db),
+        audit: new DrizzleAuditLogRepository(connection.db),
         out: (line) => console.info(line),
     };
 
@@ -43,6 +49,8 @@ async function main(): Promise<number> {
                 return (await listMembers(context)).exitCode;
             case "tag:list":
                 return (await listTags(context)).exitCode;
+            case "audit:list":
+                return (await listAudit(context, args[0])).exitCode;
             case "member:grant":
                 return (await grantTag(context, args[0] ?? "", args[1] ?? "")).exitCode;
             case "member:revoke":

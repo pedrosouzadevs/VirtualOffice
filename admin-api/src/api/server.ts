@@ -3,6 +3,7 @@ import type { Capabilities } from "@workadventure/messages";
 import cookieParser from "cookie-parser";
 import express, { type Express, type NextFunction, type Request, type RequestHandler, type Response } from "express";
 import type { AdminDashboardConfiguration } from "../Application/AdminDashboardConfiguration";
+import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
 import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
 import { CompanionCatalogue } from "../Application/CompanionCatalogue";
 import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
@@ -19,6 +20,7 @@ import { MembersController } from "./controllers/MembersController";
 import { RoomAccessController } from "./controllers/RoomAccessController";
 import { TagsController } from "./controllers/TagsController";
 import { WokaListController } from "./controllers/WokaListController";
+import { AdminAuditController } from "./controllers/AdminAuditController";
 import { AdminAuthController } from "./controllers/AdminAuthController";
 import { AdminMembersController } from "./controllers/AdminMembersController";
 import { AdminTagsController } from "./controllers/AdminTagsController";
@@ -87,6 +89,9 @@ export interface AdminDashboardDependencies {
     /** Injected rather than constructed here so the barrier's tests never need a live identity provider. */
     readonly authenticator: OidcAuthenticator;
 
+    /** Where every mutation the dashboard makes is written (ADR-0004, decision #5). */
+    readonly auditLog: AuditLogRepository;
+
     /** Overridable so the sliding-window and absolute-cap tests can drive the clock. */
     readonly now?: () => Date;
 
@@ -148,9 +153,14 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
 
     // Everything under /admin/api is behind the barrier registered above, which has already proven the session,
     // re-read the admin tag and checked CSRF on every mutation (ADR-0004, G1).
-    const administration = { members: dependencies.memberRepository, tags: dependencies.tagRepository };
+    const administration = {
+        members: dependencies.memberRepository,
+        tags: dependencies.tagRepository,
+        audit: dashboard.auditLog,
+    };
     new AdminMembersController(app, administration);
     new AdminTagsController(app, dependencies.tagRepository);
+    new AdminAuditController(app, dashboard.auditLog);
 
     mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
 }

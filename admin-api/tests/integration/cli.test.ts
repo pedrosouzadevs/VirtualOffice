@@ -1,6 +1,15 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { grantTag, listMembers, listTags, revokeTag, setMemberName, type CommandContext } from "../../src/Cli/commands";
+import {
+    grantTag,
+    listAudit,
+    listMembers,
+    listTags,
+    revokeTag,
+    setMemberName,
+    type CommandContext,
+} from "../../src/Cli/commands";
 import type { DatabaseConnection } from "../../src/Infrastructure/Database/connection";
+import { DrizzleAuditLogRepository } from "../../src/Infrastructure/Repositories/DrizzleAuditLogRepository";
 import { DrizzleMemberRepository } from "../../src/Infrastructure/Repositories/DrizzleMemberRepository";
 import { DrizzleTagRepository } from "../../src/Infrastructure/Repositories/DrizzleTagRepository";
 import { setupTestDatabase, truncateAll } from "./helpers/testDatabase";
@@ -23,6 +32,7 @@ beforeEach(async () => {
     context = {
         members: new DrizzleMemberRepository(connection.db),
         tags: new DrizzleTagRepository(connection.db),
+        audit: new DrizzleAuditLogRepository(connection.db),
         out: (line) => output.push(line),
     };
 });
@@ -211,5 +221,43 @@ describe("member:list and tag:list", () => {
         await listTags(context);
 
         expect(printed()).toBe("admin\neditor");
+    });
+
+    describe("audit", () => {
+        it("records what the CLI did, attributed to the CLI", async () => {
+            // The audit write lives in the shared service, so the terminal cannot forget it any more than the
+            // dashboard can. The actor is `cli` rather than a person: a command in the container has no identity,
+            // and inventing one would put a name in the log that nobody can stand behind.
+            await grantTag(context, "alice@example.com", "editor");
+            await revokeTag(context, "alice@example.com", "editor");
+            await setMemberName(context, "alice@example.com", "Alice");
+            output = [];
+
+            await listAudit(context, undefined);
+
+            expect(printed()).toContain("cli");
+            expect(printed()).toContain("tag.granted");
+            expect(printed()).toContain("tag.revoked");
+            expect(printed()).toContain("member.renamed");
+            expect(printed()).toContain("3 entries.");
+        });
+
+        it("narrows to one member", async () => {
+            await grantTag(context, "alice@example.com", "editor");
+            await grantTag(context, "bob@example.com", "editor");
+            output = [];
+
+            await listAudit(context, "alice@example.com");
+
+            expect(printed()).toContain("alice@example.com");
+            expect(printed()).not.toContain("bob@example.com");
+            expect(printed()).toContain("1 entry.");
+        });
+
+        it("says so when nothing has happened", async () => {
+            await listAudit(context, undefined);
+
+            expect(printed()).toBe("Nothing recorded yet.");
+        });
     });
 });

@@ -1,17 +1,63 @@
+import type { AuditAction } from "../Domain/AuditEntry";
 import type { Member } from "../Domain/Member";
 import { normalizeEmail } from "../Domain/Member";
+import type { AuditLogRepository } from "./Ports/AuditLogRepository";
 import type { MemberRepository } from "./Ports/MemberRepository";
 import type { TagRepository } from "./Ports/TagRepository";
 
 /**
- * The two repositories every operation here needs.
+ * The repositories every operation here needs.
  *
- * Bundled so the CLI and the dashboard pass the same thing, and so adding a third store later is one signature change
+ * Bundled so the CLI and the dashboard pass the same thing, and so adding a store later is one signature change
  * rather than one per call site.
  */
 export interface MemberAdministration {
     readonly members: MemberRepository;
     readonly tags: TagRepository;
+    readonly audit: AuditLogRepository;
+}
+
+/**
+ * Who made a change.
+ *
+ * `{ kind: "cli" }` is deliberately anonymous: a command run inside the container has no logged-in identity, and
+ * inventing one would put a name in the audit log that nobody can stand behind. An entry attributed to the CLI means
+ * "somebody with shell access did this", which is the true and useful statement.
+ */
+export type Actor = { kind: "administrator"; email: string } | { kind: "cli" };
+
+export const CLI_ACTOR: Actor = { kind: "cli" };
+
+/** The value written to `actor_email`. Never a real address for the CLI, so the two can never be confused. */
+function actorLabel(actor: Actor): string {
+    return actor.kind === "cli" ? "cli" : actor.email;
+}
+
+/**
+ * Writes the audit entry for a change that has already happened (ADR-0004, decision #5).
+ *
+ * Lives here rather than in the controller so that **every** surface that grants a permission records it. That is the
+ * same reasoning that put granting itself here: the dashboard and the CLI must not be able to disagree, and "the CLI
+ * forgot to write to the log" is exactly the kind of disagreement that leaves an unanswerable question later.
+ *
+ * A failure does not fail the caller. The change did land, so reporting an error would misdescribe the world, and the
+ * realistic cause — a database that is down or full — would have stopped the mutation first.
+ */
+async function record(
+    { audit }: MemberAdministration,
+    actor: Actor,
+    action: AuditAction,
+    targetEmail: string,
+    details: Record<string, unknown>,
+): Promise<void> {
+    try {
+        await audit.record({ actorEmail: actorLabel(actor), action, targetEmail, details });
+    } catch (error: unknown) {
+        console.error(
+            `[${new Date().toISOString()}] Failed to record ${action} by ${actorLabel(actor)} on ${targetEmail}`,
+            error,
+        );
+    }
 }
 
 export interface GrantTagResult {
@@ -41,10 +87,12 @@ export type RevokeTagResult =
  * for. Idempotent — granting twice is not an error.
  */
 export async function grantTagToMember(
-    { members, tags }: MemberAdministration,
+    administration: MemberAdministration,
+    actor: Actor,
     email: string,
     tagName: string,
 ): Promise<GrantTagResult> {
+    const { members, tags } = administration;
     const existingTag = await tags.findByName(tagName);
 
     const member = await members.ensureMember(email);
@@ -54,12 +102,15 @@ export async function grantTagToMember(
     // Re-read rather than patching the object in memory: `ensureMember` answered before the grant existed, and a
     // caller that renders its `tags` would show the state from one moment ago.
     const updated = await members.findByEmail(member.email);
+    const createdTag = existingTag === undefined;
 
-    return {
-        member: updated ?? member,
-        tagName: tag.name,
-        createdTag: existingTag === undefined,
-    };
+    await record(administration, actor, "tag.granted", member.email, {
+        tag: tag.name,
+        // Recorded because it is the difference between granting a permission and inventing a label.
+        createdTag,
+    });
+
+    return { member: updated ?? member, tagName: tag.name, createdTag };
 }
 
 /**
@@ -69,10 +120,12 @@ export async function grantTagToMember(
  * tag the member does not hold is **not** one — that case succeeds with `wasHeld: false`.
  */
 export async function revokeTagFromMember(
-    { members, tags }: MemberAdministration,
+    administration: MemberAdministration,
+    actor: Actor,
     email: string,
     tagName: string,
 ): Promise<RevokeTagResult> {
+    const { members, tags } = administration;
     const member = await members.findByEmail(email);
 
     if (member === undefined) {
@@ -91,6 +144,10 @@ export async function revokeTagFromMember(
 
     const updated = await members.findByEmail(member.email);
 
+    // Recorded even when nothing changed: somebody deliberately asked for this person to lose that tag, and that
+    // intent is exactly what the log is asked about later.
+    await record(administration, actor, "tag.revoked", member.email, { tag: tag.name, wasHeld });
+
     return { outcome: "revoked", member: updated ?? member, wasHeld };
 }
 
@@ -102,14 +159,22 @@ export async function revokeTagFromMember(
  *
  * @returns the updated member, or `undefined` when no member has that email.
  */
-export function setMemberDisplayName(
-    { members }: MemberAdministration,
+export async function setMemberDisplayName(
+    administration: MemberAdministration,
+    actor: Actor,
     email: string,
     name: string | null,
 ): Promise<Member | undefined> {
     const trimmed = name?.trim() ?? "";
+    const updated = await administration.members.setUsername(email, trimmed === "" ? null : trimmed);
 
-    return members.setUsername(email, trimmed === "" ? null : trimmed);
+    if (updated === undefined) {
+        return undefined;
+    }
+
+    await record(administration, actor, "member.renamed", updated.email, { username: updated.username });
+
+    return updated;
 }
 
 /** Normalises an email the same way storage does, for messages that name an address the caller got wrong. */

@@ -269,6 +269,33 @@ await fetch('/admin/api/members/someone@example.com/tags', {
 }).then(r => r.json());
 ```
 
+### O log de auditoria (G4)
+
+Toda mudança de permissão é registrada, append-only: ator, ação, alvo, timestamp e detalhe suficiente para ler a
+entrada sozinha. Nada atualiza nem apaga uma linha — não existe caminho de código que consiga.
+
+```bash
+# Tudo, mais recente primeiro
+docker compose exec admin-api npm run audit:list
+
+# Tudo o que já aconteceu com uma pessoa
+docker compose exec admin-api npm run audit:list -- alguem@empresa.com
+```
+
+Também por HTTP, atrás da sessão: `GET /admin/api/audit`, opcionalmente `?target=<email>&limit=<n>`.
+
+Duas coisas que valem saber antes de ler:
+
+- **Mudanças feitas pela CLI são atribuídas a `cli`, não a uma pessoa.** Um comando rodado dentro do container não tem
+  identidade logada, então a entrada diz "alguém com acesso ao shell fez isso" em vez de inventar um nome. É
+  registrado em vez de ignorado porque o valor do log é não ter buracos.
+- **Ator e alvo são fotografias do e-mail, não referências.** A entrada continua nomeando quem a pessoa era na época,
+  mesmo depois de renomeada ou removida. É proposital: um log que muda junto com o mundo que descreve não é prova de
+  nada.
+
+Esta é uma auditoria **administrativa** — quem mudou permissão. Não é log de uso: login, entrada em sala e chamadas
+acontecem no `play`, no `back` e no servidor de mídia, e nenhum deles passa por aqui.
+
 ### Ficou trancado do lado de fora?
 
 Remover a própria tag `admin` é permitido, inclusive sendo o último administrador. O bootstrap roda em **toda**

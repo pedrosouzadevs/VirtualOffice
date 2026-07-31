@@ -5,6 +5,7 @@ import {
     grantTagToMember,
     revokeTagFromMember,
     setMemberDisplayName,
+    type Actor,
     type MemberAdministration,
 } from "../../Application/MemberAdministrationService";
 import { normalizeEmail } from "../../Domain/Member";
@@ -93,6 +94,25 @@ export class AdminMembersController {
         this.revokeTag();
     }
 
+    /**
+     * The administrator this request acts as.
+     *
+     * Taken from `req.adminMember`, which the session barrier read from the database on this very request — never
+     * from anything the caller supplied. Writing the audit log is the service's job, not this controller's; all it
+     * needs from here is a name it can stand behind.
+     */
+    private actor(req: Request): Actor {
+        const acting = req.adminMember;
+
+        if (acting === undefined) {
+            // Unreachable behind the barrier. Throwing rather than falling back to an anonymous actor: an audit
+            // trail that cannot name who acted is worse than a failed request.
+            throw new Error("A dashboard mutation reached its handler with no acting administrator.");
+        }
+
+        return { kind: "administrator", email: acting.email };
+    }
+
     private listMembers(): void {
         this.app.get("/admin/api/members", (req: Request, res: Response, next: NextFunction) => {
             (async () => {
@@ -155,7 +175,12 @@ export class AdminMembersController {
                 }
 
                 const email = pathParam(req, "email");
-                const updated = await setMemberDisplayName(this.administration, email, body.data.username);
+                const updated = await setMemberDisplayName(
+                    this.administration,
+                    this.actor(req),
+                    email,
+                    body.data.username,
+                );
 
                 if (updated === undefined) {
                     // Not created from a typo: that would leave a ghost account nobody ever logs into. Granting a tag
@@ -197,7 +222,7 @@ export class AdminMembersController {
                     return;
                 }
 
-                const result = await grantTagToMember(this.administration, email, body.data.tag);
+                const result = await grantTagToMember(this.administration, this.actor(req), email, body.data.tag);
 
                 // 200, not 201: granting is idempotent, so the second call creates nothing and there is no new
                 // resource to point at.
@@ -220,7 +245,7 @@ export class AdminMembersController {
                 const email = pathParam(req, "email");
                 const tag = pathParam(req, "tag");
 
-                const result = await revokeTagFromMember(this.administration, email, tag);
+                const result = await revokeTagFromMember(this.administration, this.actor(req), email, tag);
 
                 if (result.outcome === "member-not-found") {
                     memberNotFound(res, email);

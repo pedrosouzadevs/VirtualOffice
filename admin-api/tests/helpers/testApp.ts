@@ -1,5 +1,7 @@
 import type { Express, RequestHandler } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
+import type { AuditLogRepository } from "../../src/Application/Ports/AuditLogRepository";
+import type { AuditEntry, RecordedAuditEntry } from "../../src/Domain/AuditEntry";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
 import type { TagRepository } from "../../src/Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
@@ -210,6 +212,47 @@ export class StubMemberRepository implements MemberRepository {
     }
 }
 
+/**
+ * The audit log, in memory.
+ *
+ * Implemented rather than stubbed out, because ADR-0004's mandatory test #6 is precisely "every mutation writes an
+ * entry naming the actor" — a fake that swallowed the writes would prove the opposite of what is needed.
+ */
+export class StubAuditLogRepository implements AuditLogRepository {
+    readonly entries: RecordedAuditEntry[] = [];
+
+    /** Set to make writes fail, standing in for a database in trouble. */
+    failing = false;
+
+    record(entry: AuditEntry): Promise<void> {
+        if (this.failing) {
+            return Promise.reject(new Error("The audit log is unavailable."));
+        }
+
+        this.entries.push({
+            ...entry,
+            id: `audit-${this.entries.length}`,
+            // Ordered by insertion rather than by a real clock, which keeps assertions on ordering deterministic.
+            createdAt: new Date(Date.UTC(2026, 6, 31, 9, 0, this.entries.length)),
+        });
+
+        return Promise.resolve();
+    }
+
+    listRecent(limit: number): Promise<RecordedAuditEntry[]> {
+        return Promise.resolve([...this.entries].reverse().slice(0, limit));
+    }
+
+    listForTarget(targetEmail: string, limit: number): Promise<RecordedAuditEntry[]> {
+        return Promise.resolve(
+            [...this.entries]
+                .reverse()
+                .filter((entry) => entry.targetEmail === normalizeEmail(targetEmail))
+                .slice(0, limit),
+        );
+    }
+}
+
 export class StubTagRepository implements TagRepository {
     private readonly catalogue: TagCatalogue;
 
@@ -278,6 +321,8 @@ export interface DashboardTestApp {
     /** Mutate with `replaceAll` to revoke a tag while a session is open. */
     readonly members: StubMemberRepository;
     readonly tags: StubTagRepository;
+    /** Inspect `entries` to assert what a mutation recorded. */
+    readonly audit: StubAuditLogRepository;
     readonly authenticator: StubOidcAuthenticator;
     /** Moves the server's clock, which is how expiry and renewal are exercised without waiting. */
     setNow(now: Date): void;
@@ -306,6 +351,7 @@ export async function serveDashboardTestApp(
     const catalogue = new TagCatalogue(options.tags ?? []);
     const members = new StubMemberRepository(options.members ?? [], catalogue);
     const tags = new StubTagRepository(catalogue);
+    const audit = new StubAuditLogRepository();
     const authenticator = new StubOidcAuthenticator(options.loginAs ?? "john.doe@example.com");
     let now = options.now ?? new Date();
 
@@ -318,6 +364,7 @@ export async function serveDashboardTestApp(
         adminDashboard: {
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
+            auditLog: audit,
             now: () => now,
             rateLimit: options.rateLimit,
         },
@@ -327,6 +374,7 @@ export async function serveDashboardTestApp(
         url,
         members,
         tags,
+        audit,
         authenticator,
         setNow: (value: Date) => {
             now = value;

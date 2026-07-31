@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * A person who can enter the world.
@@ -55,6 +55,48 @@ export const memberTag = pgTable(
         createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     },
     (table) => [primaryKey({ columns: [table.memberId, table.tagId] })],
+);
+
+/**
+ * Append-only record of every change the dashboard makes (ADR-0004, decision #5).
+ *
+ * **Deliberately without foreign keys**, which is the one place this schema breaks its own rule that references point
+ * at `member.id`. That rule exists so an email change is a one-column update; an audit entry wants the opposite. It
+ * has to answer "who did this, to whom, when" months later — after the actor has left, after the target's address
+ * changed, after either row was deleted. A reference would either cascade the history away or quietly rewrite it, and
+ * a log that changes with the world it describes is not a log.
+ *
+ * Nothing ever updates or deletes a row here. There is no code path that can.
+ */
+export const auditLog = pgTable(
+    "audit_log",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+
+        /** The acting administrator's email, as it was at the time. A snapshot, not a reference. */
+        actorEmail: text("actor_email").notNull(),
+
+        /** What happened, from a closed set — see `Domain/AuditEntry.ts`. */
+        action: text("action").notNull(),
+
+        /** Who it happened to, again as a snapshot. */
+        targetEmail: text("target_email").notNull(),
+
+        /**
+         * Whatever the action needs to be understandable on its own: the tag granted, the name set.
+         *
+         * `jsonb` so a new kind of action does not need a migration, and so the old rows stay readable when it does.
+         */
+        details: jsonb("details").notNull().default({}),
+
+        createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    },
+    (table) => [
+        // Newest first is how the log is always read, and the target index is what makes "everything that ever
+        // happened to this person" cheap.
+        index("audit_log_created_at_idx").on(table.createdAt),
+        index("audit_log_target_email_idx").on(table.targetEmail),
+    ],
 );
 
 export const memberRelations = relations(member, ({ many }) => ({

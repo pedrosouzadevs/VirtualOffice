@@ -110,17 +110,11 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
 | **G0** | Espinha de segurança: login OIDC, callback, cookie de sessão assinado, barreira da tag `admin`, `/admin/logout`, `GET /admin/me` | ✅ entregue |
 | **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1 | ✅ entregue |
 | **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui` | ✅ entregue |
-| **G3** | Visão de salas, lendo o `/maps` do `map-storage` | pendente |
-| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play`. **Próximo.** | pendente |
+| **G3** | Visão de salas, lendo o `/maps` do `map-storage`. **Único item aberto da P2.** | pendente |
+| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play` | ✅ entregue |
 
-Dos testes obrigatórios do ADR-0004 falta só o **#6** (toda mutação escreve uma entrada de auditoria), que depende da
-tabela de auditoria do G4. Os outros nove estão cobertos — o #7 e o #10 entraram com o G1, que é onde as mutações
-passaram a existir.
-
-> **Dívida consciente do G1:** as mutações existem e o log de auditoria ainda não. A decisão #5 do ADR-0004 antecipou
-> o log justamente porque *não dá para reconstruí-lo depois* — então toda tag concedida pelo dashboard entre agora e o
-> G4 fica sem registro de quem a concedeu. Na branch isso é inofensivo; **antes de qualquer uso real, o G4 vem
-> primeiro.** A `req.adminMember` já entrega o ator pronto em cada handler.
+**Os dez testes obrigatórios do ADR-0004 estão cobertos.** A dívida que o G1 abriu — mutações sem log — foi paga no
+G4, e o log é escrito pelo serviço compartilhado, então a CLI também registra.
 
 ### Fora da P2, em aberto no roadmap
 
@@ -200,16 +194,23 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**G4 antes do G3.** O G3 (visão de salas) é conveniência; o G4 tem o log de auditoria, que é a dívida registrada
-abaixo e a única coisa que separa o dashboard de poder ser usado de verdade. Entregar, nesta ordem:
+**G3 — a visão de salas**, e com ela a P2 fecha. Lendo o `/maps` do `map-storage`, que o `admin-api` ainda não
+consome: hoje ele só conhece o `PUBLIC_MAP_STORAGE_URL` para montar o `wamUrl` do `/api/map`.
 
-1. **A tabela de auditoria** — append-only: ator, ação, alvo, timestamp. Uma migration `drizzle-kit generate`, e o
-   ator já chega pronto em `req.adminMember` em cada handler do `AdminMembersController`.
-2. **O teste obrigatório #6** do ADR-0004: toda mutação escreve uma entrada nomeando o ator.
-3. **O e2e do Playwright**: login → conceder → a tag valendo no `play`. Lembrando que o `npx playwright` não funciona
-   aqui — invoque por node (ver Riscos).
+Duas perguntas a responder antes de escrever código:
 
-Depois disso, o G3.
+1. **Como o `admin-api` se autentica no `map-storage`?** O `map-storage` usa basic auth na UI dele e um bearer
+   (`MAP_STORAGE_API_TOKEN`) na API. O `play` recebe esse token; o `admin-api` não. Ou passa a receber, ou a visão de
+   salas é servida pelo front chamando o `map-storage` direto — e aí volta a questão de CORS que o ADR-0004 evitou.
+2. **A visão é só leitura?** O ADR diz "ver salas". Se virar edição, é outra fronteira de permissão e merece decisão
+   registrada.
+
+### Antes de qualquer uso real
+
+- **Modelo de ameaça STRIDE** (decisão #7 do ADR-0004): antecipado para *antes* do go-live, e ainda não escrito.
+- **HTTPS e `Secure` no cookie.** Já são automáticos quando o `ADMIN_API_PUBLIC_URL` começa com `https://`, mas
+  ninguém verificou isso num deploy de verdade.
+- **`ADMIN_API_SESSION_SECRET`** ainda é o padrão de desenvolvimento no `.env.template`.
 
 ---
 
