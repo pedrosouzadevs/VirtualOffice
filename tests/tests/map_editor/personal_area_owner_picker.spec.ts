@@ -19,6 +19,10 @@ import Menu from "../utils/menu";
 test.setTimeout(240_000);
 test.use({
     baseURL: map_storage_url,
+    // `resetWamMaps` uploads to map-storage, which enables basic authentication in docker-compose.yaml but not in
+    // docker-compose.e2e.yml. Supplying the development credentials makes this spec runnable against both stacks;
+    // they are ignored where authentication is off.
+    httpCredentials: { username: "john.doe", password: "password" },
 });
 
 test.describe("Personal area owner picker @oidc @nomobile @nowebkit", () => {
@@ -41,9 +45,11 @@ test.describe("Personal area owner picker @oidc @nomobile @nowebkit", () => {
         await page.getByTestId("accessClaimMode").selectOption({ label: "Static" });
 
         // Typing queries /api/members through the pusher on every keystroke.
-        await page.getByTestId("memberAutoCompleteInput").fill("john.doe");
+        await page.getByTestId("memberAutoCompleteInput").pressSequentially("john.doe", { delay: 120 });
 
-        await expect(page.getByText("john.doe@example.com")).toBeVisible();
+        // The option renders as the composed label "John Doe (john.doe@example.com)", so assert on the panel
+        // containing it rather than on the bare email as its own element.
+        await expect(page.locator(".map-editor .sidebar")).toContainText("john.doe@example.com");
     });
 
     test("offers nothing for a search that matches nobody @oidc", async ({ browser, request }) => {
@@ -59,6 +65,6 @@ test.describe("Personal area owner picker @oidc @nomobile @nowebkit", () => {
 
         await page.getByTestId("memberAutoCompleteInput").fill("nobody-by-this-name");
 
-        await expect(page.getByText("nobody-by-this-name@")).toBeHidden();
+        await expect(page.locator(".map-editor .sidebar")).not.toContainText("@example.com");
     });
 });

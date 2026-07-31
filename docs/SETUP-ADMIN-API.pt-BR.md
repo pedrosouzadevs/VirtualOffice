@@ -17,6 +17,16 @@ e como voltar atrás.
 
 - Docker e Docker Compose.
 - Um `.env` na raiz do repositório: `cp .env.template .env`. Os valores padrão já apontam o `play` para o `admin-api`.
+- **No Windows**, uma linha no `C:\Windows\System32\drivers\etc\hosts` (exige privilégio de administrador), junto das
+  entradas que os outros serviços já têm:
+
+  ```
+  127.0.0.1 admin-api.workadventure.localhost
+  ```
+
+  Navegadores e o `curl` resolvem `*.localhost` por conta própria, então a aplicação funciona sem ela. O Node não
+  resolve, então a suíte de ponta a ponta e qualquer script que use `fetch` falham com `ENOTFOUND` até a linha
+  existir. Resolvedores Linux tratam `*.localhost` nativamente, e por isso a CI não precisa de nada.
 
 ## O que é provisionado
 

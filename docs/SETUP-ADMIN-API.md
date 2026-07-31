@@ -17,6 +17,16 @@ rolling back.
 
 - Docker and Docker Compose.
 - A `.env` at the repository root: `cp .env.template .env`. The defaults already point `play` at `admin-api`.
+- **On Windows**, one line in `C:\Windows\System32\drivers\etc\hosts` (needs administrator rights), alongside the
+  entries the other services already have:
+
+  ```
+  127.0.0.1 admin-api.workadventure.localhost
+  ```
+
+  Browsers and `curl` resolve `*.localhost` on their own, so the app works without it. Node does not, so the
+  end-to-end suite and any script using `fetch` fail with `ENOTFOUND` until the line is there. Linux resolvers
+  handle `*.localhost` natively, which is why CI needs nothing.
 
 ## What gets provisioned
 

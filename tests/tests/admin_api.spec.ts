@@ -49,9 +49,10 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
         // alice.doe@example.com. She has a "member" tag in the OIDC claim, which is now ignored, and no member row.
         await using page = await getPage(browser, "Member1", Map.url("empty"));
 
-        await Menu.openMapMenu(page);
-
-        await expect(page.getByText("Map editor")).toBeHidden();
+        // The whole map menu is gated on `mapMenuVisibleStore` (MapSubMenu.svelte), so a user without map rights has
+        // no menu to open at all — asserting on its contents would just time out waiting for a button that is never
+        // rendered.
+        await expect(page.getByTestId("map-menu")).toBeHidden();
     });
 
     test("member search answers with the bootstrapped administrator @oidc", async ({ request }) => {
