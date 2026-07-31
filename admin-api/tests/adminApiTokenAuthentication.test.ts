@@ -4,11 +4,16 @@ import { closeStartedServers, serveTestApp, TEST_ADMIN_API_TOKEN } from "./helpe
 afterEach(closeStartedServers);
 
 /**
- * `/api/capabilities` is deliberately public, so a guarded route is needed to exercise the guard. Any unknown path
- * under `/api` reaches the middleware before Express can 404 it, which is precisely the "protected by default"
- * property we want to prove.
+ * A real, mounted endpoint, used to prove the guard actually protects the endpoints that matter.
+ * (`/api/capabilities` cannot serve here: it is deliberately public.)
  */
 const GUARDED_PATH = "/api/room/access";
+
+/**
+ * A path with no handler behind it. Requests still reach the middleware first, which is precisely the "protected by
+ * default" property worth proving: an endpoint added later is guarded before anyone remembers to guard it.
+ */
+const UNMOUNTED_PATH = "/api/never/implemented";
 
 describe("adminApiTokenAuthentication", () => {
     it("rejects a request with no Authorization header", async () => {
@@ -50,18 +55,30 @@ describe("adminApiTokenAuthentication", () => {
         expect(response.status).toBe(403);
     });
 
-    it("lets the raw token through, and the request falls to the 404 handler rather than the guard", async () => {
+    it("lets the raw token through to an unmounted path, which then falls to the 404 handler", async () => {
         const url = await serveTestApp();
 
-        const response = await fetch(`${url}${GUARDED_PATH}`, {
+        const response = await fetch(`${url}${UNMOUNTED_PATH}`, {
             headers: { Authorization: TEST_ADMIN_API_TOKEN },
         });
 
-        // 404, not 403: authentication passed and no handler is mounted here yet (it arrives in P0/E5).
+        // 404, not 403: authentication passed and there is simply no handler here.
         expect(response.status).toBe(404);
         // JSON, not Express's default HTML: the pusher parses every response with zod.
         expect(response.headers.get("content-type")).toContain("application/json");
         expect(await response.json()).toMatchObject({ status: "error", code: "ADMIN_API_NOT_FOUND" });
+    });
+
+    it("lets the raw token through to a real endpoint, which then handles the request itself", async () => {
+        const url = await serveTestApp();
+
+        // No query parameters, so the endpoint's own validation answers 400 — proof the guard let it through
+        // rather than short-circuiting with 403.
+        const response = await fetch(`${url}${GUARDED_PATH}`, {
+            headers: { Authorization: TEST_ADMIN_API_TOKEN },
+        });
+
+        expect(response.status).toBe(400);
     });
 
     it("guards any new endpoint under /api by default", async () => {

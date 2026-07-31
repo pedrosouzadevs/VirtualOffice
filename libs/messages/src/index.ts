@@ -9,6 +9,7 @@ export * from "./JsonMessages/CapabilitiesData";
 export * from "./JsonMessages/CompanionTextures";
 export * from "./JsonMessages/ChatData";
 export * from "./JsonMessages/ErrorApiData";
+export * from "./JsonMessages/FetchMemberDataByUuidResponse";
 export * from "./JsonMessages/MapDetailsData";
 export * from "./JsonMessages/MetaTagFavicon";
 export * from "./JsonMessages/MetaTagManifestIcon";

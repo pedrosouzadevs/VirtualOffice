@@ -14,4 +14,7 @@ export const SUPPORTED_CAPABILITIES: Capabilities = {
     // Backed by WokaListController. Declared so the pusher takes its catalogue from the same file we validate
     // character textures against on /api/room/access — see ADR-0002, Trap #3.
     "api/woka/list": "v1",
+    // Same reasoning for companions: /api/room/access resolves companionTextureId, so serving the list from a
+    // different copy would bounce users back to companion selection with no way through.
+    "api/companion/list": "v1",
 };

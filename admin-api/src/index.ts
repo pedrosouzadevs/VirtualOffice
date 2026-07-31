@@ -3,7 +3,19 @@ import {
     ADMIN_API_DATABASE_URL,
     ADMIN_API_PORT,
     ADMIN_API_TOKEN,
+    ADMIN_API_WORLD_NAME,
     BYPASS_PWA,
+    CARDS_ENABLED,
+    ENABLE_MAP_EDITOR,
+    ERASER_ENABLED,
+    EXCALIDRAW_ENABLED,
+    GOOGLE_DOCS_ENABLED,
+    GOOGLE_DRIVE_ENABLED,
+    GOOGLE_SHEETS_ENABLED,
+    GOOGLE_SLIDES_ENABLED,
+    KLAXOON_ENABLED,
+    TLDRAW_ENABLED,
+    YOUTUBE_ENABLED,
     DEFAULT_WOKA_NAME,
     DEFAULT_WOKA_TEXTURE,
     DISABLE_ANONYMOUS,
@@ -31,6 +43,7 @@ import {
     SKIP_CAMERA_PAGE,
     START_ROOM_URL,
 } from "./Enum/EnvironmentVariable";
+import { buildApplications } from "./Application/ApplicationsCatalogue";
 import { bootstrapAdmin } from "./Application/BootstrapAdminService";
 import type { MapDetailsConfiguration } from "./Application/MapDetailsService";
 import { createDatabaseConnection } from "./Infrastructure/Database/connection";
@@ -92,6 +105,24 @@ async function start(): Promise<void> {
     const app = createServer({
         adminApiToken: ADMIN_API_TOKEN,
         mapDetailsConfiguration,
+        roomAccessConfiguration: {
+            enableMapEditor: ENABLE_MAP_EDITOR,
+            worldName: ADMIN_API_WORLD_NAME,
+            recordingConfigured,
+            applications: buildApplications({
+                klaxoon: KLAXOON_ENABLED,
+                youtube: YOUTUBE_ENABLED,
+                googleDrive: GOOGLE_DRIVE_ENABLED,
+                googleDocs: GOOGLE_DOCS_ENABLED,
+                googleSheets: GOOGLE_SHEETS_ENABLED,
+                googleSlides: GOOGLE_SLIDES_ENABLED,
+                eraser: ERASER_ENABLED,
+                excalidraw: EXCALIDRAW_ENABLED,
+                cards: CARDS_ENABLED,
+                tldraw: TLDRAW_ENABLED,
+            }),
+        },
+        memberRepository,
         readinessChecks: [new PostgresReadinessCheck(connection.sql)],
     });
 

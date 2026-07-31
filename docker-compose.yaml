@@ -378,6 +378,21 @@ services:
       PROVIDE_DEFAULT_WOKA_TEXTURE: "$PROVIDE_DEFAULT_WOKA_TEXTURE"
       OPENID_WOKA_NAME_POLICY: "${OPENID_WOKA_NAME_POLICY:-}"
       OPID_WOKA_NAME_POLICY: "$OPID_WOKA_NAME_POLICY"
+      # Global kill switch for the map editor. MAP_EDITOR_ALLOW_ALL_USERS is deliberately NOT passed: once
+      # ADMIN_API_URL is set the pusher stops forwarding OIDC tags, so canEdit must come from our database.
+      ENABLE_MAP_EDITOR: "$ENABLE_MAP_EDITOR"
+      ADMIN_API_WORLD_NAME: "${ADMIN_API_WORLD_NAME:-localWorld}"
+      # Integrations, one entry each in the "applications" array of /api/room/access.
+      KLAXOON_ENABLED: "$KLAXOON_ENABLED"
+      YOUTUBE_ENABLED: "$YOUTUBE_ENABLED"
+      GOOGLE_DRIVE_ENABLED: "$GOOGLE_DRIVE_ENABLED"
+      GOOGLE_DOCS_ENABLED: "$GOOGLE_DOCS_ENABLED"
+      GOOGLE_SHEETS_ENABLED: "$GOOGLE_SHEETS_ENABLED"
+      GOOGLE_SLIDES_ENABLED: "$GOOGLE_SLIDES_ENABLED"
+      ERASER_ENABLED: "$ERASER_ENABLED"
+      EXCALIDRAW_ENABLED: "$EXCALIDRAW_ENABLED"
+      CARDS_ENABLED: "$CARDS_ENABLED"
+      TLDRAW_ENABLED: "$TLDRAW_ENABLED"
       # Hardcoded to the very values the "play" service above uses. These are NOT in .env, so interpolating them
       # would yield empty strings here and enableMatrixChat would be false for us and true for play.
       MATRIX_API_URI: http://synapse:8008/

@@ -59,6 +59,6 @@ describe("GET /api/capabilities", () => {
     it("only declares capabilities backed by an implemented endpoint", () => {
         // Guards against the reverse failure: declaring a capability routes real pusher traffic to an endpoint that
         // may not exist yet. Every key here must have a controller behind it.
-        expect(SUPPORTED_CAPABILITIES).toEqual({ "api/woka/list": "v1" });
+        expect(SUPPORTED_CAPABILITIES).toEqual({ "api/woka/list": "v1", "api/companion/list": "v1" });
     });
 });

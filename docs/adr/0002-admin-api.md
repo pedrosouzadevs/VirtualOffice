@@ -92,6 +92,20 @@ Optional: `username`, `companionTexture`, `userRoomToken`, `activatedInviteUser`
 
 Note the irony: **`canEdit` is optional in the schema** (`z.boolean().nullable().optional()`) and yet it is the field that **unlocks the map editor** — where tag management becomes a practical effect. Omitting it is silently falsy, which is exactly the bug we would ship without noticing.
 
+#### `userUuid` must echo the identifier, not our internal id (verified 2026-07-30)
+
+Returning `member.id` here would look like the tidy thing to do. It would **break F4**, which is already shipped.
+
+The chain: `ConnectionManager` builds the front's local user from this field (`new LocalUser(data.userUuid, data.email)`), and the map editor writes that value into `personalAreaPropertyData.ownerId` when someone claims a personal area ([`MapEditorModeManager.ts:557`](../../play/src/front/Phaser/Game/MapEditor/MapEditorModeManager.ts)). Every area claimed so far therefore holds the **email**. Switch `userUuid` to an internal uuid and every one of them is orphaned — nobody owns their office any more.
+
+Decision #5 says the same thing from the other side: the internal primary key is **never** an external identifier. It stays inside the database.
+
+#### The pusher stops sending OIDC tags
+
+`AdminApi.fetchMemberDataByUuid` accepts a `tags` argument but **does not put it in the query string** ([`AdminApi.ts:419`](../../play/src/pusher/services/AdminApi.ts)). So from the moment `ADMIN_API_URL` is set, tags come from us and nowhere else — which is precisely the point of the feature, and also why `canEdit` must **not** honour `MAP_EDITOR_ALLOW_ALL_USERS` or `MAP_EDITOR_ALLOWED_USERS`. Reproducing them would put authorisation back into an environment variable nobody can change through a screen. `ENABLE_MAP_EDITOR` is still honoured: it is a global kill switch, not an authorisation rule.
+
+> ⚠️ **Migration consequence:** on the day `ADMIN_API_URL` is switched on, anyone who had `admin`/`editor` through the OIDC claim but has no member row loses map-editor access until they are granted it. That is what the bootstrap of decision #6 exists for.
+
 **`/api/map`** → `MapDetailsData`, **or** `RoomRedirect` (`{ redirectUrl }`), **or** `ErrorApiData`.
 
 `MapDetailsData` requires **exactly one** field: `group` (`z.string().nullable()`, so `null` passes) — [`MapDetailsData.ts:163`](../../libs/messages/src/JsonMessages/MapDetailsData.ts). Every other field is `.optional()`, and since the object is not `.strict()`, unknown keys are dropped. The "~45 fields" figure describes the surface of the type, not the obligation.
@@ -218,6 +232,8 @@ Why this does not become a trap: `world` stays part of the response from day one
 ### Mandatory tests
 
 1. **Contract test** per endpoint: the response validates against the very same `zod` schema the pusher uses (`isCapabilities`, `isMapDetailsData`, `isRoomRedirect`, `isFetchMemberDataByUuidResponse`, `wokaList`). *Reuse the schemas from `@workadventure/messages` — do not retype them.*
+
+   > ⚠️ This was **not possible as written** (found 2026-07-30). Only `isMapDetailsData` lived in `@workadventure/messages`; the `/api/room/access` schema lived in `play/src/pusher/services/AdminApi.ts`, a module that validates `play`'s whole environment on import and calls `process.exit(1)` when it fails. It has been moved to [`libs/messages/src/JsonMessages/FetchMemberDataByUuidResponse.ts`](../../libs/messages/src/JsonMessages/FetchMemberDataByUuidResponse.ts) and re-exported from `AdminApi.ts`, so **no import site in `play` changed** and both sides of the contract now share one definition. There was precedent: `libs/shared-utils/src/SharedAdminApi.ts` already shares Admin API code with `back`.
 2. End-to-end login with `ADMIN_API_URL` on.
 3. `canEdit` true/false according to the member's tags.
 4. **`/api/capabilities` answers `200` even with no capability at all** (`{}` is a valid body). ⚠️ *This replaces the original test #4 — "a 404 does not take `play` down" — which asserted a behaviour that does not exist: a 404 hangs the pusher (Trap #2).*

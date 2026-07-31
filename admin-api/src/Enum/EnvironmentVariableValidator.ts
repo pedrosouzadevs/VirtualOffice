@@ -119,6 +119,35 @@ export const EnvironmentVariables = z.object({
     MATRIX_ADMIN_PASSWORD: optionalString(),
     MATRIX_DOMAIN: optionalString(),
 
+    // --- Room access ---------------------------------------------------------------------------------------------
+
+    /**
+     * Global kill switch for the map editor. Still honoured: when the feature is off, no tag may turn `canEdit` on.
+     *
+     * Note that `MAP_EDITOR_ALLOW_ALL_USERS` and `MAP_EDITOR_ALLOWED_USERS` are deliberately **not** read here. The
+     * pusher stops forwarding OIDC tags once `ADMIN_API_URL` is set, so authorisation is ours alone and must come
+     * from the database — that is the whole point of the feature (ADR-0002).
+     */
+    ENABLE_MAP_EDITOR: boolOrDefault(true),
+
+    /** Returned verbatim in the `world` field. Fixed in P0 (ADR-0002, decision #7). */
+    ADMIN_API_WORLD_NAME: z
+        .string()
+        .optional()
+        .transform((value) => (value === undefined || value.trim() === "" ? "localWorld" : value)),
+
+    // Integrations. Each maps to one entry in the `applications` array of /api/room/access.
+    KLAXOON_ENABLED: boolOrDefault(false),
+    YOUTUBE_ENABLED: boolOrDefault(false),
+    GOOGLE_DRIVE_ENABLED: boolOrDefault(false),
+    GOOGLE_DOCS_ENABLED: boolOrDefault(false),
+    GOOGLE_SHEETS_ENABLED: boolOrDefault(false),
+    GOOGLE_SLIDES_ENABLED: boolOrDefault(false),
+    ERASER_ENABLED: boolOrDefault(false),
+    EXCALIDRAW_ENABLED: boolOrDefault(false),
+    CARDS_ENABLED: boolOrDefault(false),
+    TLDRAW_ENABLED: boolOrDefault(false),
+
     // Recording: the button is shown only when the whole S3 target is configured, matching LocalAdmin.
     LIVEKIT_RECORDING_S3_ENDPOINT: optionalString(),
     LIVEKIT_RECORDING_S3_BUCKET: optionalString(),

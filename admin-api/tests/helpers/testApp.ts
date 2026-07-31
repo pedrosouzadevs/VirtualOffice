@@ -1,5 +1,8 @@
 import type { Express } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
+import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
+import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
+import { normalizeEmail, type Member } from "../../src/Domain/Member";
 import { createServer, type ServerDependencies } from "../../src/api/server";
 import { startTestServer, type TestServer } from "./testServer";
 
@@ -31,6 +34,42 @@ export const TEST_MAP_DETAILS_CONFIGURATION: MapDetailsConfiguration = {
     recordingConfigured: false,
 };
 
+export const TEST_ROOM_ACCESS_CONFIGURATION: RoomAccessConfiguration = {
+    enableMapEditor: true,
+    worldName: "localWorld",
+    recordingConfigured: false,
+    applications: [],
+};
+
+/**
+ * Minimal repository stub: the tests that matter here are about the HTTP contract and the tag rules, not about SQL.
+ * The database behaviour is covered against a real Postgres in `tests/integration`.
+ */
+export class StubMemberRepository implements MemberRepository {
+    constructor(private readonly known: readonly Member[] = []) {}
+
+    findByEmail(email: string): Promise<Member | undefined> {
+        return Promise.resolve(this.known.find((member) => member.email === normalizeEmail(email)));
+    }
+
+    ensureMember(): Promise<Member> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
+    ensureTag(): Promise<{ id: string; name: string }> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
+    grantTag(): Promise<void> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+}
+
+/** Builds a member with sensible defaults so a test only states what it cares about. */
+export function testMember(email: string, tags: string[] = [], username: string | null = null): Member {
+    return { id: `id-${email}`, email: normalizeEmail(email), oidcSub: null, username, tags };
+}
+
 /**
  * Servers started by the current test file, torn down by {@link closeStartedServers}.
  *
@@ -48,6 +87,8 @@ export async function serveTestApp(overrides: Partial<ServerDependencies> = {}):
     const app: Express = createServer({
         adminApiToken: TEST_ADMIN_API_TOKEN,
         mapDetailsConfiguration: TEST_MAP_DETAILS_CONFIGURATION,
+        roomAccessConfiguration: TEST_ROOM_ACCESS_CONFIGURATION,
+        memberRepository: new StubMemberRepository(),
         ...overrides,
     });
     const server = await startTestServer(app);

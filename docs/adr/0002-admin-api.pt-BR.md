@@ -92,6 +92,20 @@ Opcionais: `username`, `companionTexture`, `userRoomToken`, `activatedInviteUser
 
 Repare na ironia: **`canEdit` é opcional no schema** (`z.boolean().nullable().optional()`) e ainda assim é o campo que **libera o editor de mapa** — onde a gestão de tags vira efeito prático. Omiti-lo resulta em falso silencioso, que é exatamente o bug que enviaríamos sem perceber.
 
+#### O `userUuid` precisa ecoar o identificador, não o nosso id interno (verificado em 2026-07-30)
+
+Devolver o `member.id` aqui pareceria a coisa organizada a fazer. E **quebraria o F4**, que já está entregue.
+
+A cadeia: o `ConnectionManager` monta o usuário local do front a partir deste campo (`new LocalUser(data.userUuid, data.email)`), e o editor de mapa grava esse valor no `personalAreaPropertyData.ownerId` quando alguém reivindica uma área pessoal ([`MapEditorModeManager.ts:557`](../../play/src/front/Phaser/Game/MapEditor/MapEditorModeManager.ts)). Toda área já reivindicada guarda, portanto, o **e-mail**. Troque o `userUuid` por um uuid interno e todas elas ficam órfãs — ninguém mais é dono do próprio escritório.
+
+A decisão #5 diz o mesmo pelo outro lado: a chave primária interna **nunca** é um identificador externo. Ela fica dentro do banco.
+
+#### O pusher deixa de enviar as tags do OIDC
+
+O `AdminApi.fetchMemberDataByUuid` aceita um argumento `tags` mas **não o coloca na query string** ([`AdminApi.ts:419`](../../play/src/pusher/services/AdminApi.ts)). Ou seja, a partir do momento em que `ADMIN_API_URL` é definido, as tags vêm de nós e de mais ninguém — que é justamente o objetivo da feature, e também o motivo de o `canEdit` **não** honrar `MAP_EDITOR_ALLOW_ALL_USERS` nem `MAP_EDITOR_ALLOWED_USERS`. Reproduzi-los devolveria a autorização para uma variável de ambiente que ninguém muda por tela. O `ENABLE_MAP_EDITOR` continua valendo: ele é chave geral, não regra de autorização.
+
+> ⚠️ **Consequência de migração:** no dia em que o `ADMIN_API_URL` for ligado, quem tinha `admin`/`editor` pela claim OIDC mas não tem registro de membro perde o acesso ao editor até receber a tag. É para isso que existe o bootstrap da decisão #6.
+
 **`/api/map`** → `MapDetailsData`, **ou** `RoomRedirect` (`{ redirectUrl }`), **ou** `ErrorApiData`.
 
 O `MapDetailsData` exige **exatamente um** campo: `group` (`z.string().nullable()`, ou seja, `null` passa) — [`MapDetailsData.ts:163`](../../libs/messages/src/JsonMessages/MapDetailsData.ts). Todos os demais são `.optional()`, e como o objeto não é `.strict()`, chaves desconhecidas são descartadas. O número "~45 campos" descreve a superfície do tipo, não a obrigação.
@@ -218,6 +232,8 @@ Como isso não vira armadilha: `world` continua sendo um campo da resposta desde
 ### Testes obrigatórios
 
 1. **Teste de contrato** por endpoint: a resposta valida contra o mesmo schema `zod` que o pusher usa (`isCapabilities`, `isMapDetailsData`, `isRoomRedirect`, `isFetchMemberDataByUuidResponse`, `wokaList`). *Reusar os schemas de `@workadventure/messages` — não redigitar.*
+
+   > ⚠️ Isso **não era possível como estava escrito** (descoberto em 2026-07-30). Só o `isMapDetailsData` morava em `@workadventure/messages`; o schema do `/api/room/access` vivia em `play/src/pusher/services/AdminApi.ts`, um módulo que valida o ambiente inteiro do `play` no import e chama `process.exit(1)` quando falha. Ele foi movido para [`libs/messages/src/JsonMessages/FetchMemberDataByUuidResponse.ts`](../../libs/messages/src/JsonMessages/FetchMemberDataByUuidResponse.ts) e re-exportado do `AdminApi.ts`, de modo que **nenhum import do `play` mudou** e os dois lados do contrato passam a compartilhar uma definição só. Havia precedente: o `libs/shared-utils/src/SharedAdminApi.ts` já compartilha código da Admin API com o `back`.
 2. Login ponta a ponta com `ADMIN_API_URL` ligado.
 3. `canEdit` verdadeiro/falso conforme as tags do membro.
 4. **`/api/capabilities` responde `200` mesmo sem capability alguma** (`{}` é corpo válido). ⚠️ *Isto substitui o teste #4 original — "404 não derruba o `play`" — que afirmava um comportamento inexistente: um 404 pendura o pusher (Armadilha #2).*
