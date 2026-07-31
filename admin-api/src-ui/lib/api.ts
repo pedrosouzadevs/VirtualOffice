@@ -97,6 +97,55 @@ export function listTags(): Promise<string[]> {
     return request<string[]>("/tags");
 }
 
+/** A room, as `/admin/api/rooms` describes it. */
+export interface Room {
+    readonly path: string;
+    readonly roomUrl: string;
+    readonly wamUrl: string;
+    readonly name: string;
+    readonly description?: string;
+    readonly thumbnail?: string;
+}
+
+/**
+ * The world's rooms.
+ *
+ * Fails with `ADMIN_ROOMS_UNAVAILABLE` when `map-storage` is unreachable and `ADMIN_ROOMS_NOT_CONFIGURED` when this
+ * deployment never said where it is. The screen tells those apart, because one is an outage and the other is a
+ * setting nobody filled in.
+ */
+export function listRooms(): Promise<Room[]> {
+    return request<Room[]>("/rooms");
+}
+
+/** A personal area's ownership, as `/admin/api/rooms/{path}/areas` describes it. */
+export interface PersonalAreaDetails {
+    /** The owner's email — what the map stores — or `null` when nobody has claimed the area. */
+    readonly ownerId: string | null;
+    readonly ownerName: string | null;
+    /** True when the email has no member row: usually an area claimed before the Admin API was switched on. */
+    readonly ownerUnknown: boolean;
+    readonly allowedTags: string[];
+    readonly accessClaimMode?: string;
+}
+
+/** An area drawn inside a map: a personal desk, a silent zone, a meeting spot. */
+export interface Area {
+    readonly id: string;
+    readonly name: string;
+    /** The raw property types the area carries, e.g. `silent`, `livekitRoomProperty`. */
+    readonly kinds: string[];
+    readonly personal?: PersonalAreaDetails;
+}
+
+/** The areas inside one map. `path` is the room's path, slashes and all. */
+export function listAreas(path: string): Promise<Area[]> {
+    // Each segment encoded separately: the slashes are part of the route, the rest of the path is data.
+    const encoded = path.split("/").map(encodeURIComponent).join("/");
+
+    return request<Area[]>(`/rooms/${encoded}/areas`);
+}
+
 /**
  * Grants a tag, creating the member and the tag if either is new.
  *

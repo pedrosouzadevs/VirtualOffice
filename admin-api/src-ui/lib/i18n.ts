@@ -46,6 +46,30 @@ const en = {
     selfRevokeWarning:
         "You are removing your own “admin” tag. You will lose access on your next action. Restarting admin-api restores it.",
     confirm: "Continue",
+
+    tabMembers: "Members",
+    tabRooms: "Rooms",
+
+    columnRoom: "Room",
+    columnAddress: "Address",
+    noRooms: "No rooms yet.",
+    openRoom: "Open",
+    roomsUnavailable: "The room list could not be read. map-storage may be starting or unreachable.",
+    roomsNotConfigured: "The room list is not configured on this deployment.",
+
+    viewAreas: "Areas",
+    backToRooms: "All rooms",
+    columnArea: "Area",
+    columnAreaType: "Type",
+    columnOwner: "Owner",
+    noAreas: "This map has no areas drawn in it.",
+    areasUnavailable: "This map could not be read.",
+    unclaimed: "Unclaimed",
+    unknownOwner: "Unknown — no member with this address",
+    allowedTags: "May be claimed by: {tags}",
+    areaTypePersonal: "Personal",
+    areaTypeSilent: "Silent",
+    areaTypeMeeting: "Meeting",
 } as const;
 
 export type Messages = Record<keyof typeof en, string>;
@@ -87,6 +111,30 @@ const ptBR: Messages = {
     selfRevokeWarning:
         "Você está removendo a sua própria tag “admin”. Vai perder o acesso na próxima ação. Reiniciar o admin-api restaura.",
     confirm: "Continuar",
+
+    tabMembers: "Membros",
+    tabRooms: "Salas",
+
+    columnRoom: "Sala",
+    columnAddress: "Endereço",
+    noRooms: "Nenhuma sala ainda.",
+    openRoom: "Abrir",
+    roomsUnavailable: "Não foi possível ler a lista de salas. O map-storage pode estar subindo ou inacessível.",
+    roomsNotConfigured: "A lista de salas não está configurada neste ambiente.",
+
+    viewAreas: "Áreas",
+    backToRooms: "Todas as salas",
+    columnArea: "Área",
+    columnAreaType: "Tipo",
+    columnOwner: "Dono",
+    noAreas: "Este mapa não tem áreas desenhadas.",
+    areasUnavailable: "Não foi possível ler este mapa.",
+    unclaimed: "Sem dono",
+    unknownOwner: "Desconhecido — nenhum membro com este endereço",
+    allowedTags: "Pode ser reivindicada por: {tags}",
+    areaTypePersonal: "Pessoal",
+    areaTypeSilent: "Silenciosa",
+    areaTypeMeeting: "Reunião",
 };
 
 const catalogues: Record<string, Messages> = { en, "pt-BR": ptBR };

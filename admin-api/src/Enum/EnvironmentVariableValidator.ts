@@ -130,6 +130,14 @@ export const EnvironmentVariables = z.object({
         .optional()
         .transform((value) => value ?? ""),
 
+    /**
+     * In-network address of map-storage, e.g. `http://map-storage:3000`.
+     *
+     * Only the dashboard's room list reads it (ADR-0004, G3). Optional: without it that one screen reports the
+     * catalogue as unavailable, and nothing else changes — `/api/*` never talks to map-storage.
+     */
+    INTERNAL_MAP_STORAGE_URL: optionalString(),
+
     // --- Map details payload -------------------------------------------------------------------------------------
 
     DISABLE_ANONYMOUS: boolOrDefault(false),

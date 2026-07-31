@@ -248,6 +248,9 @@ cookie `admin_csrf`, enviado no header `X-CSRF-Token`.
 | `/admin/api/members/{email}/tags` | POST | `{ "tag": "…" }` — concede; responde `{ member, createdTag }` |
 | `/admin/api/members/{email}/tags/{tag}` | DELETE | revoga; responde `{ member, wasHeld }` |
 | `/admin/api/tags` | GET | o catálogo de tags |
+| `/admin/api/rooms` | GET | os mapas do mundo, lidos do `map-storage` |
+| `/admin/api/rooms/{path}/areas` | GET | as áreas dentro de um mapa, com o dono das áreas pessoais resolvido |
+| `/admin/api/audit` | GET | o log de auditoria; `?target=<email>&limit=<n>` |
 
 Três comportamentos são deliberados e compartilhados com a CLI, porque os dois chamam o mesmo serviço de Application:
 
@@ -268,6 +271,30 @@ await fetch('/admin/api/members/someone@example.com/tags', {
   body: JSON.stringify({ tag: 'editor' }),
 }).then(r => r.json());
 ```
+
+### Salas e suas áreas (G3)
+
+A aba **Salas** lista os mapas do mundo, e cada um abre no que está desenhado dentro dele: mesas pessoais, áreas
+silenciosas, salas de reunião. É esse o ponto da tela — o dono de uma área pessoal vive dentro do arquivo `.wam` e é
+invisível fora do editor de mapas, e "de quem é aquela mesa" é justamente a pergunta com que se chega aqui.
+
+Uma área pessoal mostra o **e-mail** do dono, porque é literalmente o que o mapa guarda em
+`personalAreaPropertyData.ownerId` — o mesmo valor que o `/api/room/access` devolve como `userUuid` (ADR-0002,
+invariante #2). Três estados são distinguidos de propósito:
+
+| Mostrado | Significa |
+|---|---|
+| um e-mail, com nome embaixo | reivindicada, e temos registro de membro para o dono |
+| um e-mail, marcado *desconhecido* | reivindicada por um endereço sem registro de membro — em geral antes de a Admin API ser ligada |
+| *Sem dono* | ninguém reivindicou a área ainda |
+
+O `INTERNAL_MAP_STORAGE_URL` é toda a configuração necessária: o `GET /maps` e os arquivos `.wam` do `map-storage`
+**não têm autenticação**, a mesma chamada que o `play` faz pelo `LocalAdmin`. Vale saber em vez de supor — a lista de
+salas é legível por qualquer coisa na rede Docker, o que é decisão do map-storage e não algo que este serviço possa
+apertar. O que o dashboard acrescenta é que *a cópia dele* fica atrás da barreira de sessão.
+
+Só leitura. Editar mapa é trabalho do editor de mapas, e uma escrita aqui seria um segundo lugar capaz de alterar um
+mapa, com outras regras e outra história de auditoria.
 
 ### O log de auditoria (G4)
 

@@ -5,6 +5,7 @@ import express, { type Express, type NextFunction, type Request, type RequestHan
 import type { AdminDashboardConfiguration } from "../Application/AdminDashboardConfiguration";
 import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
 import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
+import type { RoomCatalogue } from "../Application/Ports/RoomCatalogue";
 import { CompanionCatalogue } from "../Application/CompanionCatalogue";
 import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
@@ -23,6 +24,7 @@ import { WokaListController } from "./controllers/WokaListController";
 import { AdminAuditController } from "./controllers/AdminAuditController";
 import { AdminAuthController } from "./controllers/AdminAuthController";
 import { AdminMembersController } from "./controllers/AdminMembersController";
+import { AdminRoomsController } from "./controllers/AdminRoomsController";
 import { AdminTagsController } from "./controllers/AdminTagsController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
 import { adminSessionAuthentication } from "./middlewares/adminSessionAuthentication";
@@ -91,6 +93,13 @@ export interface AdminDashboardDependencies {
 
     /** Where every mutation the dashboard makes is written (ADR-0004, decision #5). */
     readonly auditLog: AuditLogRepository;
+
+    /**
+     * The world's rooms, read from `map-storage` (ADR-0004, G3).
+     *
+     * Absent when `INTERNAL_MAP_STORAGE_URL` is unset — that one screen then says so, and nothing else changes.
+     */
+    readonly rooms?: RoomCatalogue;
 
     /** Overridable so the sliding-window and absolute-cap tests can drive the clock. */
     readonly now?: () => Date;
@@ -161,6 +170,7 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
     new AdminMembersController(app, administration);
     new AdminTagsController(app, dependencies.tagRepository);
     new AdminAuditController(app, dashboard.auditLog);
+    new AdminRoomsController(app, dashboard.rooms, dependencies.memberRepository);
 
     mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
 }

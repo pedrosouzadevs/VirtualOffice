@@ -3,6 +3,7 @@ import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsSe
 import type { AuditLogRepository } from "../../src/Application/Ports/AuditLogRepository";
 import type { AuditEntry, RecordedAuditEntry } from "../../src/Domain/AuditEntry";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
+import type { RoomCatalogue } from "../../src/Application/Ports/RoomCatalogue";
 import type { TagRepository } from "../../src/Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
 import { normalizeEmail, type Member, type MemberSummary } from "../../src/Domain/Member";
@@ -345,6 +346,8 @@ export async function serveDashboardTestApp(
         rateLimit?: RequestHandler;
         /** A stand-in for `dist-ui`. Omitted means "the dashboard was never built", which must also work. */
         uiDirectory?: string;
+        /** Omitted means `INTERNAL_MAP_STORAGE_URL` is unset, which the rooms screen must report distinctly. */
+        rooms?: RoomCatalogue;
     } = {},
 ): Promise<DashboardTestApp> {
     // One catalogue behind both repositories: a tag created by a grant must be findable by the revoke that follows.
@@ -365,6 +368,7 @@ export async function serveDashboardTestApp(
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
             auditLog: audit,
+            rooms: options.rooms,
             now: () => now,
             rateLimit: options.rateLimit,
         },

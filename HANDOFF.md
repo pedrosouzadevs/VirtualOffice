@@ -110,7 +110,7 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
 | **G0** | Espinha de segurança: login OIDC, callback, cookie de sessão assinado, barreira da tag `admin`, `/admin/logout`, `GET /admin/me` | ✅ entregue |
 | **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1 | ✅ entregue |
 | **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui` | ✅ entregue |
-| **G3** | Visão de salas, lendo o `/maps` do `map-storage`. **Único item aberto da P2.** | pendente |
+| **G3** | Salas e as áreas dentro delas — donos das áreas pessoais, silenciosas, de reunião | ✅ entregue |
 | **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play` | ✅ entregue |
 
 **Os dez testes obrigatórios do ADR-0004 estão cobertos.** A dívida que o G1 abriu — mutações sem log — foi paga no
@@ -194,16 +194,7 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**G3 — a visão de salas**, e com ela a P2 fecha. Lendo o `/maps` do `map-storage`, que o `admin-api` ainda não
-consome: hoje ele só conhece o `PUBLIC_MAP_STORAGE_URL` para montar o `wamUrl` do `/api/map`.
-
-Duas perguntas a responder antes de escrever código:
-
-1. **Como o `admin-api` se autentica no `map-storage`?** O `map-storage` usa basic auth na UI dele e um bearer
-   (`MAP_STORAGE_API_TOKEN`) na API. O `play` recebe esse token; o `admin-api` não. Ou passa a receber, ou a visão de
-   salas é servida pelo front chamando o `map-storage` direto — e aí volta a questão de CORS que o ADR-0004 evitou.
-2. **A visão é só leitura?** O ADR diz "ver salas". Se virar edição, é outra fronteira de permissão e merece decisão
-   registrada.
+**A P2 está completa.** O que resta é a lista abaixo, e nada dela é código de feature.
 
 ### Antes de qualquer uso real
 

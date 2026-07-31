@@ -16,6 +16,7 @@ import {
     CARDS_ENABLED,
     ENABLE_MAP_EDITOR,
     ERASER_ENABLED,
+    INTERNAL_MAP_STORAGE_URL,
     EXCALIDRAW_ENABLED,
     GOOGLE_DOCS_ENABLED,
     GOOGLE_DRIVE_ENABLED,
@@ -55,6 +56,7 @@ import { resolveAdminDashboardConfiguration } from "./Application/AdminDashboard
 import { buildApplications } from "./Application/ApplicationsCatalogue";
 import { bootstrapAdmin } from "./Application/BootstrapAdminService";
 import type { MapDetailsConfiguration } from "./Application/MapDetailsService";
+import { MapStorageRoomCatalogue } from "./Infrastructure/MapStorage/MapStorageRoomCatalogue";
 import { OpenIdConnectAuthenticator } from "./Infrastructure/Oidc/OpenIdConnectAuthenticator";
 import { createDatabaseConnection } from "./Infrastructure/Database/connection";
 import { runMigrations } from "./Infrastructure/Database/migrate";
@@ -167,6 +169,10 @@ async function start(): Promise<void> {
                   configuration: dashboard.configuration,
                   authenticator: new OpenIdConnectAuthenticator(dashboard.configuration),
                   auditLog: new DrizzleAuditLogRepository(connection.db),
+                  rooms:
+                      INTERNAL_MAP_STORAGE_URL === undefined
+                          ? undefined
+                          : new MapStorageRoomCatalogue(INTERNAL_MAP_STORAGE_URL, PUBLIC_MAP_STORAGE_URL),
               }
             : undefined,
     });

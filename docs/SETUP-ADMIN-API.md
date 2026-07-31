@@ -247,6 +247,9 @@ Behind the barrier, so every call needs the session cookie, and every mutation a
 | `/admin/api/members/{email}/tags` | POST | `{ "tag": "…" }` — grants; answers `{ member, createdTag }` |
 | `/admin/api/members/{email}/tags/{tag}` | DELETE | revokes; answers `{ member, wasHeld }` |
 | `/admin/api/tags` | GET | the tag catalogue |
+| `/admin/api/rooms` | GET | the world's maps, read from `map-storage` |
+| `/admin/api/rooms/{path}/areas` | GET | the areas inside one map, with personal-area owners resolved |
+| `/admin/api/audit` | GET | the audit log; `?target=<email>&limit=<n>` |
 
 Three behaviours are deliberate and shared with the CLI, because both call the same Application service:
 
@@ -267,6 +270,30 @@ await fetch('/admin/api/members/someone@example.com/tags', {
   body: JSON.stringify({ tag: 'editor' }),
 }).then(r => r.json());
 ```
+
+### Rooms and their areas (G3)
+
+The **Rooms** tab lists the world's maps, and each one opens onto what is drawn inside it: personal desks, silent
+zones, meeting spots. That is the point of the screen — a personal area's owner lives in the `.wam` file and is
+invisible anywhere outside the map editor, yet "who owns that desk" is what an administrator arrives asking.
+
+A personal area shows the owner's **email**, because that is literally what the map stores in
+`personalAreaPropertyData.ownerId` — the same value `/api/room/access` returns as `userUuid` (ADR-0002, invariant
+#2). Three states are told apart on purpose:
+
+| Shown | Means |
+|---|---|
+| an email, with a name under it | claimed, and we have a member row for the owner |
+| an email, marked *unknown* | claimed by an address with no member row — usually claimed before the Admin API was switched on |
+| *Unclaimed* | nobody has taken the area yet |
+
+`INTERNAL_MAP_STORAGE_URL` is all the configuration this needs: `GET /maps` and the `.wam` files on `map-storage` are
+**unauthenticated**, the same call `play` makes from `LocalAdmin`. Worth knowing rather than assuming — the room list
+is readable by anything on the Docker network, which is map-storage's decision and not one this service can tighten.
+What the dashboard adds is that *its* copy sits behind the session barrier.
+
+Read-only. Editing a map is the map editor's job, and a write here would be a second place that can change a map,
+with different rules and a different audit story.
 
 ### The audit log (G4)
 

@@ -1,122 +1,51 @@
 <script lang="ts">
-    import MemberRow from "./MemberRow.svelte";
+    import MembersView from "./MembersView.svelte";
+    import RoomsView from "./RoomsView.svelte";
     import * as api from "./lib/api";
     import type { Member } from "./lib/api";
-    import { format, t } from "./lib/i18n";
+    import { t } from "./lib/i18n";
+
+    type Tab = "members" | "rooms";
 
     let me = $state<Member | null>(null);
-    let members = $state<Member[]>([]);
-    let knownTags = $state<string[]>([]);
-    let search = $state("");
-
-    let loading = $state(true);
-    let busy = $state(false);
     let error = $state<string | null>(null);
-    let warning = $state<string | null>(null);
 
-    /** Debounces the search so a query does not leave for every keystroke. */
-    let searchTimer: ReturnType<typeof setTimeout> | undefined;
+    /**
+     * Kept in the URL hash rather than in memory alone.
+     *
+     * No router for two screens: a hash costs five lines and buys the two things a router would — a reload stays on
+     * the screen you were looking at, and a link to the room list is a link somebody can send.
+     */
+    let tab = $state<Tab>(readTab());
 
-    async function load(): Promise<void> {
-        loading = true;
-        try {
-            [members, knownTags] = await Promise.all([api.listMembers(search), api.listTags()]);
-            error = null;
-        } catch (cause) {
-            error = describe(cause, t.loadFailed);
-        } finally {
-            loading = false;
-        }
+    function readTab(): Tab {
+        return typeof window !== "undefined" && window.location.hash === "#rooms" ? "rooms" : "members";
     }
 
-    /** Prefers the server's own explanation, falling back to ours when it did not give one. */
-    function describe(cause: unknown, fallback: string): string {
-        return cause instanceof api.ApiError && cause.message !== "" ? cause.message : fallback;
-    }
-
-    /** Replaces one row in place, so a mutation does not cost a full reload or move the row under the cursor. */
-    function replace(updated: Member): void {
-        members = members.map((member) => (member.email === updated.email ? updated : member));
-
-        if (me?.email === updated.email) {
-            me = updated;
-        }
-    }
-
-    async function runMutation(action: () => Promise<void>): Promise<void> {
-        busy = true;
-        try {
-            await action();
-        } finally {
-            busy = false;
-        }
-    }
-
-    function onGrant(email: string, tag: string): void {
-        void runMutation(async () => {
-            try {
-                const result = await api.grantTag(email, tag);
-
-                // A member who did not exist before is now in the list, so a plain replace would drop them.
-                if (members.some((member) => member.email === result.member.email)) {
-                    replace(result.member);
-                } else {
-                    members = [...members, result.member].sort((a, b) => a.email.localeCompare(b.email));
-                }
-
-                // Surfaced, not swallowed: tags are case-sensitive, so a freshly created one is usually a typo that
-                // grants nothing (ADR-0003).
-                warning = result.createdTag ? format(t.tagCreatedWarning, { tag }) : null;
-                error = null;
-                knownTags = await api.listTags();
-            } catch (cause) {
-                error = describe(cause, t.grantFailed);
-            }
-        });
-    }
-
-    function onRevoke(email: string, tag: string): void {
-        void runMutation(async () => {
-            try {
-                replace((await api.revokeTag(email, tag)).member);
-                error = null;
-            } catch (cause) {
-                error = describe(cause, t.revokeFailed);
-            }
-        });
-    }
-
-    function onRename(email: string, username: string | null): void {
-        void runMutation(async () => {
-            try {
-                replace((await api.setUsername(email, username)).member);
-                error = null;
-            } catch (cause) {
-                error = describe(cause, t.nameSaveFailed);
-            }
-        });
-    }
-
-    function onSearchInput(): void {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => void load(), 250);
+    function show(next: Tab): void {
+        tab = next;
+        window.location.hash = next === "rooms" ? "#rooms" : "";
     }
 
     $effect(() => {
-        // Identify the administrator first: `fetchMe` is what sends an expired session to the login, so nothing else
-        // has to handle that case on first paint.
+        // Identify the administrator first: `fetchMe` is what sends an expired session to the login, so no screen
+        // behind it has to handle that case on first paint.
         void api
             .fetchMe()
             .then((identity) => {
                 me = identity;
-                return load();
             })
             .catch((cause: unknown) => {
-                error = describe(cause, t.loadFailed);
-                loading = false;
+                error = cause instanceof api.ApiError ? cause.message : t.loadFailed;
             });
 
-        return () => clearTimeout(searchTimer);
+        const onHashChange = (): void => {
+            tab = readTab();
+        };
+
+        window.addEventListener("hashchange", onHashChange);
+
+        return () => window.removeEventListener("hashchange", onHashChange);
     });
 </script>
 
@@ -131,60 +60,58 @@
         {/if}
     </header>
 
-    {#if warning !== null}
-        <div class="banner warning" role="status">
-            <span>{warning}</span>
-            <button onclick={() => (warning = null)}>{t.dismiss}</button>
-        </div>
-    {/if}
+    <nav class="tabs" aria-label={t.appTitle}>
+        <button
+            class="tab"
+            class:active={tab === "members"}
+            aria-current={tab === "members"}
+            onclick={() => show("members")}
+        >
+            {t.tabMembers}
+        </button>
+        <button class="tab" class:active={tab === "rooms"} aria-current={tab === "rooms"} onclick={() => show("rooms")}>
+            {t.tabRooms}
+        </button>
+    </nav>
 
     {#if error !== null}
         <div class="banner error" role="alert">
             <span>{error}</span>
-            <button onclick={() => (error = null)}>{t.dismiss}</button>
         </div>
     {/if}
 
-    <div class="toolbar">
-        <div class="field">
-            <label for="search">{t.searchLabel}</label>
-            <input
-                id="search"
-                type="search"
-                bind:value={search}
-                oninput={onSearchInput}
-                placeholder={t.searchPlaceholder}
-            />
-        </div>
-        <button onclick={() => void load()} disabled={loading}>{t.refresh}</button>
-    </div>
-
-    {#if loading}
-        <div class="empty-state">{t.loading}</div>
-    {:else if members.length === 0}
-        <div class="empty-state">{search.trim() === "" ? t.noMembers : t.noMatches}</div>
+    {#if tab === "members"}
+        <MembersView {me} onMeChanged={(member) => (me = member)} />
     {:else}
-        <table>
-            <thead>
-                <tr>
-                    <th>{t.columnMember}</th>
-                    <th>{t.columnTags}</th>
-                    <th>{t.columnActions}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each members as member (member.email)}
-                    <MemberRow
-                        {member}
-                        {knownTags}
-                        {busy}
-                        isSelf={me?.email === member.email}
-                        {onGrant}
-                        {onRevoke}
-                        {onRename}
-                    />
-                {/each}
-            </tbody>
-        </table>
+        <RoomsView />
     {/if}
 </div>
+
+<style>
+    .tabs {
+        display: flex;
+        gap: 0.25rem;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+        border: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: transparent;
+        padding: 0.5rem 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .tab:hover:not(.active) {
+        color: var(--text);
+        border-bottom-color: var(--border);
+    }
+
+    .tab.active {
+        color: var(--text);
+        border-bottom-color: var(--accent);
+        font-weight: 600;
+    }
+</style>
