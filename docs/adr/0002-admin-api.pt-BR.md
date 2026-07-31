@@ -150,6 +150,11 @@ O `/api/capabilities` permite entregar **incrementalmente sem quebrar o `play`**
 
 Front próprio (Next.js), autenticado só para administradores, consumindo a API do `admin-api` — **não** os endpoints que o pusher usa.
 
+> ⚠️ **Parcialmente substituída pelo [ADR-0004](0004-admin-dashboard.pt-BR.md) (2026-07-31).** A metade "front
+> Next.js separado" é trocada por uma UI Svelte embutida no `admin-api`, seguindo o precedente do
+> `map-storage/src-ui` que este ADR não considerou. A metade "consome a nossa própria API, não os endpoints do
+> pusher" permanece, e o ADR-0004 a preserva.
+
 ### 4. Contrato antes de features
 
 O P0 é um "esqueleto que responde certo": os 3 endpoints bloqueantes servindo dados do Postgres, com o `play` funcionando ponta a ponta. Só então vêm membros/tags/UI.

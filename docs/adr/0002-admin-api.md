@@ -150,6 +150,10 @@ What we give up: divergence from the .NET reference stack, and no EF Core. **Bet
 
 Its own front (Next.js), authenticated for admins only, consuming `admin-api`'s own API — **not** the endpoints the pusher uses.
 
+> ⚠️ **Partly superseded by [ADR-0004](0004-admin-dashboard.md) (2026-07-31).** The "separate Next.js front" half is
+> replaced by a Svelte UI embedded in `admin-api`, following the `map-storage/src-ui` precedent this ADR did not
+> account for. The "consumes our own API, not the pusher's endpoints" half stands, and ADR-0004 keeps it.
+
 ### 4. Contract before features
 
 P0 is a "skeleton that answers correctly": the 3 blocking endpoints served from Postgres, with `play` working end to end. Only then members/tags/UI.

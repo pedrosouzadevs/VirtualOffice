@@ -295,5 +295,6 @@ Razão: o F4 foi confirmado **standalone** (propriedade na área, sem `admin-api
 ## Próximos artefatos
 
 - **ADR do F3** ✅ escrito: [ADR-0002](../adr/0002-admin-api.pt-BR.md) — contrato verificado, faseamento P0–P4, testes de contrato obrigatórios. **P0 entregue** (4 endpoints, Postgres, bootstrap idempotente, `play` ligado ponta a ponta).
-- **ADR da P1 do F3** ✅ escrito: [ADR-0003](../adr/0003-member-and-tag-management.pt-BR.md) — membros e tags, gestão por CLI, e por que o `api/save-name` não é declarado.
+- **ADR da P1 do F3** ✅ escrito: [ADR-0003](../adr/0003-member-and-tag-management.pt-BR.md) — membros e tags, gestão por CLI, e por que o `api/save-name` não é declarado. **P1 entregue.**
+- **ADR da P2 do F3** 📋 proposto: [ADR-0004](../adr/0004-admin-dashboard.pt-BR.md) — o dashboard. Revisa a decisão #3 do ADR-0002 (Svelte embutido, não front Next.js separado) e antecipa a autorização e o log de auditoria. Tem questões em aberto aguardando a equipe.
 - ADR do F1 quando a fila chegar nele.

@@ -295,5 +295,6 @@ Reason: F4 was confirmed **standalone** (ownership on the area, no `admin-api`) 
 ## Next artifacts
 
 - **F3 ADR** ✅ written: [ADR-0002](../adr/0002-admin-api.md) — verified contract, P0–P4 phasing, mandatory contract tests. **P0 delivered** (4 endpoints, Postgres, idempotent bootstrap, `play` wired end to end).
-- **F3 P1 ADR** ✅ written: [ADR-0003](../adr/0003-member-and-tag-management.md) — members and tags, CLI-based management, and why `api/save-name` stays undeclared.
+- **F3 P1 ADR** ✅ written: [ADR-0003](../adr/0003-member-and-tag-management.md) — members and tags, CLI-based management, and why `api/save-name` stays undeclared. **P1 delivered.**
+- **F3 P2 ADR** 📋 proposed: [ADR-0004](../adr/0004-admin-dashboard.md) — the dashboard. Revises ADR-0002's decision #3 (embedded Svelte, not a separate Next.js front) and moves authorisation and the audit log earlier. Has open questions awaiting the team.
 - F1 ADR when the queue reaches it.

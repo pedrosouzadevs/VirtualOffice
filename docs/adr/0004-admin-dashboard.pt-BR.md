@@ -1,0 +1,207 @@
+# ADR-0004: Dashboard de administração (Admin API, P2)
+
+- **Status:** Proposto
+- **Data:** 2026-07-31
+- **Decisores:** Equipe VirtualOffice
+- **Idiomas:** este arquivo (pt-BR) + [0004-admin-dashboard.md](0004-admin-dashboard.md) (en-US), em lockstep.
+- **Origem:** [ADR-0002](0002-admin-api.pt-BR.md), fase P2. Revisa a decisão #3 dele. Sucede o [ADR-0003](0003-member-and-tag-management.pt-BR.md).
+
+> Este ADR está **Proposto**, não Aceito: as decisões #1 a #4 são recomendações, e as *Questões em aberto* no fim
+> precisam da resposta da equipe antes de a implementação começar.
+
+## Contexto
+
+O P0 e o P1 estão entregues. As tags vivem no Postgres, o `canEdit` as segue, e a CLI do ADR-0003 acabou com o SQL na
+mão. Mas a CLI exige `docker compose exec` — ou seja, acesso ao shell do container, ou seja, gerir permissão continua
+sendo trabalho de quem programa.
+
+O P2 é o que termina a frase com que o roadmap começou: *"não consigo arrumar as tags"*. Não mais por falta de dado,
+e sim porque alterá-lo ainda não é algo que alguém sem terminal consiga fazer.
+
+Escopo: listar e buscar membros, conceder e revogar tags, definir nomes de exibição, e ver salas. Autenticado, e só
+para administradores.
+
+## Decisão 1 — UI Svelte embutida, não uma aplicação Next.js separada
+
+**Isto revisa a decisão #3 do [ADR-0002](0002-admin-api.pt-BR.md)**, que pedia um "front próprio (Next.js)".
+
+Aquela decisão foi tomada antes de alguém olhar o que o repositório já faz. O `map-storage` entrega
+[`src-ui/`](../../map-storage/src-ui): uma interface em **Svelte 5 + Vite**, construída por `vite build` e servida
+pelo mesmo serviço, roteada pelo Traefik sob um prefixo de caminho no host do próprio serviço. É exatamente o formato
+de que o P2 precisa, já funcionando, já no toolchain.
+
+O que preservamos da decisão #3: o dashboard consome a **API própria do `admin-api`**, nunca os endpoints que o
+pusher usa.
+
+| | Svelte embutido | Next.js separado |
+|---|---|---|
+| Unidades de deploy | 1 | 2 |
+| CORS | nenhum — mesma origem | necessário |
+| Superfícies de auth | 1 | 2, ou cookie de domínio compartilhado |
+| Toolchain | já está no repo | novo |
+| SSR | desnecessário atrás de login | seu principal atrativo, sem uso |
+
+O Next.js seria a resposta certa para um front público, relevante para SEO, de alto tráfego. Este é ferramenta
+interna atrás de login, usada por um punhado de pessoas.
+
+**O que abrimos mão:** se algum dia o dashboard precisar de deploy independente da API — escala diferente, time
+diferente — será preciso separar. **A aposta:** isso não acontece antes de o dashboard merecer, e um SPA Svelte não é
+difícil de destacar.
+
+## Decisão 2 — Autenticação de gente via OIDC, restrita pela tag `admin`
+
+O `ADMIN_API_TOKEN` é segredo de máquina compartilhado com o pusher. Ele **nunca** deve autenticar uma pessoa: um
+token que concede tanto "servir o pusher" quanto "dar qualquer permissão a qualquer um" está a um vazamento de um dia
+muito ruim. É o mesmo raciocínio que fez o ADR-0003 escolher CLI em vez de API HTTP de gestão.
+
+O fluxo:
+
+```
+/admin  →  sem sessão  →  redireciona ao provedor OIDC
+                       →  callback: lê o e-mail do token
+                       →  procura o membro no nosso banco
+                       →  exige a tag "admin"
+                       →  emite cookie de sessão assinado
+```
+
+A autenticação responde *quem*; o **nosso banco** responde *o que pode* — a mesma separação que o roadmap traça entre
+F2 e F3.
+
+O `openid-client@5.7.1` já é dependência do `play`, então não há nada novo a avaliar. Em desenvolvimento o mock
+registra `RedirectUris: ["http://*.workadventure.localhost", ...]`, então
+`http://admin-api.workadventure.localhost/admin/callback` já é permitido e **nenhum client novo precisa ser
+registrado**. O Azure Entra ID vai precisar dessa redirect URI adicionada quando o F2 chegar.
+
+> **A circularidade é proposital.** O dashboard que gerencia tags é protegido por uma tag que ele gerencia. É
+> exatamente isso que a decisão #6 do ADR-0002 — o bootstrap idempotente — existe para romper: um ambiente novo
+> sempre tem um administrador, então sempre há por onde entrar.
+
+### Sessões assinadas, não armazenadas
+
+A sessão é um JWT de vida curta num cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção, assinado com um segredo
+que o `admin-api` já precisa ter. Sem store de sessão, sem estado a replicar, nada a perder num restart.
+
+O custo é que uma sessão não pode ser revogada antes de expirar. Mitigado por manter a vida curta (recomendo uma
+hora) e por reverificar a tag `admin` a cada requisição em vez de confiar na cópia dentro do token: um administrador
+revogado perde acesso no clique seguinte, não uma hora depois.
+
+## Decisão 3 — Dois espaços de rota, duas credenciais, sem sobreposição
+
+| Espaço | Consumidor | Credencial |
+|---|---|---|
+| `/api/*` | o pusher | `ADMIN_API_TOKEN`, cru no `Authorization` |
+| `/admin/*` | o dashboard | cookie de sessão assinado |
+
+Nenhuma das credenciais é aceita no espaço da outra, e isso ganha teste explícito nos dois sentidos. Um token
+compartilhado que por acaso também abre o dashboard é justamente a falha que esta decisão existe para impedir.
+
+O `/admin/login`, o `/admin/callback` e o `/admin/logout` são necessariamente não autenticados, e ficam listados do
+mesmo jeito que o `/api/capabilities`: allowlist explícita dentro de uma proteção que cobre todo o resto por padrão.
+
+## Decisão 4 — A autorização entra **com** o P2, não no P4
+
+O [ADR-0002](0002-admin-api.pt-BR.md) coloca "RBAC no próprio dashboard" no P4. Autenticação e "só administradores
+entram" não podem esperar uma fase posterior: um dashboard sem isso não é entregável, é um editor público de
+permissões.
+
+O que de fato pertence ao P4 é o *refinamento* — papéis além de `admin`/`editor`, e permissões por ação.
+
+## Decisão 5 — Log de auditoria, no P2 e não no P4
+
+O ADR-0002 também adia o log de auditoria para o P4. Recomendo antecipar, por um motivo: **ele não pode ser
+reconstruído depois.** Uma tag concedida no P2 e questionada no P4 não tem registro de quem a concedeu nem quando.
+
+O mínimo é uma tabela append-only — ator, ação, alvo, timestamp — escrita a cada mutação que o dashboard fizer. É uma
+migration e algumas linhas por handler agora; é uma pergunta sem resposta depois.
+
+## Alternativas consideradas
+
+### A. Aplicação Next.js separada, como o ADR-0002 especificava
+- **Prós:** deploy independente; o framework que o padrão geral da equipe nomeia.
+- **Contras:** uma segunda unidade de deploy, CORS, uma segunda superfície de auth e um toolchain novo, para ganhar
+  SSR que uma ferramenta interna atrás de login nunca usa.
+- **Rejeitada**, substituindo a decisão #3 do ADR-0002.
+
+### B. Reaproveitar a sessão do `play`
+O `play` já assina um JWT com a `SECRET_KEY`; o `admin-api` poderia verificá-lo e ganhar SSO de graça.
+- **Prós:** sem segundo login; sem trabalho de client OIDC.
+- **Contras:** acopla os dois serviços por um segredo compartilhado, e o token identifica um **jogador numa sala**,
+  não um administrador numa ferramenta de gestão. Tempo de vida, escopo e regras de revogação não deveriam ser os
+  mesmos.
+- **Rejeitada**, mas vale revisitar se aparecer uma segunda superfície administrativa.
+
+### C. Basic auth, como o `map-storage` faz na UI dele
+- **Prós:** trivial; já é padrão no repo.
+- **Contras:** senha compartilhada não é uma pessoa. Não dá para revogar de um indivíduo, não dá para auditar, e não
+  dá para expressar "só administradores".
+- **Rejeitada.** É aceitável para upload de mapa; não é aceitável para editar permissões.
+
+### D. Nada de dashboard — estender a CLI
+- **Prós:** nenhuma superfície nova.
+- **Contras:** deixa a gestão de permissões dependendo de shell no container, que é exatamente o que o P2 existe para
+  acabar.
+- **Rejeitada.**
+
+## Consequências
+
+### Positivas
+- Gerir permissão deixa de exigir terminal, que é o objetivo original do roadmap.
+- Autenticação de gente e de máquina ficam separadas, cada uma com o tempo de vida e a revogação certos.
+- Nenhuma unidade de deploy nova, nenhum CORS, nenhum toolchain novo.
+
+### Negativas
+- O `admin-api` ganha superfície voltada a navegador, e com ela tratamento de sessão, consideração de CSRF nas
+  mutações, e um passo de build para a UI.
+- Sessão assinada não pode ser revogada antes de expirar; mitigado por vida curta e reverificação da tag a cada
+  requisição.
+- A disponibilidade do dashboard passa a importar — embora nunca a ponto de afetar o `play`, que só fala com
+  `/api/*`.
+
+### Neutras
+- A decisão #3 do ADR-0002 é substituída na metade "front Next.js separado" e preservada na metade "consome a nossa
+  própria API".
+
+## Plano de implementação
+
+| Fatia | Escopo |
+|---|---|
+| **G0** | A espinha de segurança: login OIDC, callback, cookie de sessão assinado, a barreira da tag `admin`, `/admin/logout` e `GET /admin/me`. Sem UI. |
+| **G1** | `/admin/api/*`: lista e busca de membros, detalhe, conceder e revogar tag, definir nome, listar tags. Handlers finos sobre os repositórios que o P1 já construiu. |
+| **G2** | A UI: tela de membros — busca, tags, nome. Svelte 5 + Vite em `src-ui/`, seguindo o `map-storage`. |
+| **G3** | Visão de salas, lendo o `/maps` do `map-storage`. |
+| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → a tag valendo no `play`. |
+
+O G0 vem primeiro de propósito, e sem UI de propósito: a fronteira de segurança deve existir e estar testada antes de
+haver qualquer coisa atrás dela.
+
+## Testes obrigatórios
+
+1. Requisição anônima a qualquer rota `/admin/*` redireciona para o login; requisição anônima a `/admin/api/*`
+   recebe 401, nunca um redirect.
+2. **O `ADMIN_API_TOKEN` não abre `/admin/*`, e o cookie de sessão não abre `/api/*`.** Nos dois sentidos.
+3. Um membro sem a tag `admin` completa o login OIDC e ainda assim é recusado.
+4. Revogar a tag `admin` nega a requisição seguinte numa sessão existente — provando que a tag é reverificada, e não
+   lida do token.
+5. Cookie de sessão adulterado ou expirado é recusado, e não tratado como anônimo a ponto de entrar em laço de
+   redirect.
+6. Toda mutação escreve uma entrada de auditoria nomeando o ator.
+7. Conceder uma tag pelo dashboard muda o `canEdit` daquele membro no login seguinte, ponta a ponta.
+
+## Questões em aberto
+
+1. **Log de auditoria no P2 ou no P4?** A decisão #5 recomenda o P2, contrariando o ADR-0002. É barato agora e
+   impossível de preencher retroativamente.
+2. **Tempo de vida da sessão.** Uma hora é a recomendação; mais que isso alarga a janela sem revogação.
+3. **Quem alcança o host do dashboard?** Em produção, o `admin-api.<domínio>` é público, ou restrito a VPN ou a uma
+   allowlist de IP? O OIDC torna as duas defensáveis, mas a resposta muda o modelo de ameaça — e as consequências do
+   ADR-0002 já pedem um modelo STRIDE antes de este serviço deter identidade real.
+4. **Um segundo administrador.** O bootstrap garante um. O dashboard precisa de "promover outro admin" no P2, ou isso
+   espera? É a diferença entre uma pessoa ser ponto único de falha ou não.
+
+## Referências
+
+- [ADR-0002 — Admin API própria](0002-admin-api.pt-BR.md) — decisão #3 (revisada aqui), decisão #6 (o bootstrap de que isto depende)
+- [ADR-0003 — Gestão de membros e tags](0003-member-and-tag-management.pt-BR.md) — os repositórios sobre os quais o G1 constrói, e por que o P1 escolheu CLI
+- [`map-storage/src-ui`](../../map-storage/src-ui) — o precedente de UI embutida
+- [`play/src/pusher/services/OpenIDClient.ts`](../../play/src/pusher/services/OpenIDClient.ts) — como o `openid-client` já é usado aqui
+- [Setup — `admin-api`](../SETUP-ADMIN-API.pt-BR.md)
