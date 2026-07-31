@@ -154,10 +154,10 @@ O que o provedor de identidade coloca no token — é o que o pusher nos envia. 
 O `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL` tem `john.doe@example.com` como padrão exatamente por isso: um clone novo já vem
 com administrador funcionando, sem ninguém editar arquivo.
 
-## Dashboard de administração (ADR-0004, G0)
+## Dashboard de administração (ADR-0004)
 
-Só a espinha de segurança. **Ainda não há interface** — isso é o G2, e a fronteira é construída e testada antes de
-propósito.
+Abra `http://admin-api.workadventure.localhost/admin/`, entre pelo provedor de identidade, e gerencie membros pela
+tela. O que segue documenta como está ligado.
 
 | Rota | Método | Quem |
 |---|---|---|
@@ -185,6 +185,32 @@ Faltando qualquer parte, o `/admin/*` responde `503 ADMIN_DASHBOARD_DISABLED` e 
 está ausente. O serviço sobe do mesmo jeito e o `/api/*` fica intacto — configuração errada do dashboard nunca pode
 virar indisponibilidade do `play`.
 
+### A tela (G2)
+
+Svelte 5 + Vite em [`admin-api/src-ui/`](../admin-api/src-ui), construída em `dist-ui` e servida pelo mesmo serviço
+sob `/admin/` — uma unidade de deploy, uma origem, nenhum CORS. Segue o [`map-storage/src-ui`](../map-storage/src-ui),
+o precedente que o ADR-0004 nomeia.
+
+```bash
+# Construir uma vez
+docker compose exec admin-api npm run ui:build
+
+# Typecheck da metade Svelte (a metade node é o `npm run typecheck`)
+docker compose exec admin-api npm run ui:check
+```
+
+Em desenvolvimento o `npm run start:dev` já roda `vite build --watch` junto da API, então um arquivo salvo é
+reconstruído e um refresh mostra. **Sem `--kill-others-on-fail`**: um build de UI quebrado nunca pode derrubar a API
+junto. As imagens de produção constroem a UI no `Dockerfile`, então um front quebrado falha o build da imagem, e não
+a subida do container.
+
+O `dist-ui` é gerado e está no gitignore. Sem ele, o serviço roda exatamente como rodava antes de a tela existir — o
+`/admin/` responde 404 em JSON e o resto fica igual.
+
+A interface está em **en-US e pt-BR**, escolhida pelo idioma do navegador. As strings vivem em
+[`src-ui/lib/i18n.ts`](../admin-api/src-ui/lib/i18n.ts); o tipo é derivado do catálogo em inglês, então uma chave
+adicionada em um idioma quebra o build até o outro tê-la.
+
 ### Verificação
 
 ```bash
@@ -192,9 +218,8 @@ curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.workad
 ```
 
 Espere `302` para `/admin/login?returnTo=%2Fadmin%2Fme`. Depois abra
-`http://admin-api.workadventure.localhost/admin/login` no navegador, entre como `User1` / `pwd`, e você cai em
-`/admin/` — que responde um `404` em JSON, porque o G2 ainda não construiu a tela. O `/admin/me` então devolve seu
-e-mail, nome e tags.
+`http://admin-api.workadventure.localhost/admin/` no navegador e entre como `User1` / `pwd`. Você deve cair na lista
+de membros, com a sua própria linha mostrando a tag `admin`.
 
 Duas propriedades que valem conferir na mão, porque são o objetivo desta fatia:
 

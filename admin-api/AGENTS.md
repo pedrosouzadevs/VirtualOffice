@@ -49,6 +49,13 @@ Three rules the dashboard cannot bend:
 - `src/Infrastructure/Oidc/`: the `openid-client` adapter behind `Application/Ports/OidcAuthenticator.ts`, so the
   barrier's tests never need a live identity provider.
 - `src/Enum/`: environment variables, validated with `zod` at startup.
+- `src-ui/`: the dashboard, Svelte 5 + Vite, built to the gitignored `dist-ui` and served under `/admin/`. Typechecked
+  by `npm run ui:check` against `tsconfig-ui.json` — the node `tsconfig.json` excludes it. Strings are en-US + pt-BR
+  in `src-ui/lib/i18n.ts`, with the type derived from English so a missing translation fails the build.
+
+`start:dev` runs the API and `vite build --watch` side by side, deliberately **without** `--kill-others-on-fail`: a
+broken UI build must not stop the API, whose death hangs `play`. Production builds the UI in the `Dockerfile`, where
+a failure is caught before anything ships.
 - `src/data/woka.json`: **a copy of** `play/src/pusher/data/woka.json`. `admin-api` is its own image in production
   and cannot read `play`'s files, so this copy has to be refreshed whenever upstream changes theirs.
 

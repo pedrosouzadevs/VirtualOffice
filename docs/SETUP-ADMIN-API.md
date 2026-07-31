@@ -154,10 +154,10 @@ The one the identity provider puts in the token — that is what the pusher send
 `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL` defaults to `john.doe@example.com` for exactly this reason: a fresh clone has a
 working administrator without anyone editing a file.
 
-## Administration dashboard (ADR-0004, G0)
+## Administration dashboard (ADR-0004)
 
-The security spine only. There is **no user interface yet** — that is G2, and the boundary is built and tested first
-on purpose.
+Open `http://admin-api.workadventure.localhost/admin/`, sign in through the identity provider, and manage members
+from the screen. Everything below documents how it is wired.
 
 | Route | Method | Who |
 |---|---|---|
@@ -184,6 +184,32 @@ both serves machines and mints human sessions turns a single leak into full impe
 If any of it is missing, `/admin/*` answers `503 ADMIN_DASHBOARD_DISABLED` and the startup log names what is absent.
 The service still boots and `/api/*` is untouched — a dashboard misconfiguration must never become a `play` outage.
 
+### The screen (G2)
+
+Svelte 5 + Vite in [`admin-api/src-ui/`](../admin-api/src-ui), built to `dist-ui` and served by the same service
+under `/admin/` — one deploy unit, one origin, no CORS. It follows [`map-storage/src-ui`](../map-storage/src-ui),
+the precedent ADR-0004 names.
+
+```bash
+# Build it once
+docker compose exec admin-api npm run ui:build
+
+# Typecheck the Svelte half (the node half is `npm run typecheck`)
+docker compose exec admin-api npm run ui:check
+```
+
+In development `npm run start:dev` already runs `vite build --watch` alongside the API, so a saved file is rebuilt
+and a browser refresh shows it. There is **no `--kill-others-on-fail`**: a broken UI build must never take the API
+down with it. Production images build the UI in the `Dockerfile`, so a broken front end fails the image build rather
+than the container start.
+
+`dist-ui` is generated and gitignored. When it is absent the service runs exactly as it did before the screen
+existed — `/admin/` answers a JSON 404, and everything else is unchanged.
+
+The interface is in **en-US and pt-BR**, chosen from the browser's language. Strings live in
+[`src-ui/lib/i18n.ts`](../admin-api/src-ui/lib/i18n.ts); the type derives from the English catalogue, so a key added
+in one language fails the build until the other has it.
+
 ### Verification
 
 ```bash
@@ -191,9 +217,8 @@ curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.workad
 ```
 
 Expect `302` to `/admin/login?returnTo=%2Fadmin%2Fme`. Then open
-`http://admin-api.workadventure.localhost/admin/login` in a browser, sign in as `User1` / `pwd`, and land on
-`/admin/` — which answers a `404` JSON body, because G2 has not built the screen yet. `/admin/me` then returns your
-email, name and tags.
+`http://admin-api.workadventure.localhost/admin/` in a browser and sign in as `User1` / `pwd`. You should land on the
+member list, with your own row showing the `admin` tag.
 
 Two properties worth checking by hand, because they are the whole point of this slice:
 

@@ -20,5 +20,7 @@
 
         "sourceRoot": "/"
     },
-    "exclude": ["./dist", "./eslint.config.js", "./vitest.config.ts"]
+    // `src-ui` is the browser half and is typechecked by `tsconfig-ui.json` through `svelte-check`: it targets the
+    // DOM and imports `.svelte` files, neither of which this configuration knows about.
+    "exclude": ["./dist", "./dist-ui", "./src-ui", "./eslint.config.js", "./vitest.config.ts", "./vite.config.ts"]
 }

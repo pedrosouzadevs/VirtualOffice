@@ -7,12 +7,16 @@
     "private": true,
     "scripts": {
         "start": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/index.ts",
-        "start:dev": "ESBK_TSCONFIG_PATH=tsconfig.json tsx watch --clear-screen=false --inspect=0.0.0.0:9229 ./src/index.ts",
+        "start:dev": "concurrently --names api,ui \"npm:api:start:dev\" \"npm:ui:watch\"",
+        "api:start:dev": "ESBK_TSCONFIG_PATH=tsconfig.json tsx watch --clear-screen=false --inspect=0.0.0.0:9229 ./src/index.ts",
+        "ui:build": "vite build",
+        "ui:watch": "vite build --watch",
+        "ui:check": "svelte-check --tsconfig ./tsconfig-ui.json",
         "typecheck": "tsc --project tsconfig.json --noEmit",
         "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
         "lint-fix": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" --fix",
-        "pretty": "prettier --write \"{src,tests}/**/*.ts\"",
-        "pretty-check": "prettier --check \"{src,tests}/**/*.ts\"",
+        "pretty": "prettier --write \"{src,src-ui,tests}/**/*.{ts,svelte}\" vite.config.ts",
+        "pretty-check": "prettier --check \"{src,src-ui,tests}/**/*.{ts,svelte}\" vite.config.ts",
         "precommit": "lint-staged",
         "test": "vitest",
         "test:watch": "vitest --watch",
@@ -43,16 +47,23 @@
         "zod": "^3.23.8"
     },
     "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^7.1.2",
+        "@tsconfig/svelte": "^5.0.8",
         "@types/cookie-parser": "^1.4.10",
         "@types/express": "^5.0.6",
+        "concurrently": "^9.2.1",
         "drizzle-kit": "^0.31.10",
         "@types/node": "^25.9.1",
         "@workadventure/eslint-config": "1.0.0",
         "eslint": "^9.39.4",
         "lint-staged": "^17.0.5",
         "prettier": "^3.8.3",
+        "prettier-plugin-svelte": "^4.0.1",
+        "svelte": "^5.55.9",
+        "svelte-check": "^4.4.8",
         "tsx": "^4.22.3",
         "typescript": "^5.9.3",
+        "vite": "^8.0.16",
         "vitest": "^4.1.7"
     }
 }

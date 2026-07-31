@@ -26,6 +26,10 @@ COPY --chown=node:node admin-api admin-api
 RUN chown node:node -R /usr/src/admin-api
 WORKDIR /usr/src/admin-api
 
+# The dashboard (ADR-0004, G2), built here rather than at startup. A broken front end must fail the image build,
+# where it is caught, and never the container start: admin-api refusing to come up hangs the pusher (ADR-0002).
+RUN npm run ui:build
+
 HEALTHCHECK --interval=5s --timeout=10s --start-period=5s --retries=10 CMD curl -f http://localhost:3000/healthz || exit 1
 USER node
 CMD ["npm", "run", "start"]

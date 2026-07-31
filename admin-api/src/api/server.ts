@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import type { Capabilities } from "@workadventure/messages";
 import cookieParser from "cookie-parser";
 import express, { type Express, type NextFunction, type Request, type RequestHandler, type Response } from "express";
@@ -69,7 +70,16 @@ export interface ServerDependencies {
      * Express's `trust proxy`. Only the login rate limiter reads it today, through `req.ip`.
      */
     trustProxy?: boolean | number | string;
+
+    /**
+     * Where the built dashboard lives. Overridable so a test can point at a fixture — or at nothing, to prove the
+     * service still works with no UI built.
+     */
+    dashboardUiDirectory?: string;
 }
+
+/** Matches `build.outDir` in `vite.config.ts`, relative to the package root the process starts from. */
+const DEFAULT_UI_DIRECTORY = "dist-ui";
 
 export interface AdminDashboardDependencies {
     readonly configuration: AdminDashboardConfiguration;
@@ -141,6 +151,41 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
     const administration = { members: dependencies.memberRepository, tags: dependencies.tagRepository };
     new AdminMembersController(app, administration);
     new AdminTagsController(app, dependencies.tagRepository);
+
+    mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
+}
+
+/**
+ * Serves the built Svelte application (ADR-0004, G2).
+ *
+ * Registered **after** every route above, so a screen can never shadow an endpoint. It is also behind the session
+ * barrier, which is deliberate: an anonymous visitor is sent to the login rather than handed an application shell
+ * that will only fail its first request.
+ *
+ * A missing directory is normal, not an error — the API is useful without a UI, and refusing to start over an
+ * unbuilt front end would hang `play`. `map-storage` serves its own `dist-ui` the same way.
+ */
+function mountDashboardUi(app: Express, directory: string): void {
+    if (!existsSync(directory)) {
+        return;
+    }
+
+    app.use("/admin", express.static(directory));
+
+    // The SPA fallback. `/admin/api` is excluded explicitly: those callers parse JSON, and answering them with the
+    // application's HTML would turn a plain 404 into a parse error somewhere far away.
+    app.get("/admin/{*splat}", (req: Request, res: Response, next: NextFunction) => {
+        if (req.path === "/admin/api" || req.path.startsWith("/admin/api/")) {
+            next();
+            return;
+        }
+
+        res.sendFile("index.html", { root: directory }, (error: unknown) => {
+            if (error !== undefined && error !== null) {
+                next(error);
+            }
+        });
+    });
 }
 
 /**

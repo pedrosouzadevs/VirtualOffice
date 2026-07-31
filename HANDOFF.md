@@ -109,9 +109,9 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
 |---|---|---|
 | **G0** | Espinha de segurança: login OIDC, callback, cookie de sessão assinado, barreira da tag `admin`, `/admin/logout`, `GET /admin/me` | ✅ entregue |
 | **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1 | ✅ entregue |
-| **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui`. **Próximo.** | pendente |
+| **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui` | ✅ entregue |
 | **G3** | Visão de salas, lendo o `/maps` do `map-storage` | pendente |
-| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play` | pendente |
+| **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play`. **Próximo.** | pendente |
 
 Dos testes obrigatórios do ADR-0004 falta só o **#6** (toda mutação escreve uma entrada de auditoria), que depende da
 tabela de auditoria do G4. Os outros nove estão cobertos — o #7 e o #10 entraram com o G1, que é onde as mutações
@@ -200,20 +200,16 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**G2 — a UI.** Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o [`map-storage/src-ui`](map-storage/src-ui), servida
-pelo próprio serviço sob `/admin/`. Tela de membros: busca, tags, nome.
+**G4 antes do G3.** O G3 (visão de salas) é conveniência; o G4 tem o log de auditoria, que é a dívida registrada
+abaixo e a única coisa que separa o dashboard de poder ser usado de verdade. Entregar, nesta ordem:
 
-A API que ela consome já está pronta e documentada em [SETUP-ADMIN-API.pt-BR.md](docs/SETUP-ADMIN-API.pt-BR.md).
-Quatro coisas que a UI precisa saber e que já valem hoje:
+1. **A tabela de auditoria** — append-only: ator, ação, alvo, timestamp. Uma migration `drizzle-kit generate`, e o
+   ator já chega pronto em `req.adminMember` em cada handler do `AdminMembersController`.
+2. **O teste obrigatório #6** do ADR-0004: toda mutação escreve uma entrada nomeando o ator.
+3. **O e2e do Playwright**: login → conceder → a tag valendo no `play`. Lembrando que o `npx playwright` não funciona
+   aqui — invoque por node (ver Riscos).
 
-1. **O CSRF vem do cookie `admin_csrf`** (legível por JS, de propósito) e volta no header `X-CSRF-Token`. Sem ele,
-   toda mutação é 403.
-2. **`/admin/api/*` responde 401 em JSON quando anônimo**, nunca redirect — então o `fetch` erra limpo, e cabe à UI
-   mandar para `/admin/login`.
-3. **`createdTag: true` é aviso, não confirmação.** Precisa aparecer na tela: significa que a pessoa acabou de criar
-   uma tag nova, provavelmente por erro de digitação ou de maiúscula.
-4. **`/admin/` hoje responde 404 em JSON.** É onde o `index.html` do G2 entra, e onde o `/admin/callback` já
-   redireciona depois do login.
+Depois disso, o G3.
 
 ---
 

@@ -298,6 +298,8 @@ export async function serveDashboardTestApp(
         loginAs?: string;
         now?: Date;
         rateLimit?: RequestHandler;
+        /** A stand-in for `dist-ui`. Omitted means "the dashboard was never built", which must also work. */
+        uiDirectory?: string;
     } = {},
 ): Promise<DashboardTestApp> {
     // One catalogue behind both repositories: a tag created by a grant must be findable by the revoke that follows.
@@ -310,6 +312,9 @@ export async function serveDashboardTestApp(
     const url = await serveTestApp({
         memberRepository: members,
         tagRepository: tags,
+        // A path that cannot exist, so the "not built" branch is what runs unless a test asks otherwise. Falling back
+        // to the real `dist-ui` would make these tests depend on whether somebody had run the build.
+        dashboardUiDirectory: options.uiDirectory ?? "/nonexistent-dashboard-build",
         adminDashboard: {
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
