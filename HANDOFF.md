@@ -198,10 +198,18 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ### Antes de qualquer uso real
 
-- **Modelo de ameaça STRIDE** (decisão #7 do ADR-0004): antecipado para *antes* do go-live, e ainda não escrito.
-- **HTTPS e `Secure` no cookie.** Já são automáticos quando o `ADMIN_API_PUBLIC_URL` começa com `https://`, mas
-  ninguém verificou isso num deploy de verdade.
-- **`ADMIN_API_SESSION_SECRET`** ainda é o padrão de desenvolvimento no `.env.template`.
+O **modelo de ameaças STRIDE** está escrito em [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md)
+e tem a lista completa. O resumo:
+
+- **F7 — o `ADMIN_API_SESSION_SECRET` ainda é o padrão de desenvolvimento.** Quem o tiver forja sessão para qualquer
+  e-mail. `openssl rand -base64 48`.
+- **F1 — uma sessão de admin roubada cria um administrador permanente.** É o único achado que exige *decisão*, não
+  execução: conceder `admin` pelo dashboard é a decisão #8 do ADR-0004, e a pergunta é se pode ser silencioso. A
+  recomendação é manter a decisão e **alertar** quando `admin` for concedido.
+- **HTTPS e `Secure` no cookie.** Já automáticos quando o `ADMIN_API_PUBLIC_URL` começa com `https://`, mas ninguém
+  verificou num deploy de verdade.
+- **`ADMIN_API_TRUST_PROXY`** batendo com a topologia: `false` se não houver proxy na frente, ou o limite de taxa do
+  login é contornável com `X-Forwarded-For` forjado.
 
 ---
 
