@@ -290,9 +290,10 @@ Reason: F4 was confirmed **standalone** (ownership on the area, no `admin-api`) 
 1. **F2/P2** — does the development environment keep the mock permanently, or will there be a dev Azure tenant? (decide before retiring the mock)
 2. **F3** — `admin-api` data model: confirm entities and relationships (members, tags, worlds, rooms, bans) in the ADR.
 3. ~~**F4** — ownership source, exit position, value of N, extend vs. new property, door art~~ → **all resolved** in [ADR-0001](../adr/0001-area-owner-lock.md). No art dependency: procedural walls with a standardized south opening. **No pending point blocks the start.**
-4. **Improvement (suggested 2026-07-29)** — in the editor, the personal area's "Allowed user" field (static mode) is useless without an Admin API: `LocalAdmin.searchMembers` rejects. Proposal: **list online users** as a fallback, so an owner can be assigned directly in the editor. Natural fit: alongside F3 (which brings real member search) or as a small standalone pusher item.
+4. ~~**Improvement (suggested 2026-07-29)** — in the editor, the personal area's "Allowed user" field (static mode) is useless without an Admin API~~ → **addressed** in [ADR-0003](../adr/0003-member-and-tag-management.md): P1 implements `/api/members`, so the picker performs a real search rather than the online-users fallback proposed here.
 
 ## Next artifacts
 
-- **F3 ADR** ✅ written: [ADR-0002](../adr/0002-admin-api.md) — verified contract, P0–P4 phasing, mandatory contract tests.
+- **F3 ADR** ✅ written: [ADR-0002](../adr/0002-admin-api.md) — verified contract, P0–P4 phasing, mandatory contract tests. **P0 delivered** (4 endpoints, Postgres, idempotent bootstrap, `play` wired end to end).
+- **F3 P1 ADR** ✅ written: [ADR-0003](../adr/0003-member-and-tag-management.md) — members and tags, CLI-based management, and why `api/save-name` stays undeclared.
 - F1 ADR when the queue reaches it.
