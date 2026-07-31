@@ -36,6 +36,12 @@ services:
     # Uncomment to run the production build in dev (along STARTUP_COMMAND_4 and NODE_OPTIONS)
     #command: npm run start
     working_dir: /usr/src/app/play
+    depends_on:
+      # With ADMIN_API_URL set, the pusher queries /api/capabilities before it opens its own port and retries with no
+      # cap on failure. Starting before admin-api is ready means play hangs and Traefik answers 502 (ADR-0002,
+      # Trap #2). Waiting for the healthcheck removes the race.
+      admin-api:
+        condition: service_healthy
     volumes:
       - .:/usr/src/app
     tmpfs: /tmp
@@ -355,9 +361,10 @@ services:
       # Same value the pusher sends. Interpolated from the repository-root .env so both sides cannot drift apart.
       ADMIN_API_TOKEN: "$ADMIN_API_TOKEN"
       ADMIN_API_DATABASE_URL: "postgres://${ADMIN_API_DB_USER:-admin_api}:${ADMIN_API_DB_PASSWORD:-admin_api}@admin-api-db:5432/${ADMIN_API_DB_NAME:-admin_api}"
-      # Granted the "admin" tag by the idempotent bootstrap on every startup. Optional: with no value the service
-      # still starts, it simply has no administrator yet.
-      ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL:-}"
+      # Granted the "admin" tag by the idempotent bootstrap on every startup. Defaults to the OIDC mock's admin
+      # identity so a fresh clone has a working administrator, and so the e2e suite can rely on it. Override in .env
+      # for anything but local development.
+      ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL:-john.doe@example.com}"
       # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
       # copies stop applying to those fields, so both services must read the same .env (ADR-0002).
       START_ROOM_URL: "$START_ROOM_URL"
@@ -408,6 +415,14 @@ services:
     depends_on:
       admin-api-db:
         condition: service_healthy
+    healthcheck:
+      # "play" waits on this. Without it the pusher can reach /api/capabilities before we are listening, and its
+      # uncapped retry loop means it would never open its own port (ADR-0002, Trap #2).
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
     volumes:
       - .:/usr/src/app
     tmpfs: /tmp
