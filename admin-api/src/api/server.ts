@@ -19,6 +19,8 @@ import { RoomAccessController } from "./controllers/RoomAccessController";
 import { TagsController } from "./controllers/TagsController";
 import { WokaListController } from "./controllers/WokaListController";
 import { AdminAuthController } from "./controllers/AdminAuthController";
+import { AdminMembersController } from "./controllers/AdminMembersController";
+import { AdminTagsController } from "./controllers/AdminTagsController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
 import { adminSessionAuthentication } from "./middlewares/adminSessionAuthentication";
 import { loginRateLimit } from "./middlewares/loginRateLimit";
@@ -133,6 +135,12 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
         rateLimit: dashboard.rateLimit ?? loginRateLimit(),
         now: dashboard.now,
     });
+
+    // Everything under /admin/api is behind the barrier registered above, which has already proven the session,
+    // re-read the admin tag and checked CSRF on every mutation (ADR-0004, G1).
+    const administration = { members: dependencies.memberRepository, tags: dependencies.tagRepository };
+    new AdminMembersController(app, administration);
+    new AdminTagsController(app, dependencies.tagRepository);
 }
 
 /**

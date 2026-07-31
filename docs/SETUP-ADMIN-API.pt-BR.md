@@ -210,6 +210,40 @@ docker compose exec admin-api npm run member:grant  -- john.doe@example.com admi
 # recarregue de novo -> 200
 ```
 
+### Endpoints de gestão (G1)
+
+Atrás da barreira, então toda chamada precisa do cookie de sessão, e toda mutação precisa também do token CSRF — o do
+cookie `admin_csrf`, enviado no header `X-CSRF-Token`.
+
+| Endpoint | Método | Responde |
+|---|---|---|
+| `/admin/api/members` | GET | todo membro com suas tags; `?search=` filtra, tags incluídas |
+| `/admin/api/members/{email}` | GET | um membro |
+| `/admin/api/members/{email}` | PATCH | `{ "username": "…" \| null }` — define ou limpa o nome de exibição |
+| `/admin/api/members/{email}/tags` | POST | `{ "tag": "…" }` — concede; responde `{ member, createdTag }` |
+| `/admin/api/members/{email}/tags/{tag}` | DELETE | revoga; responde `{ member, wasHeld }` |
+| `/admin/api/tags` | GET | o catálogo de tags |
+
+Três comportamentos são deliberados e compartilhados com a CLI, porque os dois chamam o mesmo serviço de Application:
+
+- **Conceder cria o que falta.** Um membro que nunca entrou é criado, e uma tag que ninguém usou também. Preparar
+  acesso antes do primeiro login é justamente o objetivo.
+- **`createdTag: true` é um aviso, não um detalhe de sucesso.** Tags são texto livre e sensíveis a maiúsculas, então
+  `Admin` é um rótulo novo em folha que não concede nada. Essa flag é como o erro aparece no clique.
+- **Revogar uma tag que o membro nunca teve dá certo**, com `wasHeld: false`. *Membro* desconhecido ou *tag*
+  desconhecida são 404, e os dois são reportados separadamente.
+
+Pelo console do navegador em `/admin/`, que é também como as telas do G2 vão chamar:
+
+```js
+const csrf = document.cookie.split('; ').find(c => c.startsWith('admin_csrf='))?.split('=')[1];
+await fetch('/admin/api/members/someone@example.com/tags', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+  body: JSON.stringify({ tag: 'editor' }),
+}).then(r => r.json());
+```
+
 ### Ficou trancado do lado de fora?
 
 Remover a própria tag `admin` é permitido, inclusive sendo o último administrador. O bootstrap roda em **toda**

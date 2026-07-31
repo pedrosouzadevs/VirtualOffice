@@ -43,6 +43,8 @@ Three rules the dashboard cannot bend:
 
 - `src/Application/`: business logic, kept free of Express so it can be tested as plain functions. `AdminSession.ts`
   and `AdminLoginTransaction.ts` are pure token handling — the session rules are unit-testable without HTTP.
+  `MemberAdministrationService.ts` owns what granting and revoking *mean*, and is called by both the CLI and
+  `/admin/api/*`: two surfaces that hand out permissions must not be able to disagree.
 - `src/api/`: Express controllers, middlewares and the server factory.
 - `src/Infrastructure/Oidc/`: the `openid-client` adapter behind `Application/Ports/OidcAuthenticator.ts`, so the
   barrier's tests never need a live identity provider.

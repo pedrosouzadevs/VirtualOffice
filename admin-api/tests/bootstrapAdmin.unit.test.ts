@@ -23,6 +23,10 @@ class InMemoryMemberRepository implements MemberRepository {
         return Promise.reject(new Error("Not needed by these tests."));
     }
 
+    searchWithTags(): Promise<Member[]> {
+        return Promise.reject(new Error("Not needed by these tests."));
+    }
+
     listAll(): Promise<Member[]> {
         return Promise.resolve([...this.members.values()]);
     }

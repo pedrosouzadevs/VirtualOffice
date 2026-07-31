@@ -164,6 +164,62 @@ describe("DrizzleMemberRepository", () => {
         });
     });
 
+    describe("searchWithTags", () => {
+        it("matches like search does, but answers with the tags loaded", async () => {
+            const member = await repository.ensureMember("alice.smith@example.com", "Alice");
+            const editor = await repository.ensureTag("editor");
+            const admin = await repository.ensureTag("admin");
+            await repository.grantTag(member.id, editor.id);
+            await repository.grantTag(member.id, admin.id);
+
+            const found = await repository.searchWithTags("ALICE", 20);
+
+            expect(found).toHaveLength(1);
+            expect(found[0]?.email).toBe("alice.smith@example.com");
+            expect([...(found[0]?.tags ?? [])].sort()).toEqual(["admin", "editor"]);
+        });
+
+        it("returns a member with no tags as an empty array, not as a missing member", async () => {
+            await repository.ensureMember("plain@example.com");
+
+            expect(await repository.searchWithTags("plain", 20)).toEqual([
+                expect.objectContaining({ email: "plain@example.com", tags: [] }),
+            ]);
+        });
+
+        it("returns nothing for an empty search, matching search rather than listAll", async () => {
+            await repository.ensureMember("alice@example.com");
+
+            expect(await repository.searchWithTags("", 20)).toEqual([]);
+            expect(await repository.searchWithTags("   ", 20)).toEqual([]);
+        });
+
+        it("counts members against the limit, not the joined rows", async () => {
+            // The join yields one row per tag, so a limit applied to it would truncate a member's tags instead of
+            // the member list — the same trap listAll folds around.
+            const first = await repository.ensureMember("aaa@example.com");
+            await repository.ensureMember("aab@example.com");
+            const editor = await repository.ensureTag("editor");
+            const admin = await repository.ensureTag("admin");
+            await repository.grantTag(first.id, editor.id);
+            await repository.grantTag(first.id, admin.id);
+
+            const found = await repository.searchWithTags("example.com", 2);
+
+            expect(found).toHaveLength(2);
+            expect(found[0]?.tags).toHaveLength(2);
+        });
+
+        it("treats LIKE wildcards as literal characters", async () => {
+            await repository.ensureMember("percent%sign@example.com");
+            await repository.ensureMember("other@example.com");
+
+            expect((await repository.searchWithTags("%s", 20)).map((m) => m.email)).toEqual([
+                "percent%sign@example.com",
+            ]);
+        });
+    });
+
     describe("referential integrity", () => {
         it("drops a member's grants when the member is deleted, leaving no dangling rows", async () => {
             const created = await repository.ensureMember("gone@example.com");

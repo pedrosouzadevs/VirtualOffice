@@ -4,6 +4,7 @@ import {
     sanitizeReturnTo,
     verifyLoginTransaction,
 } from "../../Application/AdminLoginTransaction";
+import { toAdminMemberView } from "../../Application/AdminMemberView";
 import { issueSession, verifySession } from "../../Application/AdminSession";
 import type { OidcAuthenticator } from "../../Application/Ports/OidcAuthenticator";
 import type { MemberRepository } from "../../Application/Ports/MemberRepository";
@@ -213,13 +214,9 @@ export class AdminAuthController {
                 throw new Error("/admin/me was reached without the session barrier having run.");
             }
 
-            res.status(200).json({
-                // The email, never the internal primary key: the same rule the pusher-facing API follows
-                // (ADR-0002, decision #5).
-                email: member.email,
-                username: member.username,
-                tags: [...member.tags],
-            });
+            // The same view the rest of `/admin/api` answers with, so the email — never the internal primary key —
+            // is what leaves this service everywhere (ADR-0002, decision #5).
+            res.status(200).json(toAdminMemberView(member));
         });
     }
 }

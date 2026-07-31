@@ -24,6 +24,17 @@ export interface MemberRepository {
      */
     search(searchText: string, limit: number): Promise<MemberSummary[]>;
 
+    /**
+     * Same match as {@link search}, but with tags loaded.
+     *
+     * The dashboard needs both halves at once — a permission screen that lists people without showing what they may
+     * do is not a permission screen. Kept separate from {@link search} rather than replacing it, because the pusher's
+     * member picker pays for that join on every keystroke and has no use for the result.
+     *
+     * An empty `searchText` returns nothing, matching {@link search}. Listing everyone is {@link listAll}.
+     */
+    searchWithTags(searchText: string, limit: number): Promise<Member[]>;
+
     /** Every member with their tags, ordered by email. Bounded because it feeds a terminal, not a paginated screen. */
     listAll(limit: number): Promise<Member[]>;
 

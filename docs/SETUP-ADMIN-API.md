@@ -209,6 +209,40 @@ docker compose exec admin-api npm run member:grant  -- john.doe@example.com admi
 # reload again -> 200
 ```
 
+### Management endpoints (G1)
+
+Behind the barrier, so every call needs the session cookie, and every mutation also needs the CSRF token from the
+`admin_csrf` cookie in an `X-CSRF-Token` header.
+
+| Endpoint | Method | Answers |
+|---|---|---|
+| `/admin/api/members` | GET | every member with their tags; `?search=` filters, tags included |
+| `/admin/api/members/{email}` | GET | one member |
+| `/admin/api/members/{email}` | PATCH | `{ "username": "…" \| null }` — sets or clears the display name |
+| `/admin/api/members/{email}/tags` | POST | `{ "tag": "…" }` — grants; answers `{ member, createdTag }` |
+| `/admin/api/members/{email}/tags/{tag}` | DELETE | revokes; answers `{ member, wasHeld }` |
+| `/admin/api/tags` | GET | the tag catalogue |
+
+Three behaviours are deliberate and shared with the CLI, because both call the same Application service:
+
+- **Granting creates what is missing.** A member who has never logged in is created, and so is a tag nobody has used
+  yet. Preparing access ahead of someone's first login is the point.
+- **`createdTag: true` is a warning, not a success detail.** Tags are free text and case-sensitive, so `Admin` is a
+  brand new label that grants nothing at all. That flag is how the mistake surfaces at the click.
+- **Revoking a tag the member never held succeeds**, with `wasHeld: false`. An unknown *member* or an unknown *tag*
+  is a 404, and the two are reported separately.
+
+From the browser's console on `/admin/`, which is also how the G2 screens will call it:
+
+```js
+const csrf = document.cookie.split('; ').find(c => c.startsWith('admin_csrf='))?.split('=')[1];
+await fetch('/admin/api/members/someone@example.com/tags', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+  body: JSON.stringify({ tag: 'editor' }),
+}).then(r => r.json());
+```
+
 ### Locked out?
 
 Removing your own `admin` tag is allowed, including when you are the last administrator. The bootstrap runs on

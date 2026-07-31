@@ -250,12 +250,15 @@ describe("CSRF on mutations (ADR-0004, mandatory test #9)", () => {
         const app = await serveDashboardTestApp({ members: [ADMIN], now: T0 });
         const session = await signInAs(ADMIN_EMAIL, T0);
 
-        const response = await fetch(`${app.url}/admin/api/members/someone/tags`, {
+        // An unmounted path on purpose: this test is about the barrier admitting the request, so it must not depend
+        // on what any controller behind it happens to answer today.
+        const response = await fetch(`${app.url}/admin/api/never/implemented`, {
             method: "POST",
             headers: session.headers,
         });
 
-        // 404: the barrier admitted it and there is simply no handler yet — G1 mounts these.
+        // 404 from the application's own handler, not 403 from the guard: authentication and CSRF both passed and
+        // there is simply nothing here.
         expect(response.status).toBe(404);
         expect(await response.json()).toMatchObject({ code: "ADMIN_API_NOT_FOUND" });
     });

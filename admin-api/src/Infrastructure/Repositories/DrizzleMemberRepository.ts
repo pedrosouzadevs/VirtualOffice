@@ -1,8 +1,18 @@
-import { and, asc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, eq, ilike, or, type SQL } from "drizzle-orm";
 import type { MemberRepository } from "../../Application/Ports/MemberRepository";
 import { normalizeEmail, type Member, type MemberSummary } from "../../Domain/Member";
 import type { Database } from "../Database/connection";
 import { member, memberTag, tag } from "../Database/schema";
+
+/**
+ * Wraps `text` in a LIKE pattern with its wildcards neutralised.
+ *
+ * `%` and `_` are wildcards and `\` escapes them. Escaping the backslash **first** matters: doing it last would
+ * re-escape the backslashes the other two replacements just introduced.
+ */
+function likePattern(text: string): string {
+    return `%${text.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
+}
 
 export class DrizzleMemberRepository implements MemberRepository {
     constructor(private readonly db: Database) {}
@@ -42,9 +52,7 @@ export class DrizzleMemberRepository implements MemberRepository {
             return [];
         }
 
-        // `%` and `_` are LIKE wildcards, and `\` escapes them. Escaping the backslash first matters: doing it last
-        // would re-escape the backslashes introduced by the other two replacements.
-        const pattern = `%${trimmed.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
+        const pattern = likePattern(trimmed);
 
         return this.db
             .select({ id: member.id, email: member.email, username: member.username })
@@ -52,6 +60,17 @@ export class DrizzleMemberRepository implements MemberRepository {
             .where(or(ilike(member.email, pattern), ilike(member.username, pattern)))
             .orderBy(asc(member.email))
             .limit(limit);
+    }
+
+    async searchWithTags(searchText: string, limit: number): Promise<Member[]> {
+        const trimmed = searchText.trim();
+        if (trimmed === "") {
+            return [];
+        }
+
+        const pattern = likePattern(trimmed);
+
+        return this.selectWithTags(or(ilike(member.email, pattern), ilike(member.username, pattern)), limit);
     }
 
     async ensureMember(email: string, username?: string): Promise<Member> {
@@ -107,7 +126,17 @@ export class DrizzleMemberRepository implements MemberRepository {
         return this.findByEmail(normalizedEmail);
     }
 
-    async listAll(limit: number): Promise<Member[]> {
+    listAll(limit: number): Promise<Member[]> {
+        return this.selectWithTags(undefined, limit);
+    }
+
+    /**
+     * The one query that reads members with their tags, optionally filtered.
+     *
+     * Shared by {@link listAll} and {@link searchWithTags} so the folding below — which is the subtle part — exists
+     * once. `undefined` means no filter.
+     */
+    private async selectWithTags(where: SQL | undefined, limit: number): Promise<Member[]> {
         const rows = await this.db
             .select({
                 id: member.id,
@@ -119,6 +148,7 @@ export class DrizzleMemberRepository implements MemberRepository {
             .from(member)
             .leftJoin(memberTag, eq(memberTag.memberId, member.id))
             .leftJoin(tag, eq(tag.id, memberTag.tagId))
+            .where(where)
             .orderBy(asc(member.email), asc(tag.name));
 
         // The join yields one row per tag, so fold them back into one entry per member. The limit is applied after

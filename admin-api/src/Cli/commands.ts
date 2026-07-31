@@ -1,3 +1,8 @@
+import {
+    grantTagToMember,
+    revokeTagFromMember,
+    setMemberDisplayName,
+} from "../Application/MemberAdministrationService";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
 import type { TagRepository } from "../Application/Ports/TagRepository";
 import { normalizeEmail } from "../Domain/Member";
@@ -69,10 +74,11 @@ export async function listTags({ tags, out }: CommandContext): Promise<CommandRe
 /**
  * Grants a tag, creating the member and the tag if either is new.
  *
- * Creating the tag on demand is deliberate: the map editor's pickers accept free text, so an arbitrary tag is a
- * meaningful thing to gate an area on. The trade-off is that a typo silently becomes a new tag, so a notice listing
- * the tags that already existed is printed whenever one is created — the mistake is then visible immediately rather
- * than at the next login.
+ * The semantics live in {@link grantTagToMember}, shared with the dashboard's `POST /admin/api/members/:email/tags`.
+ * Two surfaces that grant permissions must not be able to disagree about what granting means.
+ *
+ * The notice on a newly created tag is this surface's own: the CLI can list the tags that already existed, which is
+ * how a typo becomes visible immediately rather than at the next login.
  */
 export async function grantTag(
     { members, tags, out }: CommandContext,
@@ -84,21 +90,17 @@ export async function grantTag(
         return failed;
     }
 
-    const existingTag = await tags.findByName(tagName);
+    const known = await tags.listAll();
+    const result = await grantTagToMember({ members, tags }, email, tagName);
 
-    if (existingTag === undefined) {
-        const known = await tags.listAll();
-        out(`Note: the tag "${tagName}" did not exist and was created.`);
+    if (result.createdTag) {
+        out(`Note: the tag "${result.tagName}" did not exist and was created.`);
         if (known.length > 0) {
             out(`      Existing tags: ${known.join(", ")}`);
         }
     }
 
-    const member = await members.ensureMember(email);
-    const tag = existingTag ?? (await members.ensureTag(tagName));
-    await members.grantTag(member.id, tag.id);
-
-    out(`Granted "${tag.name}" to ${member.email}.`);
+    out(`Granted "${result.tagName}" to ${result.member.email}.`);
 
     return ok;
 }
@@ -114,22 +116,23 @@ export async function revokeTag(
         return failed;
     }
 
-    const member = await members.findByEmail(email);
-    if (member === undefined) {
+    const result = await revokeTagFromMember({ members, tags }, email, tagName);
+
+    if (result.outcome === "member-not-found") {
         out(`No member with email "${normalizeEmail(email)}".`);
         return failed;
     }
 
-    const tag = await tags.findByName(tagName);
-    if (tag === undefined) {
+    if (result.outcome === "tag-not-found") {
         out(`No tag named "${tagName}".`);
         return failed;
     }
 
-    const held = member.tags.includes(tag.name);
-    await members.revokeTag(member.id, tag.id);
-
-    out(held ? `Revoked "${tag.name}" from ${member.email}.` : `${member.email} did not hold "${tag.name}".`);
+    out(
+        result.wasHeld
+            ? `Revoked "${tagName}" from ${result.member.email}.`
+            : `${result.member.email} did not hold "${tagName}".`,
+    );
 
     return ok;
 }
@@ -140,7 +143,7 @@ export async function revokeTag(
  * Only works on an existing member: creating one from a typo here would produce an account nobody ever logs into.
  */
 export async function setMemberName(
-    { members, out }: CommandContext,
+    { members, tags, out }: CommandContext,
     email: string,
     name: string,
 ): Promise<CommandResult> {
@@ -149,8 +152,7 @@ export async function setMemberName(
         return failed;
     }
 
-    const trimmed = name.trim();
-    const updated = await members.setUsername(email, trimmed === "" ? null : trimmed);
+    const updated = await setMemberDisplayName({ members, tags }, email, name);
 
     if (updated === undefined) {
         out(`No member with email "${normalizeEmail(email)}". Grant them a tag first, or let them log in once.`);

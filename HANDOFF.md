@@ -108,14 +108,19 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
 | Fatia | Escopo | Estado |
 |---|---|---|
 | **G0** | Espinha de segurança: login OIDC, callback, cookie de sessão assinado, barreira da tag `admin`, `/admin/logout`, `GET /admin/me` | ✅ entregue |
-| **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1. **Próximo.** | pendente |
-| **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui` | pendente |
+| **G1** | `/admin/api/*`: membros, tags, nome. Handlers finos sobre os repositórios do P1 | ✅ entregue |
+| **G2** | UI em Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o `map-storage/src-ui`. **Próximo.** | pendente |
 | **G3** | Visão de salas, lendo o `/maps` do `map-storage` | pendente |
 | **G4** | Log de auditoria, docs bilíngues, e2e de login → conceder → tag valendo no `play` | pendente |
 
-Os testes obrigatórios #1 a #5, #8 e #9 do ADR-0004 estão cobertos. Faltam o **#6** (toda mutação escreve auditoria),
-o **#7** (conceder tag muda o `canEdit` ponta a ponta) e o **#10** (um admin promove outro, que consegue entrar) —
-todos dependem do G1/G4, que é onde as mutações passam a existir.
+Dos testes obrigatórios do ADR-0004 falta só o **#6** (toda mutação escreve uma entrada de auditoria), que depende da
+tabela de auditoria do G4. Os outros nove estão cobertos — o #7 e o #10 entraram com o G1, que é onde as mutações
+passaram a existir.
+
+> **Dívida consciente do G1:** as mutações existem e o log de auditoria ainda não. A decisão #5 do ADR-0004 antecipou
+> o log justamente porque *não dá para reconstruí-lo depois* — então toda tag concedida pelo dashboard entre agora e o
+> G4 fica sem registro de quem a concedeu. Na branch isso é inofensivo; **antes de qualquer uso real, o G4 vem
+> primeiro.** A `req.adminMember` já entrega o ator pronto em cada handler.
 
 ### Fora da P2, em aberto no roadmap
 
@@ -195,16 +200,20 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**G1 — `/admin/api/*`.** Handlers finos sobre os repositórios que o P1 já construiu, atrás da barreira que agora
-existe. Listar e buscar membros, detalhe, conceder e revogar tag, definir nome, listar tags.
+**G2 — a UI.** Svelte 5 + Vite em `admin-api/src-ui/`, seguindo o [`map-storage/src-ui`](map-storage/src-ui), servida
+pelo próprio serviço sob `/admin/`. Tela de membros: busca, tags, nome.
 
-Três coisas já estão prontas para o G1 e vale não reconstruir:
+A API que ela consome já está pronta e documentada em [SETUP-ADMIN-API.pt-BR.md](docs/SETUP-ADMIN-API.pt-BR.md).
+Quatro coisas que a UI precisa saber e que já valem hoje:
 
-1. **A barreira já anexa o ator.** `req.adminMember` traz o `Member` do banco, lido nesta requisição — é o que o log
-   de auditoria do G4 vai nomear, e evita uma segunda consulta por handler.
-2. **Toda mutação já está coberta por CSRF e pela recusa a GET.** Basta registrar as rotas como POST/PATCH/DELETE sob
-   `/admin/api/` e a barreira faz o resto.
-3. **`/admin/api/*` já responde 401 em JSON quando anônimo**, nunca redirect — é o que faz o `fetch` do G2 funcionar.
+1. **O CSRF vem do cookie `admin_csrf`** (legível por JS, de propósito) e volta no header `X-CSRF-Token`. Sem ele,
+   toda mutação é 403.
+2. **`/admin/api/*` responde 401 em JSON quando anônimo**, nunca redirect — então o `fetch` erra limpo, e cabe à UI
+   mandar para `/admin/login`.
+3. **`createdTag: true` é aviso, não confirmação.** Precisa aparecer na tela: significa que a pessoa acabou de criar
+   uma tag nova, provavelmente por erro de digitação ou de maiúscula.
+4. **`/admin/` hoje responde 404 em JSON.** É onde o `index.html` do G2 entra, e onde o `/admin/callback` já
+   redireciona depois do login.
 
 ---
 

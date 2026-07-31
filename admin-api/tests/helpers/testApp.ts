@@ -44,11 +44,63 @@ export const TEST_ROOM_ACCESS_CONFIGURATION: RoomAccessConfiguration = {
 };
 
 /**
- * Minimal repository stub: the tests that matter here are about the HTTP contract and the tag rules, not about SQL.
- * The database behaviour is covered against a real Postgres in `tests/integration`.
+ * The tag table, in memory.
+ *
+ * Shared between the two repository stubs on purpose: granting a tag goes through `MemberRepository.ensureTag` while
+ * revoking looks it up through `TagRepository.findByName`, so two separate catalogues would make every
+ * grant-then-revoke test pass for the wrong reason.
+ */
+export class TagCatalogue {
+    private readonly byName = new Map<string, { id: string; name: string }>();
+
+    constructor(names: readonly string[] = []) {
+        for (const name of names) {
+            this.ensure(name);
+        }
+    }
+
+    ensure(name: string): { id: string; name: string } {
+        const existing = this.byName.get(name);
+        if (existing !== undefined) {
+            return existing;
+        }
+
+        const created = { id: `tag-${name}`, name };
+        this.byName.set(name, created);
+
+        return created;
+    }
+
+    find(name: string): { id: string; name: string } | undefined {
+        return this.byName.get(name);
+    }
+
+    findById(id: string): { id: string; name: string } | undefined {
+        return [...this.byName.values()].find((tag) => tag.id === id);
+    }
+
+    names(): string[] {
+        return [...this.byName.keys()];
+    }
+}
+
+/**
+ * The member store, in memory: the tests here are about the HTTP contract and the tag rules, not about SQL. The
+ * database behaviour is covered against a real Postgres in `tests/integration`.
+ *
+ * The mutations are implemented rather than stubbed out, because G1's endpoints are mutations and a test that cannot
+ * observe the effect of a grant proves nothing.
  */
 export class StubMemberRepository implements MemberRepository {
-    constructor(private known: readonly Member[] = []) {}
+    private members: Member[];
+
+    constructor(
+        known: readonly Member[] = [],
+        private readonly catalogue: TagCatalogue = new TagCatalogue(),
+    ) {
+        this.members = [...known];
+        this.registerSeededTags();
+    }
 
     /**
      * Replaces the whole set mid-test.
@@ -57,75 +109,129 @@ export class StubMemberRepository implements MemberRepository {
      * that is already open, which cannot be shown without changing the database under a live cookie.
      */
     replaceAll(members: readonly Member[]): void {
-        this.known = members;
+        this.members = [...members];
+        this.registerSeededTags();
+    }
+
+    /** A tag a seeded member already holds must exist in the catalogue, or revoking it would answer "not found". */
+    private registerSeededTags(): void {
+        for (const member of this.members) {
+            for (const name of member.tags) {
+                this.catalogue.ensure(name);
+            }
+        }
+    }
+
+    private replace(updated: Member): Member {
+        this.members = this.members.map((member) => (member.id === updated.id ? updated : member));
+
+        return updated;
     }
 
     findByEmail(email: string): Promise<Member | undefined> {
-        return Promise.resolve(this.known.find((member) => member.email === normalizeEmail(email)));
+        return Promise.resolve(this.members.find((member) => member.email === normalizeEmail(email)));
     }
 
     search(searchText: string, limit: number): Promise<MemberSummary[]> {
+        return Promise.resolve(this.matching(searchText).slice(0, limit));
+    }
+
+    searchWithTags(searchText: string, limit: number): Promise<Member[]> {
+        return Promise.resolve(this.matching(searchText).slice(0, limit));
+    }
+
+    /** Shared so the two searches cannot disagree about what matches, exactly as the SQL ones share their query. */
+    private matching(searchText: string): Member[] {
         const needle = searchText.trim().toLowerCase();
         if (needle === "") {
-            return Promise.resolve([]);
+            return [];
         }
 
-        return Promise.resolve(
-            this.known
-                .filter(
-                    (member) =>
-                        member.email.includes(needle) || (member.username?.toLowerCase().includes(needle) ?? false),
-                )
-                .slice(0, limit),
+        return this.members.filter(
+            (member) => member.email.includes(needle) || (member.username?.toLowerCase().includes(needle) ?? false),
         );
     }
 
-    listAll(): Promise<Member[]> {
-        return Promise.resolve([...this.known]);
+    listAll(limit = Number.MAX_SAFE_INTEGER): Promise<Member[]> {
+        return Promise.resolve([...this.members].sort((a, b) => a.email.localeCompare(b.email)).slice(0, limit));
     }
 
-    revokeTag(): Promise<void> {
-        return Promise.reject(new Error("Not needed by these tests."));
+    ensureMember(email: string, username?: string): Promise<Member> {
+        const normalized = normalizeEmail(email);
+        const existing = this.members.find((member) => member.email === normalized);
+
+        if (existing !== undefined) {
+            return Promise.resolve(existing);
+        }
+
+        // A member who has never logged in is a meaningful person to prepare access for, so granting creates them.
+        const created: Member = {
+            id: `id-${normalized}`,
+            email: normalized,
+            oidcSub: null,
+            username: username ?? null,
+            tags: [],
+        };
+        this.members.push(created);
+
+        return Promise.resolve(created);
     }
 
-    setUsername(): Promise<Member | undefined> {
-        return Promise.reject(new Error("Not needed by these tests."));
+    ensureTag(name: string): Promise<{ id: string; name: string }> {
+        return Promise.resolve(this.catalogue.ensure(name));
     }
 
-    ensureMember(): Promise<Member> {
-        return Promise.reject(new Error("Not needed by these tests."));
+    grantTag(memberId: string, tagId: string): Promise<void> {
+        const member = this.members.find((entry) => entry.id === memberId);
+        const tag = this.catalogue.findById(tagId);
+
+        if (member !== undefined && tag !== undefined && !member.tags.includes(tag.name)) {
+            this.replace({ ...member, tags: [...member.tags, tag.name] });
+        }
+
+        return Promise.resolve();
     }
 
-    ensureTag(): Promise<{ id: string; name: string }> {
-        return Promise.reject(new Error("Not needed by these tests."));
+    revokeTag(memberId: string, tagId: string): Promise<void> {
+        const member = this.members.find((entry) => entry.id === memberId);
+        const tag = this.catalogue.findById(tagId);
+
+        if (member !== undefined && tag !== undefined) {
+            this.replace({ ...member, tags: member.tags.filter((name) => name !== tag.name) });
+        }
+
+        return Promise.resolve();
     }
 
-    grantTag(): Promise<void> {
-        return Promise.reject(new Error("Not needed by these tests."));
+    setUsername(email: string, username: string | null): Promise<Member | undefined> {
+        const member = this.members.find((entry) => entry.email === normalizeEmail(email));
+
+        return Promise.resolve(member === undefined ? undefined : this.replace({ ...member, username }));
     }
 }
 
 export class StubTagRepository implements TagRepository {
-    constructor(private readonly known: readonly string[] = []) {}
+    private readonly catalogue: TagCatalogue;
+
+    /** Accepts a bare list for the read-only tests, or a shared catalogue when mutations have to be observed. */
+    constructor(source: readonly string[] | TagCatalogue = []) {
+        this.catalogue = source instanceof TagCatalogue ? source : new TagCatalogue(source);
+    }
 
     search(searchText: string, limit: number): Promise<string[]> {
         const needle = searchText.trim().toLowerCase();
-        const matched = needle === "" ? this.known : this.known.filter((name) => name.toLowerCase().includes(needle));
+        const known = this.catalogue.names();
+        const matched = needle === "" ? known : known.filter((name) => name.toLowerCase().includes(needle));
 
-        return Promise.resolve(
-            matched
-                .slice()
-                .sort((a, b) => a.localeCompare(b))
-                .slice(0, limit),
-        );
+        return Promise.resolve(matched.sort((a, b) => a.localeCompare(b)).slice(0, limit));
     }
 
     listAll(): Promise<string[]> {
-        return Promise.resolve(this.known.slice().sort((a, b) => a.localeCompare(b)));
+        return Promise.resolve(this.catalogue.names().sort((a, b) => a.localeCompare(b)));
     }
 
     findByName(name: string): Promise<{ id: string; name: string } | undefined> {
-        return Promise.resolve(this.known.includes(name) ? { id: `tag-${name}`, name } : undefined);
+        return Promise.resolve(this.catalogue.find(name));
     }
 }
 
@@ -171,6 +277,7 @@ export interface DashboardTestApp {
     readonly url: string;
     /** Mutate with `replaceAll` to revoke a tag while a session is open. */
     readonly members: StubMemberRepository;
+    readonly tags: StubTagRepository;
     readonly authenticator: StubOidcAuthenticator;
     /** Moves the server's clock, which is how expiry and renewal are exercised without waiting. */
     setNow(now: Date): void;
@@ -185,18 +292,24 @@ export interface DashboardTestApp {
 export async function serveDashboardTestApp(
     options: {
         members?: readonly Member[];
+        /** Tags that exist before the test starts. Tags a seeded member holds are registered automatically. */
+        tags?: readonly string[];
         /** Email the stub provider will authenticate as. */
         loginAs?: string;
         now?: Date;
         rateLimit?: RequestHandler;
     } = {},
 ): Promise<DashboardTestApp> {
-    const members = new StubMemberRepository(options.members ?? []);
+    // One catalogue behind both repositories: a tag created by a grant must be findable by the revoke that follows.
+    const catalogue = new TagCatalogue(options.tags ?? []);
+    const members = new StubMemberRepository(options.members ?? [], catalogue);
+    const tags = new StubTagRepository(catalogue);
     const authenticator = new StubOidcAuthenticator(options.loginAs ?? "john.doe@example.com");
     let now = options.now ?? new Date();
 
     const url = await serveTestApp({
         memberRepository: members,
+        tagRepository: tags,
         adminDashboard: {
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
@@ -208,6 +321,7 @@ export async function serveDashboardTestApp(
     return {
         url,
         members,
+        tags,
         authenticator,
         setNow: (value: Date) => {
             now = value;
