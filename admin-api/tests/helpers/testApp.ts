@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
+import type { TagRepository } from "../../src/Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
 import { normalizeEmail, type Member, type MemberSummary } from "../../src/Domain/Member";
 import { createServer, type ServerDependencies } from "../../src/api/server";
@@ -81,6 +82,26 @@ export class StubMemberRepository implements MemberRepository {
     }
 }
 
+export class StubTagRepository implements TagRepository {
+    constructor(private readonly known: readonly string[] = []) {}
+
+    search(searchText: string, limit: number): Promise<string[]> {
+        const needle = searchText.trim().toLowerCase();
+        const matched = needle === "" ? this.known : this.known.filter((name) => name.toLowerCase().includes(needle));
+
+        return Promise.resolve(
+            matched
+                .slice()
+                .sort((a, b) => a.localeCompare(b))
+                .slice(0, limit),
+        );
+    }
+
+    listAll(): Promise<string[]> {
+        return Promise.resolve(this.known.slice().sort((a, b) => a.localeCompare(b)));
+    }
+}
+
 /** Builds a member with sensible defaults so a test only states what it cares about. */
 export function testMember(email: string, tags: string[] = [], username: string | null = null): Member {
     return { id: `id-${email}`, email: normalizeEmail(email), oidcSub: null, username, tags };
@@ -105,6 +126,7 @@ export async function serveTestApp(overrides: Partial<ServerDependencies> = {}):
         mapDetailsConfiguration: TEST_MAP_DETAILS_CONFIGURATION,
         roomAccessConfiguration: TEST_ROOM_ACCESS_CONFIGURATION,
         memberRepository: new StubMemberRepository(),
+        tagRepository: new StubTagRepository(),
         ...overrides,
     });
     const server = await startTestServer(app);

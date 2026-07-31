@@ -50,6 +50,7 @@ import { createDatabaseConnection } from "./Infrastructure/Database/connection";
 import { runMigrations } from "./Infrastructure/Database/migrate";
 import { PostgresReadinessCheck } from "./Infrastructure/Database/PostgresReadinessCheck";
 import { DrizzleMemberRepository } from "./Infrastructure/Repositories/DrizzleMemberRepository";
+import { DrizzleTagRepository } from "./Infrastructure/Repositories/DrizzleTagRepository";
 import { createServer } from "./api/server";
 
 /**
@@ -100,6 +101,7 @@ async function start(): Promise<void> {
     await runMigrations(connection.db);
 
     const memberRepository = new DrizzleMemberRepository(connection.db);
+    const tagRepository = new DrizzleTagRepository(connection.db);
     await bootstrapAdmin(memberRepository, ADMIN_API_BOOTSTRAP_ADMIN_EMAIL);
 
     const app = createServer({
@@ -123,6 +125,7 @@ async function start(): Promise<void> {
             }),
         },
         memberRepository,
+        tagRepository,
         readinessChecks: [new PostgresReadinessCheck(connection.sql)],
     });
 

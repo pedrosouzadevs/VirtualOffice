@@ -3,6 +3,7 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import { CompanionCatalogue } from "../Application/CompanionCatalogue";
 import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
+import type { TagRepository } from "../Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../Application/RoomAccessService";
 import { WokaCatalogue } from "../Application/WokaCatalogue";
 import { SUPPORTED_CAPABILITIES } from "../Capabilities";
@@ -12,6 +13,7 @@ import { HealthController, type ReadinessCheck } from "./controllers/HealthContr
 import { MapController } from "./controllers/MapController";
 import { MembersController } from "./controllers/MembersController";
 import { RoomAccessController } from "./controllers/RoomAccessController";
+import { TagsController } from "./controllers/TagsController";
 import { WokaListController } from "./controllers/WokaListController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
 
@@ -30,6 +32,9 @@ export interface ServerDependencies {
 
     /** Where tags come from once `ADMIN_API_URL` is set. */
     memberRepository: MemberRepository;
+
+    /** The tag catalogue behind the map editor's pickers. */
+    tagRepository: TagRepository;
 
     /** Subsystem probes consulted by `/readyz`. Empty until Postgres lands (ADR-0002, P0/E4). */
     readinessChecks?: readonly ReadinessCheck[];
@@ -74,6 +79,7 @@ export function createServer(dependencies: ServerDependencies): Express {
     new WokaListController(app, wokaCatalogue);
     new CompanionListController(app, companionCatalogue);
     new MembersController(app, dependencies.memberRepository);
+    new TagsController(app, dependencies.tagRepository);
     new RoomAccessController(
         app,
         dependencies.memberRepository,
