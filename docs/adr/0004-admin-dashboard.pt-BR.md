@@ -1,13 +1,13 @@
 # ADR-0004: Dashboard de administração (Admin API, P2)
 
-- **Status:** Proposto
-- **Data:** 2026-07-31
+- **Status:** Aceito
+- **Data:** 2026-07-31 — questões em aberto respondidas no mesmo dia (decisões #6 a #8)
 - **Decisores:** Equipe VirtualOffice
 - **Idiomas:** este arquivo (pt-BR) + [0004-admin-dashboard.md](0004-admin-dashboard.md) (en-US), em lockstep.
 - **Origem:** [ADR-0002](0002-admin-api.pt-BR.md), fase P2. Revisa a decisão #3 dele. Sucede o [ADR-0003](0003-member-and-tag-management.pt-BR.md).
 
-> Este ADR está **Proposto**, não Aceito: as decisões #1 a #4 são recomendações, e as *Questões em aberto* no fim
-> precisam da resposta da equipe antes de a implementação começar.
+> As decisões #1 a #5 foram propostas e aceitas; as #6 a #8 respondem as questões que este ADR abriu. Nada fica
+> pendente antes de a implementação começar.
 
 ## Contexto
 
@@ -114,6 +114,52 @@ reconstruído depois.** Uma tag concedida no P2 e questionada no P4 não tem reg
 O mínimo é uma tabela append-only — ator, ação, alvo, timestamp — escrita a cada mutação que o dashboard fizer. É uma
 migration e algumas linhas por handler agora; é uma pergunta sem resposta depois.
 
+## Decisão 6 — Sessão deslizante, dentro de um teto absoluto
+
+Uma hora, renovada pela atividade.
+
+A renovação deslizante seria preocupante se o cookie carregasse a autorização: uma sessão ativa sobreviveria
+indefinidamente a um administrador revogado. Ela não carrega. A decisão #2 reverifica a tag `admin` **a cada
+requisição**, então quem perde a tag é recusado no clique seguinte por mais fresco que esteja o cookie. O
+deslizamento estende *quanto tempo você permanece logado*, nunca *o que você pode fazer*.
+
+O que o deslizamento ainda exige é um **teto absoluto** — recomendo 12 horas. Sem ele, um cookie roubado e mantido
+quente por um script nunca expira, e "uma hora" vira um número que não descreve nada. Com o teto, o pior caso fica
+limitado: uma sessão roubada morre em até 12 horas mesmo em uso constante, e em uma hora se ficar parada.
+
+Renovar quando restar menos da metade do tempo de vida, e não a cada requisição: reemitir `Set-Cookie` em toda
+chamada não custa nada além de ruído, e atrapalha a leitura dos logs.
+
+## Decisão 7 — Host público, com o Entra ID como perímetro
+
+O dashboard é alcançável pela internet; o Azure Entra ID é o que impede as pessoas de entrarem.
+
+É uma escolha defensável, e é justamente o motivo de não fabricarmos autenticação própria: o Conditional Access do
+Entra — MFA, conformidade de dispositivo, regras de localização — vira o perímetro de verdade, e é muito melhor que
+uma allowlist de IP que teríamos de manter.
+
+Quatro coisas deixam de ser opcionais no momento em que o host é público:
+
+- **HTTPS, e a flag `Secure` no cookie de sessão.** Não é refinamento de produção; sem isso o cookie atravessa a
+  internet em texto claro.
+- **Proteção CSRF nas mutações.** O `SameSite=Lax` cobre ataques por navegação, mas toda rota que muda estado
+  precisa ser POST/PATCH/DELETE — nunca GET — e as mutações precisam de `SameSite=Strict` ou token CSRF.
+- **Rate limiting no `/admin/login`**, para que o redirect OIDC não vire amplificador contra o provedor.
+- **O modelo de ameaça STRIDE.** O [ADR-0002](0002-admin-api.pt-BR.md) o lista no P4. Com um editor de permissões
+  publicamente alcançável, ele pertence a **antes de isto ir ao ar**, não depois. Este ADR o antecipa.
+
+## Decisão 8 — Mais de um administrador, e como um lockout se recupera
+
+Conceder `admin` pelo dashboard é apenas conceder uma tag, então o G1 já cobre, sem caso especial.
+
+Deliberadamente sem trava: um administrador **pode** remover a própria tag `admin`, inclusive sendo o último do
+sistema. Isso é recuperável e não fatal, porque o bootstrap da decisão #6 do [ADR-0002](0002-admin-api.pt-BR.md) roda
+em **toda** inicialização e reconcede o `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL` — reiniciar o `admin-api` restaura o
+acesso.
+
+Documentado em vez de bloqueado: uma regra "você não pode remover o último administrador" é mais código, e mais
+surpresa no momento em que alguém esbarra nela, do que um caminho de recuperação que já existe por outro motivo.
+
 ## Alternativas consideradas
 
 ### A. Aplicação Next.js separada, como o ADR-0002 especificava
@@ -186,17 +232,21 @@ haver qualquer coisa atrás dela.
    redirect.
 6. Toda mutação escreve uma entrada de auditoria nomeando o ator.
 7. Conceder uma tag pelo dashboard muda o `canEdit` daquele membro no login seguinte, ponta a ponta.
+8. A atividade renova a sessão, e a sessão ainda assim morre no teto absoluto por mais ativa que tenha sido.
+9. Toda rota que muda estado recusa GET, e uma mutação sem a defesa CSRF é rejeitada.
+10. Um administrador consegue conceder `admin` a outra pessoa, e o novo administrador consegue entrar.
 
-## Questões em aberto
+## Pontos confirmados (2026-07-31)
 
-1. **Log de auditoria no P2 ou no P4?** A decisão #5 recomenda o P2, contrariando o ADR-0002. É barato agora e
-   impossível de preencher retroativamente.
-2. **Tempo de vida da sessão.** Uma hora é a recomendação; mais que isso alarga a janela sem revogação.
-3. **Quem alcança o host do dashboard?** Em produção, o `admin-api.<domínio>` é público, ou restrito a VPN ou a uma
-   allowlist de IP? O OIDC torna as duas defensáveis, mas a resposta muda o modelo de ameaça — e as consequências do
-   ADR-0002 já pedem um modelo STRIDE antes de este serviço deter identidade real.
-4. **Um segundo administrador.** O bootstrap garante um. O dashboard precisa de "promover outro admin" no P2, ou isso
-   espera? É a diferença entre uma pessoa ser ponto único de falha ou não.
+1. ✅ **Log de auditoria no P2**, não no P4 (decisão #5). Não pode ser preenchido retroativamente.
+2. ✅ **Sessão: uma hora, renovada pela atividade, dentro de um teto absoluto de 12 horas** (decisão #6). Seguro
+   porque a tag `admin` é reverificada por requisição, então o deslizamento nunca estende a autorização.
+3. ✅ **Host público, Entra ID como perímetro** (decisão #7). HTTPS, `Secure`, CSRF e rate limiting no login deixam
+   de ser opcionais, e o modelo STRIDE passa para antes do go-live.
+4. ✅ **Vários administradores** (decisão #8). Conceder `admin` é concessão comum de tag; a auto-remoção é permitida
+   e se recupera pelo bootstrap no restart.
+
+Nenhum ponto pendente bloqueia o início do G0.
 
 ## Referências
 

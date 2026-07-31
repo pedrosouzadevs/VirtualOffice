@@ -1,13 +1,13 @@
 # ADR-0004: Admin dashboard (Admin API, P2)
 
-- **Status:** Proposed
-- **Date:** 2026-07-31
+- **Status:** Accepted
+- **Date:** 2026-07-31 — open questions answered the same day (decisions #6 to #8)
 - **Deciders:** VirtualOffice team
 - **Languages:** [0004-admin-dashboard.pt-BR.md](0004-admin-dashboard.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
 - **Origin:** [ADR-0002](0002-admin-api.md), phase P2. Revises its decision #3. Follows [ADR-0003](0003-member-and-tag-management.md).
 
-> This ADR is **Proposed**, not Accepted: decisions #1 to #4 are recommendations, and the *Open questions* at the end
-> need the team's answer before implementation starts.
+> Decisions #1 to #5 were proposed and accepted; #6 to #8 answer the questions this ADR opened. Nothing is left
+> pending before implementation starts.
 
 ## Context
 
@@ -112,6 +112,51 @@ later.** A tag granted in P2 and questioned in P4 has no record of who granted i
 The minimum is one append-only table — actor, action, subject, timestamp — written on every mutation the dashboard
 performs. It is one migration and a few lines per handler now; it is an unanswerable question later.
 
+## Decision 6 — A sliding session, inside an absolute cap
+
+One hour, renewed by activity.
+
+Sliding renewal would be alarming if the cookie carried the authorisation: an active session could then outlive a
+revoked administrator indefinitely. It does not. Decision #2 re-checks the `admin` tag **on every request**, so
+someone who loses the tag is refused on their next click no matter how fresh their cookie is. Sliding extends *how
+long you stay signed in*, never *what you are allowed to do*.
+
+What sliding does still need is an **absolute cap** — recommend 12 hours. Without one, a stolen cookie kept warm by a
+script never expires, and "one hour" becomes a number that describes nothing. With the cap, the worst case is
+bounded: a stolen session dies within 12 hours even if it is used constantly, and within one hour if it is not.
+
+Renew when less than half the lifetime remains, rather than on every request: re-issuing `Set-Cookie` on each call
+costs nothing but noise, and makes the logs harder to read.
+
+## Decision 7 — A public host, with Entra ID as the perimeter
+
+The dashboard is reachable from the internet; Azure Entra ID is what stops people getting in.
+
+That is a defensible choice, and it is the reason not to roll our own authentication: Entra's Conditional Access —
+MFA, device compliance, location rules — becomes the real perimeter, and it is a far better one than an IP allowlist
+we would have to maintain.
+
+Four things stop being optional the moment the host is public:
+
+- **HTTPS, and the `Secure` flag on the session cookie.** Not a production nicety; without it the cookie crosses the
+  internet in the clear.
+- **CSRF protection on mutations.** `SameSite=Lax` covers navigation-based attacks, but every state-changing route
+  must be a POST/PATCH/DELETE — never a GET — and mutations need `SameSite=Strict` or a CSRF token.
+- **Rate limiting on `/admin/login`**, so the OIDC redirect cannot be used as an amplifier against the provider.
+- **The STRIDE threat model.** [ADR-0002](0002-admin-api.md) lists it under P4. With a publicly reachable permission
+  editor, it belongs **before this goes live**, not after. This ADR moves it.
+
+## Decision 8 — More than one administrator, and how a lockout recovers
+
+Granting `admin` through the dashboard is just granting a tag, so G1 covers it with no special case.
+
+Deliberately left unguarded: an administrator **may** remove their own `admin` tag, including the last one in the
+system. That is recoverable rather than fatal, because [ADR-0002](0002-admin-api.md)'s decision #6 bootstrap runs on
+**every** startup and re-grants `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL` — restarting `admin-api` restores access.
+
+Documented rather than blocked: a "you cannot remove the last administrator" rule is more code, and more surprise at
+the moment someone hits it, than a recovery path that already exists for another reason.
+
 ## Alternatives considered
 
 ### A. Separate Next.js application, as ADR-0002 originally specified
@@ -181,17 +226,21 @@ is behind it.
 5. A tampered or expired session cookie is refused, not treated as anonymous-then-redirected into a loop.
 6. Every mutation writes an audit entry naming the actor.
 7. Granting a tag through the dashboard changes `canEdit` for that member on their next login, end to end.
+8. Activity renews the session, and a session still dies at the absolute cap however active it has been.
+9. Every state-changing route refuses a GET, and a mutation without the CSRF defence is rejected.
+10. An administrator can grant `admin` to someone else, and the new administrator can sign in.
 
-## Open questions
+## Points confirmed (2026-07-31)
 
-1. **Audit log in P2 or P4?** Decision #5 recommends P2, against ADR-0002. It is cheap now and impossible to
-   backfill.
-2. **Session lifetime.** One hour is the recommendation; anything longer widens the un-revocable window.
-3. **Who may reach the dashboard's host?** In production, is `admin-api.<domain>` public, or restricted to a VPN or
-   an IP allowlist? OIDC makes it defensible either way, but the answer changes the threat model — and ADR-0002's
-   consequences already call for a STRIDE model before this service holds real identity.
-4. **A second administrator.** The bootstrap guarantees one. Does the dashboard need "promote another admin" in P2,
-   or does that wait? It is the difference between one person being a single point of failure and not.
+1. ✅ **Audit log in P2**, not P4 (decision #5). It cannot be backfilled.
+2. ✅ **Session: one hour, renewed by activity, inside a 12-hour absolute cap** (decision #6). Safe because the
+   `admin` tag is re-checked per request, so sliding never extends authorisation.
+3. ✅ **Public host, Entra ID as the perimeter** (decision #7). HTTPS, `Secure`, CSRF and login rate limiting stop
+   being optional, and the STRIDE model moves ahead of go-live.
+4. ✅ **Several administrators** (decision #8). Granting `admin` is an ordinary tag grant; self-removal is allowed
+   and recovers through the bootstrap on restart.
+
+No pending point blocks the start of G0.
 
 ## References
 
