@@ -10,7 +10,7 @@ nos documentos linkados.
 
 ## Current Status
 
-**P0, P1 e a fatia G0 da P2 entregues e verificados. G0 ainda não commitada — está na árvore de trabalho.**
+**P0, P1 e a fatia G0 da P2 entregues, verificados e commitados.**
 
 O `play` já consome o `admin-api` de verdade: tags e `canEdit` vêm do Postgres, e não mais da claim OIDC. O ambiente
 de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versionado).
@@ -19,7 +19,7 @@ de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-com
 |---|---|---|
 | P0 (E1–E6) | 4 endpoints bloqueantes, Postgres, bootstrap idempotente, `play` ligado | ✅ entregue |
 | P1 (F0–F3) | `/api/members*`, `/api/*/tags`, CLI de gestão, docs, e2e | ✅ entregue |
-| **P2 / G0** | **Espinha de segurança do dashboard: login OIDC, sessão, barreira, CSRF** | ✅ **entregue, não commitado** |
+| **P2 / G0** | Espinha de segurança do dashboard: login OIDC, sessão, barreira, CSRF | ✅ entregue |
 | P2 (G1–G4) | `/admin/api/*`, UI Svelte, visão de salas, auditoria | 📐 ADR aceito, **zero código** |
 
 **Verificação atual:** 188 testes unitários, 53 de integração (Postgres real), 7 e2e (Playwright, executados contra a
@@ -195,13 +195,8 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**Commitar o G0**, que está inteiro na árvore de trabalho e verde. Lembrando das armadilhas: `--no-verify`, e conferir
-`git diff --stat` antes (o `contrib/oidc-server-mock/clients-config.json` já foi reescrito uma vez por CRLF nesta
-fatia). **Não incluir** `messages/package-lock.json` nem `maps/assets/*` — já estavam sujos antes e não são desta
-feature.
-
-**Depois, G1 — `/admin/api/*`.** Handlers finos sobre os repositórios que o P1 já construiu, atrás da barreira que
-agora existe. Listar e buscar membros, detalhe, conceder e revogar tag, definir nome, listar tags.
+**G1 — `/admin/api/*`.** Handlers finos sobre os repositórios que o P1 já construiu, atrás da barreira que agora
+existe. Listar e buscar membros, detalhe, conceder e revogar tag, definir nome, listar tags.
 
 Três coisas já estão prontas para o G1 e vale não reconstruir:
 
