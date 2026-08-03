@@ -9,6 +9,7 @@ import {
     type CommandContext,
 } from "../../src/Cli/commands";
 import type { DatabaseConnection } from "../../src/Infrastructure/Database/connection";
+import { LoggingAdminAlerter } from "../../src/Infrastructure/Alerting/LoggingAdminAlerter";
 import { DrizzleAuditLogRepository } from "../../src/Infrastructure/Repositories/DrizzleAuditLogRepository";
 import { DrizzleMemberRepository } from "../../src/Infrastructure/Repositories/DrizzleMemberRepository";
 import { DrizzleTagRepository } from "../../src/Infrastructure/Repositories/DrizzleTagRepository";
@@ -33,11 +34,28 @@ beforeEach(async () => {
         members: new DrizzleMemberRepository(connection.db),
         tags: new DrizzleTagRepository(connection.db),
         audit: new DrizzleAuditLogRepository(connection.db),
+        // Real, so a refused `admin` grant is proven to alert rather than merely to fail. Its webhook is unset, so
+        // it only writes to the log.
+        alerter: new LoggingAdminAlerter(undefined),
         out: (line) => output.push(line),
     };
 });
 
 const printed = () => output.join("\n");
+
+/**
+ * Grants `admin` the only way anything is allowed to: straight through the repository, which is what direct SQL and
+ * the idempotent bootstrap both amount to.
+ *
+ * The CLI cannot do this any more (threat model, F1), so a test that needs an administrator has to set one up the
+ * way the world really does.
+ */
+async function grantAdminDirectly(email: string): Promise<void> {
+    const member = await context.members.ensureMember(email);
+    const tag = await context.members.ensureTag("admin");
+
+    await context.members.grantTag(member.id, tag.id);
+}
 
 /**
  * The CLI is exercised against a real Postgres rather than stubs: what these commands promise is idempotence, and
@@ -190,7 +208,7 @@ describe("member:list and tag:list", () => {
 
     it("lists members with their tags, and a member with none", async () => {
         await grantTag(context, "alice@example.com", "editor");
-        await grantTag(context, "alice@example.com", "admin");
+        await grantAdminDirectly("alice@example.com");
         await context.members.ensureMember("bob@example.com");
         output = [];
 
@@ -205,7 +223,7 @@ describe("member:list and tag:list", () => {
     it("keeps a member's tags together instead of truncating them under the limit", async () => {
         // The limit applies to members, not to joined rows: applying it to the join would cut a member's tag list.
         await grantTag(context, "alice@example.com", "editor");
-        await grantTag(context, "alice@example.com", "admin");
+        await grantAdminDirectly("alice@example.com");
 
         const listed = await context.members.listAll(1);
 
@@ -215,12 +233,57 @@ describe("member:list and tag:list", () => {
 
     it("lists the tag catalogue", async () => {
         await grantTag(context, "alice@example.com", "editor");
-        await grantTag(context, "alice@example.com", "admin");
+        await grantAdminDirectly("alice@example.com");
         output = [];
 
         await listTags(context);
 
         expect(printed()).toBe("admin\neditor");
+    });
+
+    describe("the admin tag", () => {
+        it("cannot be granted from the terminal either, and prints the SQL that can", async () => {
+            // The rule is about where the privilege lives, not about which surface asked. The CLI runs inside the
+            // container and is still refused (threat model, F1).
+            const result = await grantTag(context, "alice@example.com", "admin");
+
+            expect(result.exitCode).toBe(1);
+            expect(printed()).toContain("cannot be granted from here");
+            expect(printed()).toContain("insert into member_tag");
+            expect(printed()).toContain("alice@example.com");
+        });
+
+        it("leaves the database untouched when refused", async () => {
+            await grantTag(context, "alice@example.com", "admin");
+
+            // Not even the member is created: the refusal happens before any write.
+            expect(await context.members.findByEmail("alice@example.com")).toBeUndefined();
+        });
+
+        it("records the refused attempt", async () => {
+            await grantTag(context, "alice@example.com", "admin");
+            output = [];
+
+            await listAudit(context, undefined);
+
+            expect(printed()).toContain("tag.grant_refused");
+            expect(printed()).toContain("cli");
+        });
+
+        it("can still be revoked from the terminal", async () => {
+            // Removing an administrator during an incident must not need a DBA. The bootstrap is what grants it, so
+            // this is set up the way the bootstrap does.
+            const member = await context.members.ensureMember("boss@example.com");
+            const tag = await context.members.ensureTag("admin");
+            await context.members.grantTag(member.id, tag.id);
+            output = [];
+
+            const result = await revokeTag(context, "boss@example.com", "admin");
+
+            expect(result.exitCode).toBe(0);
+            expect(printed()).toContain('Revoked "admin"');
+            expect((await context.members.findByEmail("boss@example.com"))?.tags).toEqual([]);
+        });
     });
 
     describe("audit", () => {

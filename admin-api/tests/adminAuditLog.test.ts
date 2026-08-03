@@ -25,17 +25,19 @@ function mutate(
 
 describe("every mutation is recorded (ADR-0004, mandatory test #6)", () => {
     it("records a grant, naming the acting administrator", async () => {
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin"] });
+        // Not `admin`: that one is refused before anything is written, and its own recording is covered in
+        // `adminProtectedTags.test.ts`.
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter"] });
         const session = await signInAs(ADMIN_EMAIL, T0);
 
-        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "admin" });
+        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "greeter" });
 
         expect(app.audit.entries).toHaveLength(1);
         expect(app.audit.entries[0]).toMatchObject({
             actorEmail: ADMIN_EMAIL,
             action: "tag.granted",
             targetEmail: ALICE.email,
-            details: { tag: "admin", createdTag: false },
+            details: { tag: "greeter", createdTag: false },
         });
         expect(app.audit.entries[0]?.createdAt).toBeInstanceOf(Date);
         expect(app.audit.entries[0]?.id).toBeTruthy();
@@ -117,17 +119,17 @@ describe("every mutation is recorded (ADR-0004, mandatory test #6)", () => {
     it("does not fail the request when the log is unavailable", async () => {
         // The change already landed. Answering with an error would misdescribe the world, and the caller could not
         // act on it — so the failure is shouted into the logs instead.
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin"] });
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter"] });
         const session = await signInAs(ADMIN_EMAIL, T0);
         const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
         app.audit.failing = true;
 
         const response = await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, {
-            tag: "admin",
+            tag: "greeter",
         });
 
         expect(response.status).toBe(200);
-        expect(await response.json()).toMatchObject({ member: { tags: ["admin", "editor"] } });
+        expect(await response.json()).toMatchObject({ member: { tags: ["editor", "greeter"] } });
         expect(consoleError).toHaveBeenCalled();
         consoleError.mockRestore();
     });
@@ -135,10 +137,10 @@ describe("every mutation is recorded (ADR-0004, mandatory test #6)", () => {
 
 describe("GET /admin/api/audit", () => {
     it("answers newest first", async () => {
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin"] });
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter"] });
         const session = await signInAs(ADMIN_EMAIL, T0);
 
-        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "admin" });
+        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "greeter" });
         await mutate(app, session, "PATCH", `/admin/api/members/${ALICE.email}`, { username: "Alice D." });
 
         const entries = (await (
@@ -149,10 +151,10 @@ describe("GET /admin/api/audit", () => {
     });
 
     it("narrows to one member", async () => {
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin"] });
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter"] });
         const session = await signInAs(ADMIN_EMAIL, T0);
 
-        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "admin" });
+        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "greeter" });
         await mutate(app, session, "PATCH", `/admin/api/members/${ADMIN_EMAIL}`, { username: "John D." });
 
         const response = await fetch(`${app.url}/admin/api/audit?target=${encodeURIComponent(ALICE.email)}`, {

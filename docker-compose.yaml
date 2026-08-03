@@ -382,6 +382,8 @@ services:
       # Read only by the dashboard's room list (ADR-0004, G3). GET /maps on map-storage is unauthenticated, so
       # there is no token here — the same call "play" makes from LocalAdmin. Empty it to switch that screen off.
       INTERNAL_MAP_STORAGE_URL: "${INTERNAL_MAP_STORAGE_URL:-http://map-storage:3000}"
+      # Optional. Alerts always reach the log with an [ADMIN-ALERT] marker; this also POSTs them as JSON.
+      ADMIN_API_ALERT_WEBHOOK_URL: "${ADMIN_API_ALERT_WEBHOOK_URL:-}"
       # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
       # copies stop applying to those fields, so both services must read the same .env (ADR-0002).
       START_ROOM_URL: "$START_ROOM_URL"

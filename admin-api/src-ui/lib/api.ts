@@ -35,6 +35,18 @@ const CSRF_COOKIE = "admin_csrf";
 const CSRF_HEADER = "X-CSRF-Token";
 
 /**
+ * Tags the server refuses to grant, mirrored here so the screen can say so before asking.
+ *
+ * A copy, and deliberately a small one: the server is what enforces it (`PROTECTED_TAGS` in the domain), and this
+ * only decides whether a button is disabled. A stale copy makes the screen slightly less helpful, never less safe.
+ */
+export const PROTECTED_TAGS: readonly string[] = ["admin"];
+
+export function isProtectedTag(tag: string): boolean {
+    return PROTECTED_TAGS.includes(tag.trim());
+}
+
+/**
  * Reads the CSRF token the server put in a deliberately readable cookie.
  *
  * The value is not a secret on its own — it is worthless without the `HttpOnly` session cookie. What it buys is that

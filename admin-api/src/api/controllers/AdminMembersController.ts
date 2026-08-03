@@ -224,6 +224,20 @@ export class AdminMembersController {
 
                 const result = await grantTagToMember(this.administration, this.actor(req), email, body.data.tag);
 
+                if (result.outcome === "protected-tag") {
+                    // 403, and the reason spelled out: this is a rule, not a bug, and the next person needs to know
+                    // where the privilege actually lives (threat model, F1).
+                    res.status(403).json(
+                        errorBody(
+                            "ADMIN_TAG_PROTECTED",
+                            "Forbidden",
+                            `The "${result.tagName}" tag cannot be granted through the dashboard or the CLI. ` +
+                                "It is assigned with direct SQL against the admin-api database.",
+                        ),
+                    );
+                    return;
+                }
+
                 // 200, not 201: granting is idempotent, so the second call creates nothing and there is no new
                 // resource to point at.
                 res.status(200).json({

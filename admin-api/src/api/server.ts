@@ -3,6 +3,7 @@ import type { Capabilities } from "@workadventure/messages";
 import cookieParser from "cookie-parser";
 import express, { type Express, type NextFunction, type Request, type RequestHandler, type Response } from "express";
 import type { AdminDashboardConfiguration } from "../Application/AdminDashboardConfiguration";
+import type { AdminAlerter } from "../Application/Ports/AdminAlerter";
 import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
 import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
 import type { RoomCatalogue } from "../Application/Ports/RoomCatalogue";
@@ -94,6 +95,9 @@ export interface AdminDashboardDependencies {
     /** Where every mutation the dashboard makes is written (ADR-0004, decision #5). */
     readonly auditLog: AuditLogRepository;
 
+    /** Where a refused `admin` grant, or a revoked one, is shouted about (threat model, F1). */
+    readonly alerter: AdminAlerter;
+
     /**
      * The world's rooms, read from `map-storage` (ADR-0004, G3).
      *
@@ -166,6 +170,7 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
         members: dependencies.memberRepository,
         tags: dependencies.tagRepository,
         audit: dashboard.auditLog,
+        alerter: dashboard.alerter,
     };
     new AdminMembersController(app, administration);
     new AdminTagsController(app, dependencies.tagRepository);

@@ -138,6 +138,14 @@ export const EnvironmentVariables = z.object({
      */
     INTERNAL_MAP_STORAGE_URL: optionalString(),
 
+    /**
+     * Where security alerts are POSTed as JSON — a Slack or Teams incoming webhook, or anything that accepts one.
+     *
+     * Optional. Without it alerts still go to the log at `error` level with a fixed `[ADMIN-ALERT]` marker, which is
+     * what any log-based alerting can match on. The webhook is for deployments where nobody watches the log.
+     */
+    ADMIN_API_ALERT_WEBHOOK_URL: optionalString(),
+
     // --- Map details payload -------------------------------------------------------------------------------------
 
     DISABLE_ANONYMOUS: boolOrDefault(false),

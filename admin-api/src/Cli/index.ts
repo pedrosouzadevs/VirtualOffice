@@ -1,4 +1,5 @@
-import { ADMIN_API_DATABASE_URL } from "../Enum/EnvironmentVariable";
+import { ADMIN_API_ALERT_WEBHOOK_URL, ADMIN_API_DATABASE_URL } from "../Enum/EnvironmentVariable";
+import { LoggingAdminAlerter } from "../Infrastructure/Alerting/LoggingAdminAlerter";
 import { createDatabaseConnection } from "../Infrastructure/Database/connection";
 import { DrizzleAuditLogRepository } from "../Infrastructure/Repositories/DrizzleAuditLogRepository";
 import { DrizzleMemberRepository } from "../Infrastructure/Repositories/DrizzleMemberRepository";
@@ -40,6 +41,7 @@ async function main(): Promise<number> {
         members: new DrizzleMemberRepository(connection.db),
         tags: new DrizzleTagRepository(connection.db),
         audit: new DrizzleAuditLogRepository(connection.db),
+        alerter: new LoggingAdminAlerter(ADMIN_API_ALERT_WEBHOOK_URL),
         out: (line) => console.info(line),
     };
 

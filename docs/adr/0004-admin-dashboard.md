@@ -167,6 +167,25 @@ system. That is recoverable rather than fatal, because [ADR-0002](0002-admin-api
 Documented rather than blocked: a "you cannot remove the last administrator" rule is more code, and more surprise at
 the moment someone hits it, than a recovery path that already exists for another reason.
 
+> **Revision (2026-08-01, after the threat model).** The first half of this decision — that granting `admin` is an
+> ordinary tag grant — **no longer holds**. Finding F1 of the
+> [threat model](../security/threat-model.md#f1--a-stolen-admin-session-can-create-a-permanent-administrator) named
+> the asymmetry it created: an attacker holding a dashboard session for a minute could grant `admin` to an address
+> they control, and while the session dies within twelve hours the grant does not. A temporary compromise became
+> permanent access, surviving session expiry, password reset and revoking the original account.
+>
+> **`admin` is now assigned only with direct SQL.** Neither the dashboard nor the CLI can grant it — both go through
+> `MemberAdministrationService`, which refuses it, records the attempt and raises an alert. Mandatory test #10 is
+> superseded by a test asserting the opposite.
+>
+> The second half stands unchanged: **revoking `admin` is still allowed from either surface**, because needing a DBA
+> to remove an administrator during an incident would be the wrong trade. Self-removal still recovers through the
+> bootstrap on restart, which grants through the repository rather than through the refusing service.
+>
+> **What this costs:** a legitimate `admin` grant now leaves no trace at all — SQL bypasses the audit log and the
+> alert alike. The trade is deliberate: no application surface can escalate, at the price of the one privilege whose
+> assignment is no longer recorded.
+
 ## Alternatives considered
 
 ### A. Separate Next.js application, as ADR-0002 originally specified

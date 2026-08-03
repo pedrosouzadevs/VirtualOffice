@@ -170,6 +170,26 @@ acesso.
 Documentado em vez de bloqueado: uma regra "você não pode remover o último administrador" é mais código, e mais
 surpresa no momento em que alguém esbarra nela, do que um caminho de recuperação que já existe por outro motivo.
 
+> **Revisão (2026-08-01, depois do modelo de ameaças).** A primeira metade desta decisão — que conceder `admin` é uma
+> concessão comum de tag — **não vale mais**. O achado F1 do
+> [modelo de ameaças](../security/threat-model.pt-BR.md#f1--uma-sessão-de-admin-roubada-cria-um-administrador-permanente)
+> nomeou a assimetria que ela criava: um atacante com uma sessão do dashboard por um minuto conseguia conceder
+> `admin` a um endereço dele, e enquanto a sessão morre em até doze horas a concessão não morre. Um comprometimento
+> temporário virava acesso permanente, sobrevivendo à expiração da sessão, à troca de senha e à revogação da conta
+> original.
+>
+> **O `admin` agora é atribuído só por SQL direto.** Nem o dashboard nem a CLI conseguem conceder — os dois passam
+> pelo `MemberAdministrationService`, que recusa, registra a tentativa e dispara alerta. O teste obrigatório #10 é
+> substituído por um teste que afirma o contrário.
+>
+> A segunda metade continua igual: **revogar `admin` segue permitido pelas duas superfícies**, porque precisar de um
+> DBA para tirar um administrador durante um incidente seria a troca errada. A auto-remoção continua se recuperando
+> pelo bootstrap no restart, que concede pelo repositório e não pelo serviço que recusa.
+>
+> **O que isso custa:** uma concessão legítima de `admin` passa a não deixar rastro nenhum — o SQL contorna o log de
+> auditoria e o alerta. A troca é deliberada: nenhuma superfície de aplicação consegue escalar privilégio, ao preço
+> de o único privilégio cuja atribuição deixa de ser registrada.
+
 ## Alternativas consideradas
 
 ### A. Aplicação Next.js separada, como o ADR-0002 especificava

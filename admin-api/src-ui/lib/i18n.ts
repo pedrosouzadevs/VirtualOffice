@@ -70,6 +70,8 @@ const en = {
     areaTypePersonal: "Personal",
     areaTypeSilent: "Silent",
     areaTypeMeeting: "Meeting",
+
+    protectedTagHint: 'The "{tag}" tag is assigned with direct SQL and cannot be granted here.',
 } as const;
 
 export type Messages = Record<keyof typeof en, string>;
@@ -135,6 +137,8 @@ const ptBR: Messages = {
     areaTypePersonal: "Pessoal",
     areaTypeSilent: "Silenciosa",
     areaTypeMeeting: "Reunião",
+
+    protectedTagHint: 'A tag "{tag}" é atribuída por SQL direto e não pode ser concedida aqui.',
 };
 
 const catalogues: Record<string, Messages> = { en, "pt-BR": ptBR };

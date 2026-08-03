@@ -1,4 +1,5 @@
 import {
+    ADMIN_API_ALERT_WEBHOOK_URL,
     ADMIN_API_BOOTSTRAP_ADMIN_EMAIL,
     ADMIN_API_DATABASE_URL,
     ADMIN_API_PORT,
@@ -56,6 +57,7 @@ import { resolveAdminDashboardConfiguration } from "./Application/AdminDashboard
 import { buildApplications } from "./Application/ApplicationsCatalogue";
 import { bootstrapAdmin } from "./Application/BootstrapAdminService";
 import type { MapDetailsConfiguration } from "./Application/MapDetailsService";
+import { LoggingAdminAlerter } from "./Infrastructure/Alerting/LoggingAdminAlerter";
 import { MapStorageRoomCatalogue } from "./Infrastructure/MapStorage/MapStorageRoomCatalogue";
 import { OpenIdConnectAuthenticator } from "./Infrastructure/Oidc/OpenIdConnectAuthenticator";
 import { createDatabaseConnection } from "./Infrastructure/Database/connection";
@@ -169,6 +171,7 @@ async function start(): Promise<void> {
                   configuration: dashboard.configuration,
                   authenticator: new OpenIdConnectAuthenticator(dashboard.configuration),
                   auditLog: new DrizzleAuditLogRepository(connection.db),
+                  alerter: new LoggingAdminAlerter(ADMIN_API_ALERT_WEBHOOK_URL),
                   rooms:
                       INTERNAL_MAP_STORAGE_URL === undefined
                           ? undefined

@@ -322,6 +322,48 @@ Two things worth knowing before you read it:
 This is an **administrative** audit — who changed permissions. It is not a usage log: logins, room entries and calls
 happen in `play`, `back` and the media server, and none of them pass through here.
 
+### Granting `admin`
+
+**Only direct SQL can.** Neither the dashboard nor the CLI will — both refuse, record the attempt, and raise an
+alert. That is threat model finding
+[F1](security/threat-model.md#f1--a-stolen-admin-session-can-create-a-permanent-administrator): a stolen browser
+session lasts minutes, an `admin` grant lasts forever, and the two should not be one click apart.
+
+```bash
+# The member and the tag must both exist. Grant them any other tag first if they are new —
+# that is what creates the member.
+docker compose exec admin-api-db psql -U admin_api -d admin_api -c \
+  "insert into member_tag (member_id, tag_id)
+   select m.id, t.id from member m, tag t
+   where m.email = 'alguem@empresa.com' and t.name = 'admin'
+   on conflict do nothing;"
+```
+
+The CLI prints this exact command when you try, so you do not have to come back here.
+
+**Revoking `admin` is not restricted** — the dashboard and `member:revoke` both do it, and both raise an alert.
+Needing a DBA to remove an administrator during an incident would be the wrong trade.
+
+**A grant made this way leaves no audit entry.** SQL bypasses the log. That is the deliberate cost of putting the
+privilege out of reach of an application surface; write down who you granted it to and why.
+
+### Alerts
+
+Two events are shouted about rather than merely recorded:
+
+| Event | When |
+|---|---|
+| `admin.grant.refused` | somebody tried to grant `admin` through the dashboard or the CLI |
+| `admin.revoked` | somebody removed an `admin` tag that was actually held |
+
+Both always go to the log at `error` level with a fixed `[ADMIN-ALERT]` marker, which is what log-based alerting can
+match on with no configuration. Set `ADMIN_API_ALERT_WEBHOOK_URL` to also POST them as JSON — a Slack or Teams
+incoming webhook reads the `text` field; anything else gets the structured fields too.
+
+```bash
+docker compose logs admin-api | grep ADMIN-ALERT
+```
+
 ### Locked out?
 
 Removing your own `admin` tag is allowed, including when you are the last administrator. The bootstrap runs on

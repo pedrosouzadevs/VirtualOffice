@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Member } from "./lib/api";
+    import { isProtectedTag, type Member } from "./lib/api";
     import { format, t } from "./lib/i18n";
 
     interface Props {
@@ -22,9 +22,17 @@
 
     const listId = $derived(`tags-${member.email}`);
 
+    /**
+     * Whether what is typed is a tag the server will refuse.
+     *
+     * Checked here so the button is disabled and the reason is on screen, rather than letting the click earn a 403
+     * with no explanation. The server is still what enforces it.
+     */
+    const typedProtectedTag = $derived(isProtectedTag(newTag) ? newTag.trim() : null);
+
     function grant(): void {
         const tag = newTag.trim();
-        if (tag === "") {
+        if (tag === "" || isProtectedTag(tag)) {
             return;
         }
 
@@ -111,10 +119,17 @@
                     <option value={tag}></option>
                 {/each}
             </datalist>
-            <button class="primary" onclick={grant} disabled={busy || newTag.trim() === ""}>{t.grant}</button>
+            <button
+                class="primary"
+                onclick={grant}
+                disabled={busy || newTag.trim() === "" || typedProtectedTag !== null}>{t.grant}</button
+            >
             {#if !editingName}
                 <button onclick={startEditing} disabled={busy}>{t.editName}</button>
             {/if}
         </div>
+        {#if typedProtectedTag !== null}
+            <div class="name empty">{format(t.protectedTagHint, { tag: typedProtectedTag })}</div>
+        {/if}
     </td>
 </tr>

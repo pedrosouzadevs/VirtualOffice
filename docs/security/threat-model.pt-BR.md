@@ -132,26 +132,32 @@ condição que muda.
 
 ### F1 — Uma sessão de admin roubada cria um administrador permanente
 
-**Severidade: alta.** Um atacante com a sessão de navegador de um administrador, ainda que por um minuto, concede
-`admin` a um endereço que ele controla. A sessão morre em até 12 horas; a concessão não. Um comprometimento
-temporário vira acesso permanente que sobrevive à expiração da sessão, à troca de senha e à revogação da conta
-original.
+**Severidade: era alta. Fechado em 2026-08-01.**
 
-Conceder `admin` pelo dashboard é deliberado (ADR-0004, decisão #8) e tem teste obrigatório. A pergunta que este
-modelo levanta não é se permitir, e sim se pode ser *silencioso*.
+Um atacante com a sessão de navegador de um administrador, ainda que por um minuto, conseguia conceder `admin` a um
+endereço que ele controla. A sessão morre em até 12 horas; a concessão não morria. Um comprometimento temporário
+virava acesso permanente que sobrevivia à expiração da sessão, à troca de senha e à revogação da conta original.
 
-**Opções:**
+**Resolução — mais forte do que este modelo recomendou primeiro.** O `admin` agora é atribuído **só por SQL direto**.
+Nem o dashboard nem a CLI conseguem conceder: os dois passam pelo `MemberAdministrationService`, que recusa a
+tentativa, registra como `tag.grant_refused` e dispara um alerta `admin.grant.refused`. Um cookie roubado não alcança
+uma sessão de banco, então o caminho de escalada deixou de existir em vez de apenas ser vigiado.
 
-| | Efeito | Custo |
-|---|---|---|
-| **a. Aceitar, apoiado no provedor** | O Conditional Access do Entra — MFA, conformidade de dispositivo — é o perímetro de verdade, que é a premissa da decisão #7 | nenhum |
-| **b. Alertar em concessões de `admin`** | Transforma permanente-e-silencioso em permanente-e-percebido. O log já registra; ninguém lê | pequeno |
-| **c. Só conceder `admin` pela CLI** | Uma sessão de navegador roubada deixaria de criar administrador clandestino | revisa a decisão #8 e o teste obrigatório #10 |
-| **d. Exigir aprovação de um segundo administrador** | Remove o ponto único de comprometimento | grande; atrito real para um time pequeno |
+Duas coisas deliberadamente **não** mudaram:
 
-**Recomendação: (a) + (b).** Manter a decisão #8, e fazer de uma concessão de `admin` algo que um humano fica
-sabendo, em vez de algo enterrado numa tabela. Revisitar a (c) se o dashboard algum dia ficar alcançável sem
-Conditional Access na frente.
+- **Revogar `admin` segue permitido pelas duas superfícies**, e dispara um alerta `admin.revoked`. Precisar de um DBA
+  para remover um administrador durante um incidente seria a troca errada.
+- **O bootstrap continua concedendo a cada subida**, porque escreve pelo repositório e não pelo serviço que recusa.
+  Reiniciar o `admin-api` continua sendo a recuperação de lockout (ADR-0004, decisão #8).
+
+A decisão #8 do ADR-0004 foi revisada de acordo, e o teste obrigatório #10 dela foi substituído por um que afirma o
+contrário.
+
+**O que custou.** Uma concessão legítima de `admin` passa a **não deixar rastro nenhum** — o SQL contorna o log de
+auditoria e o alerta. A troca foi feita com consciência: nenhuma superfície de aplicação consegue escalar privilégio,
+ao preço de o único privilégio cuja atribuição deixa de ser registrada. Se isso virar problema, a resposta é uma
+reconciliação periódica que compare o conjunto atual de administradores com o último que ela viu e alerte na
+diferença — o que pega concessões por SQL sem devolver o privilégio ao alcance de uma sessão.
 
 ### F2 — Mudanças pela CLI não conseguem nomear uma pessoa
 

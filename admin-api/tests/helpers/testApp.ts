@@ -1,5 +1,6 @@
 import type { Express, RequestHandler } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
+import type { AdminAlert, AdminAlerter } from "../../src/Application/Ports/AdminAlerter";
 import type { AuditLogRepository } from "../../src/Application/Ports/AuditLogRepository";
 import type { AuditEntry, RecordedAuditEntry } from "../../src/Domain/AuditEntry";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
@@ -254,6 +255,29 @@ export class StubAuditLogRepository implements AuditLogRepository {
     }
 }
 
+/**
+ * Collects alerts instead of shouting them.
+ *
+ * Implemented rather than swallowed: whether an alert was raised is the assertion for threat model F1, and a fake
+ * that dropped them would prove nothing.
+ */
+export class StubAdminAlerter implements AdminAlerter {
+    readonly raised: AdminAlert[] = [];
+
+    /** Set to make alerting fail, standing in for a webhook that is down. */
+    failing = false;
+
+    raise(alert: AdminAlert): Promise<void> {
+        if (this.failing) {
+            return Promise.reject(new Error("The alert channel is unavailable."));
+        }
+
+        this.raised.push(alert);
+
+        return Promise.resolve();
+    }
+}
+
 export class StubTagRepository implements TagRepository {
     private readonly catalogue: TagCatalogue;
 
@@ -324,6 +348,8 @@ export interface DashboardTestApp {
     readonly tags: StubTagRepository;
     /** Inspect `entries` to assert what a mutation recorded. */
     readonly audit: StubAuditLogRepository;
+    /** Inspect `raised` to assert what a mutation shouted about. */
+    readonly alerter: StubAdminAlerter;
     readonly authenticator: StubOidcAuthenticator;
     /** Moves the server's clock, which is how expiry and renewal are exercised without waiting. */
     setNow(now: Date): void;
@@ -355,6 +381,7 @@ export async function serveDashboardTestApp(
     const members = new StubMemberRepository(options.members ?? [], catalogue);
     const tags = new StubTagRepository(catalogue);
     const audit = new StubAuditLogRepository();
+    const alerter = new StubAdminAlerter();
     const authenticator = new StubOidcAuthenticator(options.loginAs ?? "john.doe@example.com");
     let now = options.now ?? new Date();
 
@@ -368,6 +395,7 @@ export async function serveDashboardTestApp(
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
             auditLog: audit,
+            alerter,
             rooms: options.rooms,
             now: () => now,
             rateLimit: options.rateLimit,
@@ -379,6 +407,7 @@ export async function serveDashboardTestApp(
         members,
         tags,
         audit,
+        alerter,
         authenticator,
         setNow: (value: Date) => {
             now = value;

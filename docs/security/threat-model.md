@@ -132,25 +132,32 @@ that changes.
 
 ### F1 — A stolen admin session can create a permanent administrator
 
-**Severity: high.** An attacker with an administrator's browser session for even a minute can grant `admin` to an
-address they control. The session dies within 12 hours; the grant does not. A temporary compromise becomes
-permanent access that survives session expiry, password reset and revoking the original account.
+**Severity: was high. Closed 2026-08-01.**
 
-Granting `admin` through the dashboard is deliberate (ADR-0004, decision #8) and has a mandatory test. The question
-this model raises is not whether to allow it, but whether it should be *silent*.
+An attacker with an administrator's browser session for even a minute could grant `admin` to an address they
+control. The session dies within 12 hours; the grant did not. A temporary compromise became permanent access that
+survived session expiry, password reset and revoking the original account.
 
-**Options:**
+**Resolution — stronger than this model first recommended.** `admin` is now assigned **only with direct SQL**.
+Neither the dashboard nor the CLI can grant it: both go through `MemberAdministrationService`, which refuses the
+attempt, records it as `tag.grant_refused`, and raises an `admin.grant.refused` alert. A stolen cookie cannot reach a
+database session, so the escalation path is gone rather than merely watched.
 
-| | Effect | Cost |
-|---|---|---|
-| **a. Accept, lean on the provider** | Entra Conditional Access — MFA, device compliance — is the real perimeter, which is decision #7's premise | none |
-| **b. Alert on `admin` grants** | Turns permanent-and-silent into permanent-and-noticed. The audit log already records it; nobody reads it | small |
-| **c. Move `admin` grants to the CLI only** | A stolen browser session could no longer create a backdoor administrator | revises decision #8 and mandatory test #10 |
-| **d. Require a second administrator to approve** | Removes the single point of compromise | large; real friction for a small team |
+Two things deliberately did **not** change:
 
-**Recommendation: (a) + (b).** Keep decision #8, and make an `admin` grant something a human is told about rather
-than something buried in a table. Revisit (c) if the dashboard is ever reachable without Conditional Access in front
-of it.
+- **Revoking `admin` is still allowed from either surface**, and raises an `admin.revoked` alert. Needing a DBA to
+  remove an administrator during an incident would be the wrong trade.
+- **The bootstrap still grants it on every startup**, because it writes through the repository rather than through
+  the refusing service. Restarting `admin-api` remains the lockout recovery (ADR-0004, decision #8).
+
+ADR-0004's decision #8 is revised accordingly, and its mandatory test #10 is superseded by one asserting the
+opposite.
+
+**What it cost.** A legitimate `admin` grant now leaves **no trace at all** — SQL bypasses the audit log and the
+alert alike. The trade was made knowingly: no application surface can escalate, at the price of the one privilege
+whose assignment is no longer recorded. If that becomes a problem, the answer is a periodic reconciliation that
+compares the current set of administrators against the last one it saw and alerts on the difference — which catches
+SQL grants without putting the privilege back within reach of a session.
 
 ### F2 — CLI changes cannot name a person
 

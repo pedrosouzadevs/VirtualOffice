@@ -323,6 +323,49 @@ Duas coisas que valem saber antes de ler:
 Esta é uma auditoria **administrativa** — quem mudou permissão. Não é log de uso: login, entrada em sala e chamadas
 acontecem no `play`, no `back` e no servidor de mídia, e nenhum deles passa por aqui.
 
+### Concedendo `admin`
+
+**Só SQL direto consegue.** Nem o dashboard nem a CLI concedem — os dois recusam, registram a tentativa e disparam
+alerta. É o achado
+[F1](security/threat-model.pt-BR.md#f1--uma-sessão-de-admin-roubada-cria-um-administrador-permanente) do modelo de
+ameaças: uma sessão de navegador roubada dura minutos, uma concessão de `admin` dura para sempre, e as duas não
+deveriam estar a um clique de distância.
+
+```bash
+# O membro e a tag precisam existir. Conceda qualquer outra tag antes se a pessoa for nova —
+# é isso que cria o membro.
+docker compose exec admin-api-db psql -U admin_api -d admin_api -c \
+  "insert into member_tag (member_id, tag_id)
+   select m.id, t.id from member m, tag t
+   where m.email = 'alguem@empresa.com' and t.name = 'admin'
+   on conflict do nothing;"
+```
+
+A CLI imprime exatamente esse comando quando você tenta, então não precisa voltar aqui.
+
+**Revogar `admin` não é restrito** — o dashboard e o `member:revoke` fazem, e os dois disparam alerta. Precisar de um
+DBA para remover um administrador durante um incidente seria a troca errada.
+
+**Uma concessão feita assim não deixa entrada de auditoria.** O SQL contorna o log. Esse é o custo deliberado de pôr
+o privilégio fora do alcance de uma superfície de aplicação; anote para quem você concedeu e por quê.
+
+### Alertas
+
+Dois eventos são gritados, não só registrados:
+
+| Evento | Quando |
+|---|---|
+| `admin.grant.refused` | alguém tentou conceder `admin` pelo dashboard ou pela CLI |
+| `admin.revoked` | alguém removeu uma tag `admin` que a pessoa de fato tinha |
+
+Os dois sempre vão para o log em nível `error` com o marcador fixo `[ADMIN-ALERT]`, que é o que alerta baseado em log
+consegue casar sem nenhuma configuração. Defina `ADMIN_API_ALERT_WEBHOOK_URL` para também mandá-los como JSON — um
+webhook de entrada do Slack ou do Teams lê o campo `text`; qualquer outro recebe também os campos estruturados.
+
+```bash
+docker compose logs admin-api | grep ADMIN-ALERT
+```
+
 ### Ficou trancado do lado de fora?
 
 Remover a própria tag `admin` é permitido, inclusive sendo o último administrador. O bootstrap roda em **toda**

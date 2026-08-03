@@ -4,6 +4,7 @@ import {
     revokeTagFromMember,
     setMemberDisplayName,
 } from "../Application/MemberAdministrationService";
+import type { AdminAlerter } from "../Application/Ports/AdminAlerter";
 import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
 import type { TagRepository } from "../Application/Ports/TagRepository";
@@ -22,6 +23,8 @@ export interface CommandContext {
      * rather than inventing a name. A gap would be worse: the log's whole value is that it has no gaps.
      */
     audit: AuditLogRepository;
+    /** Where a refused `admin` grant, or a revoked one, is shouted about (threat model, F1). */
+    alerter: AdminAlerter;
     /** Injected so tests can capture output instead of writing to the terminal. */
     out: (line: string) => void;
 }
@@ -122,7 +125,7 @@ export async function listTags({ tags, out }: CommandContext): Promise<CommandRe
  * how a typo becomes visible immediately rather than at the next login.
  */
 export async function grantTag(
-    { members, tags, audit, out }: CommandContext,
+    { members, tags, audit, alerter, out }: CommandContext,
     email: string,
     tagName: string,
 ): Promise<CommandResult> {
@@ -132,7 +135,23 @@ export async function grantTag(
     }
 
     const known = await tags.listAll();
-    const result = await grantTagToMember({ members, tags, audit }, CLI_ACTOR, email, tagName);
+    const result = await grantTagToMember({ members, tags, audit, alerter }, CLI_ACTOR, email, tagName);
+
+    if (result.outcome === "protected-tag") {
+        // The CLI is inside the container and still cannot do this: the rule is about where the privilege lives, not
+        // about which surface asked (threat model, F1).
+        out(`"${result.tagName}" cannot be granted from here. It is assigned with direct SQL:`);
+        out("");
+        out("  docker compose exec admin-api-db psql -U admin_api -d admin_api -c \\");
+        out(`    "insert into member_tag (member_id, tag_id)`);
+        out(`     select m.id, t.id from member m, tag t`);
+        out(`     where m.email = '${normalizeEmail(email)}' and t.name = '${result.tagName}'`);
+        out(`     on conflict do nothing;"`);
+        out("");
+        out("The member and the tag must already exist. Grant any other tag first to create the member.");
+
+        return failed;
+    }
 
     if (result.createdTag) {
         out(`Note: the tag "${result.tagName}" did not exist and was created.`);
@@ -148,7 +167,7 @@ export async function grantTag(
 
 /** Revokes a tag. Revoking one the member does not hold is reported, not treated as an error. */
 export async function revokeTag(
-    { members, tags, audit, out }: CommandContext,
+    { members, tags, audit, alerter, out }: CommandContext,
     email: string,
     tagName: string,
 ): Promise<CommandResult> {
@@ -157,7 +176,7 @@ export async function revokeTag(
         return failed;
     }
 
-    const result = await revokeTagFromMember({ members, tags, audit }, CLI_ACTOR, email, tagName);
+    const result = await revokeTagFromMember({ members, tags, audit, alerter }, CLI_ACTOR, email, tagName);
 
     if (result.outcome === "member-not-found") {
         out(`No member with email "${normalizeEmail(email)}".`);
@@ -184,7 +203,7 @@ export async function revokeTag(
  * Only works on an existing member: creating one from a typo here would produce an account nobody ever logs into.
  */
 export async function setMemberName(
-    { members, tags, audit, out }: CommandContext,
+    { members, tags, audit, alerter, out }: CommandContext,
     email: string,
     name: string,
 ): Promise<CommandResult> {
@@ -193,7 +212,7 @@ export async function setMemberName(
         return failed;
     }
 
-    const updated = await setMemberDisplayName({ members, tags, audit }, CLI_ACTOR, email, name);
+    const updated = await setMemberDisplayName({ members, tags, audit, alerter }, CLI_ACTOR, email, name);
 
     if (updated === undefined) {
         out(`No member with email "${normalizeEmail(email)}". Grant them a tag first, or let them log in once.`);

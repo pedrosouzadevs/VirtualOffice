@@ -120,16 +120,18 @@ describe("GET /admin/api/members/:email", () => {
 
 describe("POST /admin/api/members/:email/tags", () => {
     it("grants a tag and answers with the member as they now are", async () => {
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin", "editor"] });
+        // A tag that is not `admin`: that one can only be granted with direct SQL (threat model, F1), and this test
+        // is about the shape of an ordinary grant.
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter", "editor"] });
         const session = await asAdmin(app);
 
         const response = await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, {
-            tag: "admin",
+            tag: "greeter",
         });
 
         expect(response.status).toBe(200);
         expect(await response.json()).toEqual({
-            member: { email: ALICE.email, username: "Alice Doe", tags: ["admin", "editor"] },
+            member: { email: ALICE.email, username: "Alice Doe", tags: ["editor", "greeter"] },
             createdTag: false,
         });
     });
@@ -202,16 +204,17 @@ describe("POST /admin/api/members/:email/tags", () => {
     });
 
     it("is refused without the CSRF token", async () => {
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin"] });
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter"] });
         const session = await asAdmin(app);
 
         const response = await fetch(`${app.url}/admin/api/members/${ALICE.email}/tags`, {
             method: "POST",
             headers: { ...session.cookieOnlyHeaders, "Content-Type": "application/json" },
-            body: JSON.stringify({ tag: "admin" }),
+            body: JSON.stringify({ tag: "greeter" }),
         });
 
         expect(response.status).toBe(403);
+        // The code matters: this must be the CSRF guard refusing, not the protected-tag rule.
         expect(await response.json()).toMatchObject({ code: "ADMIN_CSRF_FAILED" });
         // And nothing happened.
         expect(await (await read(app, session, `/admin/api/members/${ALICE.email}`)).json()).toMatchObject({
@@ -220,12 +223,12 @@ describe("POST /admin/api/members/:email/tags", () => {
     });
 
     it("is refused when the pusher's token is offered instead of a session", async () => {
-        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["admin"] });
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0, tags: ["greeter"] });
 
         const response = await fetch(`${app.url}/admin/api/members/${ALICE.email}/tags`, {
             method: "POST",
             headers: { Authorization: TEST_ADMIN_API_TOKEN, "Content-Type": "application/json" },
-            body: JSON.stringify({ tag: "admin" }),
+            body: JSON.stringify({ tag: "greeter" }),
             redirect: "manual",
         });
 
@@ -371,8 +374,10 @@ describe("what a grant is actually worth", () => {
         expect(await (await roomAccess()).json()).toMatchObject({ canEdit: true, tags: ["editor"] });
     });
 
-    it("lets a new administrator log in (ADR-0004, mandatory test #10)", async () => {
-        // Granting `admin` is an ordinary tag grant, with no special case (ADR-0004, decision #8).
+    it("does not let an administrator create another one (supersedes mandatory test #10)", async () => {
+        // ADR-0004's decision #8 originally made granting `admin` an ordinary tag grant, and mandatory test #10
+        // asserted exactly that. Threat model finding F1 revised it: an attacker holding a session for a minute
+        // could otherwise mint an administrator that outlives the session by years. The privilege now lives in SQL.
         const app = await serveDashboardTestApp({
             members: [ADMIN, ALICE],
             loginAs: ALICE.email,
@@ -381,15 +386,15 @@ describe("what a grant is actually worth", () => {
         });
         const session = await asAdmin(app);
 
-        // Alice cannot get in yet.
-        const refused = await completeLoginAs(app);
+        const refused = await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, {
+            tag: "admin",
+        });
+
         expect(refused.status).toBe(403);
+        expect(await refused.json()).toMatchObject({ code: "ADMIN_TAG_PROTECTED" });
 
-        await mutate(app, session, "POST", `/admin/api/members/${ALICE.email}/tags`, { tag: "admin" });
-
-        const admitted = await completeLoginAs(app);
-        expect(admitted.status).toBe(302);
-        expect(readSetCookie(admitted, SESSION_COOKIE)).toBeTruthy();
+        // And Alice still cannot get in, which is the property test #10 was really about.
+        expect((await completeLoginAs(app)).status).toBe(403);
     });
 });
 
@@ -416,7 +421,7 @@ describe("the CSRF header name is the one the dashboard will send", () => {
                 [CSRF_HEADER]: session.session.csrfToken,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ tag: "admin" }),
+            body: JSON.stringify({ tag: "greeter" }),
         });
 
         expect(response.status).toBe(200);

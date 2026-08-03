@@ -1,7 +1,7 @@
 # HANDOFF
 
 Feature 3 do [Spec 0001](docs/specs/0001-feature-roadmap.pt-BR.md) — a Admin API própria (`admin-api`).
-Branch **`feature/admin-api`**, 18 commits à frente de `master`.
+Branch **`feature/admin-api`**, 25 commits à frente de `master`.
 
 Este documento não depende de nada que tenha sido dito em conversa. Tudo o que é preciso para continuar está aqui ou
 nos documentos linkados.
@@ -10,7 +10,8 @@ nos documentos linkados.
 
 ## Current Status
 
-**P0, P1 e a fatia G0 da P2 entregues, verificados e commitados.**
+**P0, P1 e P2 inteiras entregues, verificadas e commitadas.** O que resta antes de uso real não é código de feature —
+está em [Antes de qualquer uso real](#antes-de-qualquer-uso-real).
 
 O `play` já consome o `admin-api` de verdade: tags e `canEdit` vêm do Postgres, e não mais da claim OIDC. O ambiente
 de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versionado).
@@ -19,12 +20,12 @@ de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-com
 |---|---|---|
 | P0 (E1–E6) | 4 endpoints bloqueantes, Postgres, bootstrap idempotente, `play` ligado | ✅ entregue |
 | P1 (F0–F3) | `/api/members*`, `/api/*/tags`, CLI de gestão, docs, e2e | ✅ entregue |
-| **P2 / G0** | Espinha de segurança do dashboard: login OIDC, sessão, barreira, CSRF | ✅ entregue |
-| P2 (G1–G4) | `/admin/api/*`, UI Svelte, visão de salas, auditoria | 📐 ADR aceito, **zero código** |
+| P2 (G0–G4) | Dashboard: barreira de sessão, API, UI Svelte, salas e áreas, auditoria | ✅ entregue |
 
-**Verificação atual:** 188 testes unitários, 53 de integração (Postgres real), 7 e2e (Playwright, executados contra a
-stack rodando). `typecheck`, `eslint` e `prettier` limpos. O fluxo de login foi exercido ponta a ponta no navegador
-contra o mock OIDC real, incluindo revogar a tag pela CLI e ver a sessão aberta ser negada na requisição seguinte.
+**Verificação atual:** 285 testes unitários, 73 de integração (Postgres real), 8 e2e (Playwright, executados contra a
+stack rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O fluxo foi exercido ponta a ponta no
+navegador contra o mock OIDC real: login, conceder tag, ver o `canEdit` mudar no `/api/room/access`, e a entrada de
+auditoria nomeando quem concedeu.
 
 ### Onde a leitura deve começar
 
@@ -33,9 +34,11 @@ Nesta ordem, e não pule o ADR-0002 — ele é o contrato:
 1. [`docs/adr/0002-admin-api.pt-BR.md`](docs/adr/0002-admin-api.pt-BR.md) — o contrato verificado no código, as três
    armadilhas, e o que muda ao ligar o serviço
 2. [`docs/adr/0003-member-and-tag-management.pt-BR.md`](docs/adr/0003-member-and-tag-management.pt-BR.md) — a P1
-3. [`docs/adr/0004-admin-dashboard.pt-BR.md`](docs/adr/0004-admin-dashboard.pt-BR.md) — a P2, **próximo trabalho**
-4. [`admin-api/AGENTS.md`](admin-api/AGENTS.md) — as convenções do pacote
-5. [`docs/SETUP-ADMIN-API.pt-BR.md`](docs/SETUP-ADMIN-API.pt-BR.md) — subir, verificar, gerir permissões, rollback
+3. [`docs/adr/0004-admin-dashboard.pt-BR.md`](docs/adr/0004-admin-dashboard.pt-BR.md) — a P2, com a **revisão da
+   decisão #8** no fim dela: o `admin` só se atribui por SQL
+4. [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md) — o STRIDE e o que continua aberto
+5. [`admin-api/AGENTS.md`](admin-api/AGENTS.md) — as convenções do pacote
+6. [`docs/SETUP-ADMIN-API.pt-BR.md`](docs/SETUP-ADMIN-API.pt-BR.md) — subir, verificar, gerir permissões, rollback
 
 ---
 
@@ -202,10 +205,10 @@ O **modelo de ameaças STRIDE** está escrito em [`docs/security/threat-model.pt
 e tem a lista completa. O resumo:
 
 - **F7 — o `ADMIN_API_SESSION_SECRET` ainda é o padrão de desenvolvimento.** Quem o tiver forja sessão para qualquer
-  e-mail. `openssl rand -base64 48`.
-- **F1 — uma sessão de admin roubada cria um administrador permanente.** É o único achado que exige *decisão*, não
-  execução: conceder `admin` pelo dashboard é a decisão #8 do ADR-0004, e a pergunta é se pode ser silencioso. A
-  recomendação é manter a decisão e **alertar** quando `admin` for concedido.
+  e-mail. `openssl rand -base64 48`. **É o único achado de severidade alta ainda aberto.**
+- ~~F1~~ — **fechado.** O `admin` agora só é atribuído por SQL direto; nem o dashboard nem a CLI concedem. A decisão
+  #8 do ADR-0004 foi revisada e o teste obrigatório #10 substituído. **Custo consciente: uma concessão legítima de
+  `admin` não deixa rastro nenhum**, porque o SQL contorna o log de auditoria.
 - **HTTPS e `Secure` no cookie.** Já automáticos quando o `ADMIN_API_PUBLIC_URL` começa com `https://`, mas ninguém
   verificou num deploy de verdade.
 - **`ADMIN_API_TRUST_PROXY`** batendo com a topologia: `false` se não houver proxy na frente, ou o limite de taxa do
@@ -245,24 +248,28 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
 9. **Membro desconhecido no `/api/room/access` entra com `tags: []` e `canEdit: false`** — nunca erro. Falhar ali
    significaria que nenhum visitante novo consegue entrar no mundo.
 
-10. **Os schemas `zod` são importados de `@workadventure/messages`, nunca redigitados.** O do `/api/room/access` foi
+10. **O `admin` só se atribui por SQL direto.** O `MemberAdministrationService` recusa, e as duas superfícies passam
+    por ele. Fecha o F1 do modelo de ameaças. **Revogar continua permitido** pelas duas, e o bootstrap continua
+    concedendo no restart porque escreve pelo repositório — é a recuperação de lockout.
+
+11. **Os schemas `zod` são importados de `@workadventure/messages`, nunca redigitados.** O do `/api/room/access` foi
     movido para lá justamente para isso, e é re-exportado do `AdminApi.ts` — **nenhum import do `play` mudou**.
 
-11. **O `ADMIN_API_TOKEN` não abre `/admin/*`, e o cookie de sessão não abre `/api/*`.** Nos dois sentidos, cada um
+12. **O `ADMIN_API_TOKEN` não abre `/admin/*`, e o cookie de sessão não abre `/api/*`.** Nos dois sentidos, cada um
     com teste. A barreira do `/admin` **nunca** lê o header `Authorization`; é isso que garante o primeiro sentido.
 
-12. **A tag `admin` é relida do banco a cada requisição, nunca do token.** É o que faz um administrador revogado
+13. **A tag `admin` é relida do banco a cada requisição, nunca do token.** É o que faz um administrador revogado
     perder acesso no clique seguinte em vez de uma hora depois — e é o que torna a sessão deslizante segura.
 
-13. **O `ADMIN_API_SESSION_SECRET` não é o `ADMIN_API_TOKEN`.** Reaproveitar o segredo do pusher para assinar sessão
+14. **O `ADMIN_API_SESSION_SECRET` não é o `ADMIN_API_TOKEN`.** Reaproveitar o segredo do pusher para assinar sessão
     faz um vazamento virar personificação de qualquer administrador.
 
-14. **O cookie de sessão é `SameSite=Lax`, não `Strict`.** Parece o contrário do certo, e não é: navegadores retêm
+15. **O cookie de sessão é `SameSite=Lax`, não `Strict`.** Parece o contrário do certo, e não é: navegadores retêm
     cookies `Strict` em requisições que chegam por cadeia de redirect cross-site, que é exatamente a volta do
     provedor de identidade. `Strict` produz um login que parece funcionar e volta ao provedor em laço. A defesa CSRF
     é o token no header, não o atributo do cookie.
 
-15. **`/admin/*` sem configuração responde 503 e o processo sobe assim mesmo.** Fazer o `admin-api` morrer por causa
+16. **`/admin/*` sem configuração responde 503 e o processo sobe assim mesmo.** Fazer o `admin-api` morrer por causa
     do dashboard pendura o `play` — é o item 1 desta lista por outro caminho.
 
 ### Também não mexer sem conversar
