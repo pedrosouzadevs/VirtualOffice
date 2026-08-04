@@ -56,3 +56,15 @@ export function isProtectedTag(name: string): boolean {
 export function normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
 }
+
+/**
+ * Normalises the identifier a ban or a report is stored and looked up by.
+ *
+ * Lives next to {@link normalizeEmail} and deliberately *is* it. The pusher names people with whatever it holds in
+ * `socketData.userUuid`: an email for everyone who logged in, an anonymous uuid for a visitor who did not. Two
+ * normalisations that could drift apart would mean a ban written under one spelling and never found under another, so
+ * there is one function and this comment sits where a reader would look to check that.
+ */
+export function normalizeIdentifier(identifier: string): string {
+    return normalizeEmail(identifier);
+}

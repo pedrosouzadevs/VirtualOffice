@@ -15,6 +15,20 @@
       "when": 1785530941961,
       "tag": "0001_long_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785848129941,
+      "tag": "0002_ambitious_gamma_corps",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785849471822,
+      "tag": "0003_fast_runaways",
+      "breakpoints": true
     }
   ]
 }

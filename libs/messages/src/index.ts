@@ -3,6 +3,7 @@ export * from "./protobuf-transformers/undefinedChecker";
 export * from "./protobuf-transformers/transformers";
 
 export * from "./JsonMessages/AdminApiData";
+export * from "./JsonMessages/AdminBannedData";
 export * from "./JsonMessages/ApiVersion";
 export * from "./JsonMessages/ApplicationDefinitionInterface";
 export * from "./JsonMessages/CapabilitiesData";

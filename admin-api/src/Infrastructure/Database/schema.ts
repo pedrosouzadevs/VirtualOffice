@@ -99,6 +99,86 @@ export const auditLog = pgTable(
     ],
 );
 
+/**
+ * Who was thrown out of the world, and by whom (ADR-0005, decision #1).
+ *
+ * **Without foreign keys, like `audit_log`, and for two reasons of its own.** The pusher names the banned person with
+ * whatever it holds — an email for someone who logged in, an anonymous uuid for a visitor who did not — so a
+ * reference to `member.id` would force an anonymous visitor to become an account nobody can log into. And a ban must
+ * outlive the row it points at: `on delete cascade` would mean deleting a member lifts their ban, which is exactly
+ * backwards.
+ *
+ * `room_url` is stored as **evidence, not scope**. One world exists (ADR-0002, decision #7), so the ban applies
+ * everywhere regardless of what this column says; when worlds arrive it becomes the scope rather than being added.
+ *
+ * No IP address is stored, deliberately: `GET /api/ban` receives one and drops it (ADR-0005, decision #3).
+ */
+export const ban = pgTable(
+    "ban",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+
+        /** The banned person's identifier, lower-cased on the way in like every other identifier here. */
+        identifier: text("identifier").notNull(),
+
+        /** The name they were carrying at the time. A snapshot, for reading the record months later. */
+        displayName: text("display_name"),
+
+        /** What the banned person is told. Answered verbatim by `GET /api/ban`. */
+        message: text("message").notNull(),
+
+        /** Where it happened. */
+        roomUrl: text("room_url").notNull(),
+
+        /** The administrator who issued it, as the pusher named them. A snapshot, not a reference. */
+        issuedBy: text("issued_by").notNull(),
+
+        createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    },
+    (table) => [
+        // The lookup `GET /api/ban` performs on every check, once anything calls it (ADR-0005, decision #2).
+        index("ban_identifier_idx").on(table.identifier),
+        index("ban_created_at_idx").on(table.createdAt),
+    ],
+);
+
+/**
+ * What one user complained about another (ADR-0005, decision #4).
+ *
+ * Append-only, and **without foreign keys** for the same two reasons as `ban`: either side of a report may be an
+ * anonymous visitor carrying a uuid rather than an email, and the record has to keep naming who they were after the
+ * account is gone. Nothing here is ever updated or deleted.
+ *
+ * No `status` column. Nobody owns triage yet, and a state machine invented before there is a person to run it is a
+ * column that sits at its default forever.
+ */
+export const report = pgTable(
+    "report",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+
+        /** Who was reported, lower-cased on the way in like every other identifier here. */
+        reportedIdentifier: text("reported_identifier").notNull(),
+
+        /** Who complained. */
+        reporterIdentifier: text("reporter_identifier").notNull(),
+
+        /** What they wrote, verbatim. The whole point of the record. */
+        comment: text("comment").notNull(),
+
+        /** Where it happened. `reportWorldSlug` on the wire, which is the room URL despite the name. */
+        roomUrl: text("room_url").notNull(),
+
+        createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    },
+    (table) => [
+        // Newest first is how the list is always read, and the reported index is what makes "everything ever said
+        // about this person" cheap — the question moderation actually asks.
+        index("report_created_at_idx").on(table.createdAt),
+        index("report_reported_identifier_idx").on(table.reportedIdentifier),
+    ],
+);
+
 export const memberRelations = relations(member, ({ many }) => ({
     memberTags: many(memberTag),
 }));

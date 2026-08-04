@@ -1,6 +1,7 @@
 import type { AuditAction } from "../Domain/AuditEntry";
 import type { Member } from "../Domain/Member";
 import { isProtectedTag, normalizeEmail } from "../Domain/Member";
+import { actorLabel, recordAudit, type Actor } from "./AuditRecording";
 import type { AdminAlert, AdminAlerter } from "./Ports/AdminAlerter";
 import type { AuditLogRepository } from "./Ports/AuditLogRepository";
 import type { MemberRepository } from "./Ports/MemberRepository";
@@ -21,31 +22,11 @@ export interface MemberAdministration {
 }
 
 /**
- * Who made a change.
- *
- * `{ kind: "cli" }` is deliberately anonymous: a command run inside the container has no logged-in identity, and
- * inventing one would put a name in the audit log that nobody can stand behind. An entry attributed to the CLI means
- * "somebody with shell access did this", which is the true and useful statement.
+ * Re-exported from {@link AuditRecording}, where they moved once banning became a second writer to the audit log
+ * (ADR-0005). Every existing import keeps working, and there is still only one definition of what an actor is.
  */
-export type Actor = { kind: "administrator"; email: string } | { kind: "cli" };
+export { CLI_ACTOR, type Actor } from "./AuditRecording";
 
-export const CLI_ACTOR: Actor = { kind: "cli" };
-
-/** The value written to `actor_email`. Never a real address for the CLI, so the two can never be confused. */
-function actorLabel(actor: Actor): string {
-    return actor.kind === "cli" ? "cli" : actor.email;
-}
-
-/**
- * Writes the audit entry for a change that has already happened (ADR-0004, decision #5).
- *
- * Lives here rather than in the controller so that **every** surface that grants a permission records it. That is the
- * same reasoning that put granting itself here: the dashboard and the CLI must not be able to disagree, and "the CLI
- * forgot to write to the log" is exactly the kind of disagreement that leaves an unanswerable question later.
- *
- * A failure does not fail the caller. The change did land, so reporting an error would misdescribe the world, and the
- * realistic cause — a database that is down or full — would have stopped the mutation first.
- */
 /**
  * Raises an alert without letting it affect the caller.
  *
@@ -60,6 +41,7 @@ async function raise({ alerter }: MemberAdministration, alert: AdminAlert): Prom
     }
 }
 
+/** Records against this service's own repositories. The semantics live in {@link recordAudit}. */
 async function record(
     { audit }: MemberAdministration,
     actor: Actor,
@@ -67,14 +49,7 @@ async function record(
     targetEmail: string,
     details: Record<string, unknown>,
 ): Promise<void> {
-    try {
-        await audit.record({ actorEmail: actorLabel(actor), action, targetEmail, details });
-    } catch (error: unknown) {
-        console.error(
-            `[${new Date().toISOString()}] Failed to record ${action} by ${actorLabel(actor)} on ${targetEmail}`,
-            error,
-        );
-    }
+    await recordAudit(audit, actor, action, targetEmail, details);
 }
 
 export type GrantTagResult =

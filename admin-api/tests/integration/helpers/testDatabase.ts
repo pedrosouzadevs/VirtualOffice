@@ -61,7 +61,9 @@ export async function setupTestDatabase(): Promise<DatabaseConnection> {
 
 /** Empties every table between tests. CASCADE handles member_tag's foreign keys. */
 export async function truncateAll(connection: DatabaseConnection): Promise<void> {
-    // `audit_log` is listed explicitly because nothing references it — the cascade from the other tables would not
-    // reach it, and a test asserting "one entry was written" would see everything the previous test wrote too.
-    await connection.sql`truncate table "member_tag", "member", "tag", "audit_log" cascade`;
+    // `audit_log`, `ban` and `report` are listed explicitly because nothing references them — the cascade from the
+    // other tables would not reach them, and a test asserting "one entry was written" would see everything the
+    // previous test wrote too. That they need naming here is the same fact their schemas state: they hold snapshots,
+    // not references.
+    await connection.sql`truncate table "member_tag", "member", "tag", "audit_log", "ban", "report" cascade`;
 }

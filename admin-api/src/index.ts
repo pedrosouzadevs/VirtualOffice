@@ -64,7 +64,9 @@ import { createDatabaseConnection } from "./Infrastructure/Database/connection";
 import { runMigrations } from "./Infrastructure/Database/migrate";
 import { PostgresReadinessCheck } from "./Infrastructure/Database/PostgresReadinessCheck";
 import { DrizzleAuditLogRepository } from "./Infrastructure/Repositories/DrizzleAuditLogRepository";
+import { DrizzleBanRepository } from "./Infrastructure/Repositories/DrizzleBanRepository";
 import { DrizzleMemberRepository } from "./Infrastructure/Repositories/DrizzleMemberRepository";
+import { DrizzleReportRepository } from "./Infrastructure/Repositories/DrizzleReportRepository";
 import { DrizzleTagRepository } from "./Infrastructure/Repositories/DrizzleTagRepository";
 import { createServer } from "./api/server";
 
@@ -140,6 +142,9 @@ async function start(): Promise<void> {
 
     const memberRepository = new DrizzleMemberRepository(connection.db);
     const tagRepository = new DrizzleTagRepository(connection.db);
+    const banRepository = new DrizzleBanRepository(connection.db);
+    const reportRepository = new DrizzleReportRepository(connection.db);
+    const auditLog = new DrizzleAuditLogRepository(connection.db);
     await bootstrapAdmin(memberRepository, ADMIN_API_BOOTSTRAP_ADMIN_EMAIL);
 
     const app = createServer({
@@ -164,13 +169,15 @@ async function start(): Promise<void> {
         },
         memberRepository,
         tagRepository,
+        banRepository,
+        reportRepository,
+        auditLog,
         readinessChecks: [new PostgresReadinessCheck(connection.sql)],
         trustProxy: ADMIN_API_TRUST_PROXY,
         adminDashboard: dashboard.enabled
             ? {
                   configuration: dashboard.configuration,
                   authenticator: new OpenIdConnectAuthenticator(dashboard.configuration),
-                  auditLog: new DrizzleAuditLogRepository(connection.db),
                   alerter: new LoggingAdminAlerter(ADMIN_API_ALERT_WEBHOOK_URL),
                   rooms:
                       INTERNAL_MAP_STORAGE_URL === undefined

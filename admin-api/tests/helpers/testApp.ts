@@ -2,12 +2,16 @@ import type { Express, RequestHandler } from "express";
 import type { MapDetailsConfiguration } from "../../src/Application/MapDetailsService";
 import type { AdminAlert, AdminAlerter } from "../../src/Application/Ports/AdminAlerter";
 import type { AuditLogRepository } from "../../src/Application/Ports/AuditLogRepository";
+import type { BanRepository } from "../../src/Application/Ports/BanRepository";
+import type { BanRecord, NewBan } from "../../src/Domain/Ban";
 import type { AuditEntry, RecordedAuditEntry } from "../../src/Domain/AuditEntry";
 import type { MemberRepository } from "../../src/Application/Ports/MemberRepository";
+import type { ReportRepository } from "../../src/Application/Ports/ReportRepository";
+import type { NewReport, ReportRecord } from "../../src/Domain/Report";
 import type { RoomCatalogue } from "../../src/Application/Ports/RoomCatalogue";
 import type { TagRepository } from "../../src/Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
-import { normalizeEmail, type Member, type MemberSummary } from "../../src/Domain/Member";
+import { normalizeEmail, normalizeIdentifier, type Member, type MemberSummary } from "../../src/Domain/Member";
 import { createServer, type ServerDependencies } from "../../src/api/server";
 import { StubOidcAuthenticator, TEST_DASHBOARD_CONFIGURATION } from "./adminDashboard";
 import { startTestServer, type TestServer } from "./testServer";
@@ -256,6 +260,79 @@ export class StubAuditLogRepository implements AuditLogRepository {
 }
 
 /**
+ * The ban table, in memory.
+ *
+ * Implemented rather than stubbed out: ADR-0005's mandatory tests are about what a ban *records* and what a check
+ * *answers*, and a fake that swallowed the writes could not tell the two apart. Test #8 — that an IP address is
+ * written nowhere — is only meaningful against a store that really keeps what it was given.
+ */
+export class StubBanRepository implements BanRepository {
+    readonly bans: BanRecord[] = [];
+
+    constructor(existing: readonly NewBan[] = []) {
+        for (const entry of existing) {
+            this.add(entry);
+        }
+    }
+
+    /** Synchronous so the constructor can seed without an unawaited promise. */
+    private add(entry: NewBan): BanRecord {
+        const recorded: BanRecord = {
+            ...entry,
+            identifier: normalizeIdentifier(entry.identifier),
+            id: `ban-${this.bans.length}`,
+            // Ordered by insertion rather than by a real clock, which keeps assertions on ordering deterministic.
+            createdAt: new Date(Date.UTC(2026, 7, 4, 9, 0, this.bans.length)),
+        };
+        this.bans.push(recorded);
+
+        return recorded;
+    }
+
+    record(entry: NewBan): Promise<BanRecord> {
+        return Promise.resolve(this.add(entry));
+    }
+
+    findActive(identifier: string): Promise<BanRecord | undefined> {
+        const normalized = normalizeIdentifier(identifier);
+
+        // Newest first, like the SQL one: somebody banned twice is shown the message they were last given.
+        return Promise.resolve([...this.bans].reverse().find((entry) => entry.identifier === normalized));
+    }
+
+    listRecent(limit: number): Promise<BanRecord[]> {
+        return Promise.resolve([...this.bans].reverse().slice(0, limit));
+    }
+}
+
+/**
+ * The report table, in memory.
+ *
+ * Implemented rather than stubbed out: ADR-0005's mandatory test #5 is about the *shape* the pusher sends, and the
+ * only way to show that a JSON body carrying `reportWorldSlug` was understood is to read back what was stored.
+ */
+export class StubReportRepository implements ReportRepository {
+    readonly reports: ReportRecord[] = [];
+
+    record(entry: NewReport): Promise<ReportRecord> {
+        const recorded: ReportRecord = {
+            ...entry,
+            reportedIdentifier: normalizeIdentifier(entry.reportedIdentifier),
+            reporterIdentifier: normalizeIdentifier(entry.reporterIdentifier),
+            id: `report-${this.reports.length}`,
+            createdAt: new Date(Date.UTC(2026, 7, 4, 9, 0, this.reports.length)),
+        };
+        this.reports.push(recorded);
+
+        return Promise.resolve(recorded);
+    }
+
+    listRecent(limit: number): Promise<ReportRecord[]> {
+        return Promise.resolve([...this.reports].reverse().slice(0, limit));
+    }
+}
+
+/**
  * Collects alerts instead of shouting them.
  *
  * Implemented rather than swallowed: whether an alert was raised is the assertion for threat model F1, and a fake
@@ -328,6 +405,9 @@ export async function serveTestApp(overrides: Partial<ServerDependencies> = {}):
         roomAccessConfiguration: TEST_ROOM_ACCESS_CONFIGURATION,
         memberRepository: new StubMemberRepository(),
         tagRepository: new StubTagRepository(),
+        banRepository: new StubBanRepository(),
+        reportRepository: new StubReportRepository(),
+        auditLog: new StubAuditLogRepository(),
         ...overrides,
     });
     const server = await startTestServer(app);
@@ -388,13 +468,13 @@ export async function serveDashboardTestApp(
     const url = await serveTestApp({
         memberRepository: members,
         tagRepository: tags,
+        auditLog: audit,
         // A path that cannot exist, so the "not built" branch is what runs unless a test asks otherwise. Falling back
         // to the real `dist-ui` would make these tests depend on whether somebody had run the build.
         dashboardUiDirectory: options.uiDirectory ?? "/nonexistent-dashboard-build",
         adminDashboard: {
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
-            auditLog: audit,
             alerter,
             rooms: options.rooms,
             now: () => now,

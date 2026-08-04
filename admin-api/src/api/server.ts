@@ -5,7 +5,9 @@ import express, { type Express, type NextFunction, type Request, type RequestHan
 import type { AdminDashboardConfiguration } from "../Application/AdminDashboardConfiguration";
 import type { AdminAlerter } from "../Application/Ports/AdminAlerter";
 import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
+import type { BanRepository } from "../Application/Ports/BanRepository";
 import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
+import type { ReportRepository } from "../Application/Ports/ReportRepository";
 import type { RoomCatalogue } from "../Application/Ports/RoomCatalogue";
 import { CompanionCatalogue } from "../Application/CompanionCatalogue";
 import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
@@ -14,11 +16,13 @@ import type { TagRepository } from "../Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../Application/RoomAccessService";
 import { WokaCatalogue } from "../Application/WokaCatalogue";
 import { SUPPORTED_CAPABILITIES } from "../Capabilities";
+import { BanController } from "./controllers/BanController";
 import { CapabilitiesController } from "./controllers/CapabilitiesController";
 import { CompanionListController } from "./controllers/CompanionListController";
 import { HealthController, type ReadinessCheck } from "./controllers/HealthController";
 import { MapController } from "./controllers/MapController";
 import { MembersController } from "./controllers/MembersController";
+import { ReportController } from "./controllers/ReportController";
 import { RoomAccessController } from "./controllers/RoomAccessController";
 import { TagsController } from "./controllers/TagsController";
 import { WokaListController } from "./controllers/WokaListController";
@@ -49,6 +53,21 @@ export interface ServerDependencies {
 
     /** The tag catalogue behind the map editor's pickers. */
     tagRepository: TagRepository;
+
+    /** Who was thrown out of the world (ADR-0005). Read and written by `/api/ban`. */
+    banRepository: BanRepository;
+
+    /** What users complained about (ADR-0005). Written by `/api/report`. */
+    reportRepository: ReportRepository;
+
+    /**
+     * Where every mutation is recorded (ADR-0004, decision #5).
+     *
+     * A top-level dependency rather than a dashboard one, because the dashboard is no longer its only writer:
+     * `POST /api/ban` is called by the pusher and must record who banned whom whether or not `/admin/*` is configured.
+     * The CLI has always written here without a dashboard either.
+     */
+    auditLog: AuditLogRepository;
 
     /** Subsystem probes consulted by `/readyz`. Empty until Postgres lands (ADR-0002, P0/E4). */
     readinessChecks?: readonly ReadinessCheck[];
@@ -91,9 +110,6 @@ export interface AdminDashboardDependencies {
 
     /** Injected rather than constructed here so the barrier's tests never need a live identity provider. */
     readonly authenticator: OidcAuthenticator;
-
-    /** Where every mutation the dashboard makes is written (ADR-0004, decision #5). */
-    readonly auditLog: AuditLogRepository;
 
     /** Where a refused `admin` grant, or a revoked one, is shouted about (threat model, F1). */
     readonly alerter: AdminAlerter;
@@ -169,12 +185,12 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
     const administration = {
         members: dependencies.memberRepository,
         tags: dependencies.tagRepository,
-        audit: dashboard.auditLog,
+        audit: dependencies.auditLog,
         alerter: dashboard.alerter,
     };
     new AdminMembersController(app, administration);
     new AdminTagsController(app, dependencies.tagRepository);
-    new AdminAuditController(app, dashboard.auditLog);
+    new AdminAuditController(app, dependencies.auditLog);
     new AdminRoomsController(app, dashboard.rooms, dependencies.memberRepository);
 
     mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
@@ -247,6 +263,8 @@ export function createServer(dependencies: ServerDependencies): Express {
     new CompanionListController(app, companionCatalogue);
     new MembersController(app, dependencies.memberRepository);
     new TagsController(app, dependencies.tagRepository);
+    new BanController(app, { bans: dependencies.banRepository, audit: dependencies.auditLog });
+    new ReportController(app, dependencies.reportRepository);
     new RoomAccessController(
         app,
         dependencies.memberRepository,

@@ -1,6 +1,6 @@
 # ADR-0005: Moderation (Admin API, P3)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-04
 - **Deciders:** VirtualOffice team
 - **Languages:** this file (en-US) + [0005-moderation.pt-BR.md](0005-moderation.pt-BR.md), in lockstep
@@ -65,6 +65,13 @@ The contract sends `playUri`. What we do with it is ours to choose.
 One world exists (ADR-0002, decision #7), so a per-room ban would be a distinction with no consequence and no screen
 to express it. A ban is stored against the member, with the room URL kept as **evidence rather than as scope** — the
 same shape the audit log uses, and the same upgrade path tags have when worlds arrive.
+
+**Against the member, not against `member.id`.** Implementing this made the difference concrete: the pusher names the
+banned person with whatever it holds in `socketData.userUuid`, which is an email for anyone who logged in and an
+anonymous uuid for a visitor who did not. A foreign key would force an anonymous visitor to become an account nobody
+can ever log into, and `on delete cascade` would mean deleting a member lifts their ban — exactly backwards. So the
+ban table stores an identifier snapshot and carries no foreign keys, which is the audit log's rule rather than an
+exception to it. The same applies to `report`.
 
 ## Decision 2 — A ban still will not survive reconnection, and P3 does not change that
 

@@ -1,6 +1,6 @@
 # ADR-0005: Moderação (Admin API, P3)
 
-- **Status:** Proposto
+- **Status:** Aceito
 - **Data:** 2026-08-04
 - **Decisores:** Equipe VirtualOffice
 - **Idiomas:** este arquivo (pt-BR) + [0005-moderation.md](0005-moderation.md) (en-US), em lockstep
@@ -65,6 +65,13 @@ O contrato manda `playUri`. O que fazemos com ele é escolha nossa.
 Existe um mundo só (ADR-0002, decisão #7), então um ban por sala seria uma distinção sem consequência e sem tela para
 expressá-la. O ban é guardado contra o membro, com a URL da sala mantida como **evidência, não como escopo** — a
 mesma forma que o log de auditoria usa, e o mesmo caminho de evolução que as tags têm quando mundos chegarem.
+
+**Contra o membro, não contra o `member.id`.** Implementar isto tornou a diferença concreta: o pusher nomeia a pessoa
+banida com o que ele tem em mãos no `socketData.userUuid`, que é um e-mail para quem fez login e um uuid anônimo para
+o visitante que não fez. Uma chave estrangeira obrigaria o visitante anônimo a virar uma conta em que ninguém nunca
+consegue entrar, e o `on delete cascade` faria apagar o membro levantar o ban dele — exatamente o contrário. Então a
+tabela de ban guarda um snapshot do identificador e não tem nenhuma chave estrangeira, que é a regra do log de
+auditoria e não uma exceção a ela. O mesmo vale para o `report`.
 
 ## Decisão 2 — Um ban continua não sobrevivendo à reconexão, e o P3 não muda isso
 

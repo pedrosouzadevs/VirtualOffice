@@ -16,6 +16,7 @@ import {
     isErrorApiErrorData,
     isMapDetailsData,
     isRoomRedirect,
+    AdminBannedData,
     AdminLoginMessage,
     isFetchMemberDataByUuidSuccessResponse,
     isFetchMemberDataByUuidResponse,
@@ -46,19 +47,13 @@ import { ShortMapDescriptionList } from "./ShortMapDescription";
 import { WorldChatMembersData } from "./WorldChatMembersData";
 import { iceServersService } from "./IceServersService";
 
-export const AdminBannedData = z.object({
-    is_banned: z.boolean(),
-    message: z.string(),
-});
-
-export type AdminBannedData = z.infer<typeof AdminBannedData>;
-
 /**
- * The `/api/room/access` contract now lives in @workadventure/messages, so that an Admin API implementation can
- * validate its own responses against the very schema the pusher parses them with, instead of retyping it.
- * Re-exported here to keep every existing import in this package working unchanged.
+ * The `/api/room/access` and `/api/ban` contracts now live in @workadventure/messages, so that an Admin API
+ * implementation can validate its own responses against the very schema the pusher parses them with, instead of
+ * retyping it. Re-exported here to keep every existing import in this package working unchanged.
  */
 export {
+    AdminBannedData,
     AdminLoginMessage,
     isFetchMemberDataByUuidSuccessResponse,
     isFetchMemberDataByUuidResponse,

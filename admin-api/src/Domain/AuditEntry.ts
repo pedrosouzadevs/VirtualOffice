@@ -5,7 +5,14 @@
  * anyone ever typed" is not a queryable column. Adding an action means adding it here, which is the point at which
  * somebody has to decide what it is called.
  */
-export const AUDIT_ACTIONS = ["tag.granted", "tag.revoked", "member.renamed", "tag.grant_refused"] as const;
+export const AUDIT_ACTIONS = [
+    "tag.granted",
+    "tag.revoked",
+    "member.renamed",
+    "tag.grant_refused",
+    /** Somebody was thrown out of the world (ADR-0005). Issued from `play`, not from the dashboard. */
+    "member.banned",
+] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
