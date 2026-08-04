@@ -184,6 +184,43 @@ export function setUsername(email: string, username: string | null): Promise<{ m
     });
 }
 
+/**
+ * A ban, as `/admin/api/bans` describes it.
+ *
+ * `identifier` is whatever the pusher knew the person by: an email for anyone who logged in, an anonymous uuid for a
+ * visitor who did not (ADR-0005, decision #1).
+ */
+export interface Ban {
+    readonly id: string;
+    readonly identifier: string;
+    readonly displayName: string | null;
+    readonly message: string;
+    readonly roomUrl: string;
+    readonly issuedBy: string;
+    /** ISO-8601, as JSON carries it. Formatted for display by the screen. */
+    readonly createdAt: string;
+}
+
+/** A report, as `/admin/api/reports` describes it. */
+export interface Report {
+    readonly id: string;
+    readonly reportedIdentifier: string;
+    readonly reporterIdentifier: string;
+    readonly comment: string;
+    readonly roomUrl: string;
+    readonly createdAt: string;
+}
+
+/** The most recent bans, newest first. Read-only: bans are issued from the world, never from here. */
+export function listBans(): Promise<Ban[]> {
+    return request<Ban[]>("/bans");
+}
+
+/** The most recent reports, newest first. Read-only: reports are written by the users who make them. */
+export function listReports(): Promise<Report[]> {
+    return request<Report[]>("/reports");
+}
+
 /** The acting administrator. Served outside `/admin/api`, so it is fetched directly rather than through {@link request}. */
 export async function fetchMe(): Promise<Member> {
     const response = await fetch("/admin/me");

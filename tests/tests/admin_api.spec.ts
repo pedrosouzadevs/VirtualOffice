@@ -3,6 +3,8 @@ import Map from "./utils/map";
 import Menu from "./utils/menu";
 import { getPage } from "./utils/auth";
 import { isMobile } from "./utils/isMobile";
+import { evaluateScript } from "./utils/scripting";
+import { publicTestMapUrl } from "./utils/urls";
 
 /**
  * End-to-end proof that authorisation comes from `admin-api`'s database rather than the OIDC claim
@@ -73,5 +75,60 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
 
         expect(response.status()).toBe(200);
         expect(await response.json()).toEqual(expect.arrayContaining(["admin", "editor"]));
+    });
+
+    /**
+     * ADR-0005, mandatory test #10 — the failure P3 exists to repair.
+     *
+     * `handleBanPlayerMessage` awaits `banUserByUuid` and only then calls `emitBan`, the part that actually removes
+     * the person. While `/api/ban` answered 404 the await threw, so the ban did nothing at all and the failure went
+     * quietly to Sentry. This drives the whole path — front → pusher → us → back → the banned browser.
+     *
+     * **The ban is triggered through the scripting API, because `play` ships no UI that issues one.** The action menu
+     * on a video box offers `#kickoff-user`, which removes somebody from the *meeting* (a space private event), and
+     * `ActionMediaBox.svelte` carries a commented-out `ban()` marked `TODO: implement ban user`. The only sender of
+     * `banPlayerMessage` today is `IframeListener`'s `banUser` event, so that is what an administrator's script uses
+     * and what this test exercises. Everything after that line is the production path.
+     */
+    test("banning somebody actually removes them @oidc", async ({ browser, request }) => {
+        const room = publicTestMapUrl("tests/E2E/empty.json", "admin_api_ban");
+
+        // john.doe@example.com, holding "admin" from the bootstrap. `handleBanPlayerMessage` returns early for
+        // anybody else, so the tag has to be real rather than claimed.
+        await using admin = await getPage(browser, "Admin1", room);
+        // alice.doe@example.com, in the same room — `emitBan` is addressed to the room the administrator is in.
+        await using victim = await getPage(browser, "Member1", room);
+
+        // The uuid is the **email**: `/api/room/access` answers `userUuid` with the identifier the pusher sent, and
+        // that invariant is what the whole area rests on (ADR-0002, invariant #2).
+        await evaluateScript(
+            admin,
+            async () =>
+                await new Promise<void>((resolve) => {
+                    window.parent.postMessage(
+                        { type: "banUser", data: { uuid: "alice.doe@example.com", name: "Member1" } },
+                        "*",
+                    );
+                    resolve();
+                }),
+        );
+
+        // What the banned person sees: `GameScene.bannedUser` replaces the game with an error screen. Matched by
+        // heading rather than by text, because the screen says "banned" three times over.
+        await expect(victim.getByRole("heading", { name: "BANNED" })).toBeVisible({ timeout: 60_000 });
+        await expect(victim.getByText("Code : USER_BANNED")).toBeVisible();
+
+        // And the ban is a record, not an event that vanished. `GET /api/ban` has no caller in the pusher
+        // (ADR-0005, correction #7), so it is asserted at the HTTP boundary rather than through a screen.
+        const check = await request.get("http://admin-api.workadventure.localhost/api/ban", {
+            params: { token: "alice.doe@example.com", ipAddress: "127.0.0.1", roomUrl: room },
+            headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
+        });
+
+        expect(check.status()).toBe(200);
+        expect(await check.json()).toMatchObject({
+            is_banned: true,
+            message: "User banned by admin john.doe@example.com",
+        });
     });
 });

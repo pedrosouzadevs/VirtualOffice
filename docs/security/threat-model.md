@@ -35,6 +35,7 @@ Ranked by what losing it costs.
 | **`ADMIN_API_SESSION_SECRET`** | Signs session cookies. Whoever has it can mint an administrator. |
 | **`ADMIN_API_TOKEN`** | Opens `/api/*`. Shared with `play`. |
 | **Member emails** | Personal data under the LGPD. Low volume, but it is a directory of who works here. |
+| **The moderation records** (`ban`, `report`) | Personal data of a different kind: an accusation one named person made about another, and evidence of a decision somebody took. Append-only, readable only by an administrator. See [F8](#f8--reports-hold-accusations-with-no-retention-policy). |
 
 ## 3. Trust boundaries
 
@@ -211,6 +212,19 @@ anything expensive.
 
 **Action:** generate a real one (`openssl rand -base64 48`) before any deployment that is not a local clone. This is
 a go-live checklist item, not a code change.
+
+### F8 — Reports hold accusations with no retention policy
+
+**Severity: low.** A `report` row is one named person's account of another's behaviour, kept forever, readable by
+every administrator and by anyone with shell access to the container. Nothing expires it and there is no
+"unfounded" outcome — P3 stores reports and stops there (ADR-0005, decision #4), because nobody owns triage yet.
+
+An IP address is deliberately **not** stored (decision #3): it is the one field that would arrive with a retention
+obligation attached, and there is no column for it. That leaves the comment as the sensitive part.
+
+**Mitigation:** decide a retention period when somebody owns triage, and delete on that schedule. Until then the
+population is small and the exposure is bounded by who holds `admin`. Deleting a row is direct SQL, documented in
+the setup guide — the right-to-erasure path exists even though nothing automates it.
 
 ## 7. Before go-live
 

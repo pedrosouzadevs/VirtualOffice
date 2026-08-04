@@ -28,6 +28,8 @@
         "member:set-name": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts member:set-name",
         "tag:list": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts tag:list",
         "audit:list": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts audit:list",
+        "ban:list": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts ban:list",
+        "report:list": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Cli/index.ts report:list",
         "db:generate": "drizzle-kit generate",
         "db:migrate": "ESBK_TSCONFIG_PATH=tsconfig.json tsx ./src/Infrastructure/Database/runMigrations.ts"
     },

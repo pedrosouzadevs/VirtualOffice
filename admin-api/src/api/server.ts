@@ -30,6 +30,7 @@ import { WokaListController } from "./controllers/WokaListController";
 import { AdminAuditController } from "./controllers/AdminAuditController";
 import { AdminAuthController } from "./controllers/AdminAuthController";
 import { AdminMembersController } from "./controllers/AdminMembersController";
+import { AdminModerationController } from "./controllers/AdminModerationController";
 import { AdminRoomsController } from "./controllers/AdminRoomsController";
 import { AdminTagsController } from "./controllers/AdminTagsController";
 import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
@@ -196,6 +197,7 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
     new AdminTagsController(app, dependencies.tagRepository);
     new AdminAuditController(app, dependencies.auditLog);
     new AdminRoomsController(app, dependencies.roomCatalogue, dependencies.memberRepository);
+    new AdminModerationController(app, dependencies.banRepository, dependencies.reportRepository);
 
     mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
 }

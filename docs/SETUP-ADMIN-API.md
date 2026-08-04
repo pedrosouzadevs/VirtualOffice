@@ -373,6 +373,51 @@ Removing your own `admin` tag is allowed, including when you are the last admini
 docker compose restart admin-api
 ```
 
+## Moderation (ADR-0005)
+
+Banning and reporting happen **inside the world**, in `play`. `admin-api` records both, and the dashboard and CLI
+read them back.
+
+> **`play` has no ban button yet.** The action menu on a video box offers "kick off", which removes somebody from the
+> *meeting* rather than the world, and `ActionMediaBox.svelte` carries a commented-out `ban()` marked
+> `TODO: implement ban user`. The only sender of `banPlayerMessage` today is the scripting API's `banUser` event —
+> which is what the end-to-end test uses, and what an administrator's map script can use meanwhile. Everything behind
+> that trigger works; what is missing is the surface.
+
+```bash
+docker compose exec admin-api npm run ban:list
+docker compose exec admin-api npm run report:list
+```
+
+Also on the dashboard, under **Moderation**, and over HTTP behind the session: `GET /admin/api/bans` and
+`GET /admin/api/reports`, optionally `?limit=<n>`.
+
+Four things worth knowing before you rely on any of it:
+
+- **A ban does not survive a reconnection, and P3 does not change that.** It removes the person from the session they
+  are in; they may come straight back. Nothing in the pusher calls `verifyBanUser`, so our `GET /api/ban` is answered
+  by nobody today. Making a ban stick is a change in `play`, deliberately left out of F3 —
+  [ADR-0005, decision #2](adr/0005-moderation.md) says so plainly rather than implying enforcement that is not there.
+- **Nothing is notified.** A report lands in a table and waits to be read. No email, no webhook, no queue, until
+  somebody owns triage — a channel nobody agreed to watch is worse than a list somebody checks.
+- **No IP address is stored.** `GET /api/ban` receives one and drops it: it is personal data under the LGPD, it
+  identifies a household rather than a person, and it is the one field here that would arrive with a retention
+  obligation attached. There is no column to put one in.
+- **Both records name people with snapshots, not references.** The identifier is an email for anyone who logged in
+  and an anonymous uuid for a visitor who did not, and deleting the member does not erase the ban.
+
+### Lifting a ban, or deleting a report
+
+Direct SQL, like member deletion — there is no button and no command, because P3 does not decide what lifting a ban
+means and a button would be deciding by accident:
+
+```bash
+docker compose exec admin-api-db psql -U admin_api -d admin_api -c \
+  "delete from ban where identifier = 'alguem@empresa.com';"
+```
+
+Since nothing enforces a ban on reconnect yet, this changes what `GET /api/ban` answers and nothing else.
+
 ## Rolling back
 
 Empty `ADMIN_API_URL` in your `.env` and recreate `play`. The pusher returns to `LocalAdmin` immediately:

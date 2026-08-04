@@ -19,6 +19,10 @@ Two verified traps, both documented in the ADR:
 - `/api/room/access` must resolve `characterTextureIds` into `WokaDetail[]`. Returning an empty array bounces the user
   to the Woka selection page — forever, if our catalogue disagrees with the one `play` serves.
 
+A third one, from [ADR-0005](../docs/adr/0005-moderation.md): **`/api/ban`, `/api/report` and `/api/room/sameWorld`
+are gated by no capability at all**, so the pusher calls them the moment `ADMIN_API_URL` is set. There is no
+negotiation and no way to opt out — an unimplemented route here is a broken feature in `play`, not a disabled one.
+
 ## Two route spaces, two credentials, no overlap
 
 | Space | Consumer | Credential | Guard |
@@ -46,7 +50,9 @@ Three rules the dashboard cannot bend:
   `MemberAdministrationService.ts` owns what granting and revoking *mean*, and is called by both the CLI and
   `/admin/api/*`: two surfaces that hand out permissions must not be able to disagree. It also writes the audit
   entry, for the same reason — a surface that could forget to log is a gap in the only record there is.
-- `src/api/`: Express controllers, middlewares and the server factory.
+- `src/api/`: Express controllers, middlewares and the server factory. `auditLog` and `roomCatalogue` are **top-level**
+  server dependencies rather than dashboard ones: `POST /api/ban` writes to the log and `GET /api/room/sameWorld`
+  reads the catalogue, both with `/admin/*` switched off.
 - `src/Infrastructure/Oidc/`: the `openid-client` adapter behind `Application/Ports/OidcAuthenticator.ts`, so the
   barrier's tests never need a live identity provider.
 - `src/Enum/`: environment variables, validated with `zod` at startup.
@@ -76,9 +82,15 @@ correct a mistake with a new migration, never by editing an applied one.
 Foreign keys point at `member.id`, never at `email`. That is what makes an email change a one-column update instead of
 a migration (ADR-0002, decision #5). Emails are stored and looked up lower-cased.
 
-`audit_log` is the one exception, and deliberately so: it has **no foreign keys** and stores emails as snapshots. An
-entry has to keep naming who someone was at the time, after they are renamed or deleted — a reference would either
-cascade the history away or quietly rewrite it. Nothing updates or deletes a row there.
+`audit_log`, `ban` and `report` are the exceptions, and deliberately so: they have **no foreign keys** and store
+identities as snapshots. An entry has to keep naming who someone was at the time, after they are renamed or deleted —
+a reference would either cascade the history away or quietly rewrite it. For `ban` and `report` there is a second
+reason: the pusher names people with an anonymous uuid when they never logged in, so a foreign key would force a
+visitor to become an account nobody can log into, and a cascade would mean deleting a member lifts their ban
+(ADR-0005, decision #1). Nothing updates or deletes a row in any of the three.
+
+`ban` has **no column for an IP address**, and an integration test asserts that against the real schema rather than
+against our own writer (ADR-0005, decision #3).
 
 The server migrates and runs the idempotent bootstrap before binding its port: answering the pusher against an
 unmigrated schema would feed its retry loop and hang `play`.

@@ -375,6 +375,52 @@ inicialização, então reiniciar restaura o `ADMIN_API_BOOTSTRAP_ADMIN_EMAIL`:
 docker compose restart admin-api
 ```
 
+## Moderação (ADR-0005)
+
+Banir e denunciar acontecem **dentro do mundo**, no `play`. O `admin-api` registra os dois, e o dashboard e a CLI
+leem de volta.
+
+> **O `play` ainda não tem botão de banir.** O menu de ação na caixa de vídeo oferece "kick off", que tira a pessoa da
+> *reunião* e não do mundo, e o `ActionMediaBox.svelte` tem um `ban()` comentado com `TODO: implement ban user`. O
+> único remetente de `banPlayerMessage` hoje é o evento `banUser` da API de scripting — que é o que o teste ponta a
+> ponta usa, e o que o script de um mapa pode usar enquanto isso. Tudo atrás desse gatilho funciona; o que falta é a
+> superfície.
+
+```bash
+docker compose exec admin-api npm run ban:list
+docker compose exec admin-api npm run report:list
+```
+
+Também no dashboard, na aba **Moderação**, e por HTTP atrás da sessão: `GET /admin/api/bans` e
+`GET /admin/api/reports`, opcionalmente com `?limit=<n>`.
+
+Quatro coisas que vale saber antes de depender de qualquer uma delas:
+
+- **Um ban não sobrevive a uma reconexão, e o P3 não muda isso.** Ele tira a pessoa da sessão em que ela está; ela
+  pode voltar em seguida. Nada no pusher chama o `verifyBanUser`, então o nosso `GET /api/ban` hoje não é perguntado
+  por ninguém. Fazer o ban colar é mudança no `play`, deliberadamente fora do F3 — a
+  [decisão #2 do ADR-0005](adr/0005-moderation.pt-BR.md) diz isso com todas as letras em vez de sugerir uma aplicação
+  que não existe.
+- **Nada é notificado.** Uma denúncia cai numa tabela e espera ser lida. Sem e-mail, sem webhook, sem fila, até
+  alguém assumir a triagem — um canal que ninguém combinou acompanhar é pior que uma lista que alguém confere.
+- **Nenhum endereço de IP é guardado.** O `GET /api/ban` recebe um e descarta: é dado pessoal sob a LGPD, identifica
+  uma casa e não uma pessoa, e é o único campo aqui que chegaria com obrigação de retenção junto. Não existe coluna
+  onde colocá-lo.
+- **Os dois registros nomeiam pessoas por snapshot, não por referência.** O identificador é um e-mail para quem fez
+  login e um uuid anônimo para o visitante que não fez, e apagar o membro não apaga o ban.
+
+### Levantando um ban, ou apagando uma denúncia
+
+SQL direto, como a remoção de membro — não há botão nem comando, porque o P3 não decide o que levantar um ban
+significa e um botão seria decidir sem querer:
+
+```bash
+docker compose exec admin-api-db psql -U admin_api -d admin_api -c \
+  "delete from ban where identifier = 'alguem@empresa.com';"
+```
+
+Como nada aplica o ban na reconexão ainda, isso muda o que o `GET /api/ban` responde e mais nada.
+
 ## Voltando atrás
 
 Esvazie o `ADMIN_API_URL` no seu `.env` e recrie o `play`. O pusher volta ao `LocalAdmin` na hora:

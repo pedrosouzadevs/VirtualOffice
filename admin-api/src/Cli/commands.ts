@@ -6,7 +6,9 @@ import {
 } from "../Application/MemberAdministrationService";
 import type { AdminAlerter } from "../Application/Ports/AdminAlerter";
 import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
+import type { BanRepository } from "../Application/Ports/BanRepository";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
+import type { ReportRepository } from "../Application/Ports/ReportRepository";
 import type { TagRepository } from "../Application/Ports/TagRepository";
 import { normalizeEmail } from "../Domain/Member";
 
@@ -25,6 +27,10 @@ export interface CommandContext {
     audit: AuditLogRepository;
     /** Where a refused `admin` grant, or a revoked one, is shouted about (threat model, F1). */
     alerter: AdminAlerter;
+    /** Who was thrown out of the world (ADR-0005). Read-only here: bans are issued from `play`. */
+    bans: BanRepository;
+    /** What users complained about (ADR-0005). Read-only here: reports are written by the users who make them. */
+    reports: ReportRepository;
     /** Injected so tests can capture output instead of writing to the terminal. */
     out: (line: string) => void;
 }
@@ -95,6 +101,58 @@ export async function listAudit(
         );
     }
     out(`\n${entries.length} entr${entries.length === 1 ? "y" : "ies"}.`);
+
+    return ok;
+}
+
+/**
+ * Shows the most recent bans, newest first.
+ *
+ * Read-only, like every moderation command here: a ban is issued from `play`, where the administrator can see who
+ * they are throwing out. Lifting one is direct SQL — P3 does not decide what lifting means, and a `ban:lift` command
+ * would be deciding by accident. The setup guide has the statement.
+ */
+export async function listBans({ bans, out }: CommandContext): Promise<CommandResult> {
+    const entries = await bans.listRecent(LIST_LIMIT);
+
+    if (entries.length === 0) {
+        out("Nobody has been banned.");
+        return ok;
+    }
+
+    out(`${"WHEN".padEnd(26)} ${"WHO".padEnd(36)} ${"BY".padEnd(30)} ${"ROOM".padEnd(30)} MESSAGE`);
+    for (const entry of entries) {
+        out(
+            `${entry.createdAt.toISOString().padEnd(26)} ${entry.identifier.padEnd(36)} ` +
+                `${entry.issuedBy.padEnd(30)} ${entry.roomUrl.padEnd(30)} ${entry.message}`,
+        );
+    }
+    out(`\n${entries.length} ban(s).`);
+
+    return ok;
+}
+
+/**
+ * Shows the most recent reports, newest first.
+ *
+ * The comment is the point of a report, so it is printed on its own line rather than padded into a column: an account
+ * of what happened truncated to fit a terminal is not evidence of anything.
+ */
+export async function listReports({ reports, out }: CommandContext): Promise<CommandResult> {
+    const entries = await reports.listRecent(LIST_LIMIT);
+
+    if (entries.length === 0) {
+        out("Nothing has been reported.");
+        return ok;
+    }
+
+    for (const entry of entries) {
+        out(`${entry.createdAt.toISOString()}  ${entry.reporterIdentifier} reported ${entry.reportedIdentifier}`);
+        out(`  room: ${entry.roomUrl === "" ? "—" : entry.roomUrl}`);
+        out(`  ${entry.comment === "" ? "(no comment)" : entry.comment}`);
+        out("");
+    }
+    out(`${entries.length} report(s).`);
 
     return ok;
 }

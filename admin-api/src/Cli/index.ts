@@ -2,9 +2,21 @@ import { ADMIN_API_ALERT_WEBHOOK_URL, ADMIN_API_DATABASE_URL } from "../Enum/Env
 import { LoggingAdminAlerter } from "../Infrastructure/Alerting/LoggingAdminAlerter";
 import { createDatabaseConnection } from "../Infrastructure/Database/connection";
 import { DrizzleAuditLogRepository } from "../Infrastructure/Repositories/DrizzleAuditLogRepository";
+import { DrizzleBanRepository } from "../Infrastructure/Repositories/DrizzleBanRepository";
 import { DrizzleMemberRepository } from "../Infrastructure/Repositories/DrizzleMemberRepository";
+import { DrizzleReportRepository } from "../Infrastructure/Repositories/DrizzleReportRepository";
 import { DrizzleTagRepository } from "../Infrastructure/Repositories/DrizzleTagRepository";
-import { grantTag, listAudit, listMembers, listTags, revokeTag, setMemberName, type CommandContext } from "./commands";
+import {
+    grantTag,
+    listAudit,
+    listBans,
+    listMembers,
+    listReports,
+    listTags,
+    revokeTag,
+    setMemberName,
+    type CommandContext,
+} from "./commands";
 
 const USAGE = `Manage Admin API members and tags.
 
@@ -14,8 +26,11 @@ const USAGE = `Manage Admin API members and tags.
   npm run member:set-name  -- <email> <name>
   npm run tag:list
   npm run audit:list       -- [email]
+  npm run ban:list
+  npm run report:list
 
-Every command is idempotent: running it twice changes nothing the second time.
+Every command is idempotent: running it twice changes nothing the second time. The moderation commands are read-only:
+bans are issued from the world and reports are written by the users who make them (ADR-0005).
 
 Changes made here are recorded in the audit log as "cli": a command run inside the container has no logged-in
 identity, so the entry says somebody with shell access did it rather than naming a person.`;
@@ -42,6 +57,8 @@ async function main(): Promise<number> {
         tags: new DrizzleTagRepository(connection.db),
         audit: new DrizzleAuditLogRepository(connection.db),
         alerter: new LoggingAdminAlerter(ADMIN_API_ALERT_WEBHOOK_URL),
+        bans: new DrizzleBanRepository(connection.db),
+        reports: new DrizzleReportRepository(connection.db),
         out: (line) => console.info(line),
     };
 
@@ -53,6 +70,10 @@ async function main(): Promise<number> {
                 return (await listTags(context)).exitCode;
             case "audit:list":
                 return (await listAudit(context, args[0])).exitCode;
+            case "ban:list":
+                return (await listBans(context)).exitCode;
+            case "report:list":
+                return (await listReports(context)).exitCode;
             case "member:grant":
                 return (await grantTag(context, args[0] ?? "", args[1] ?? "")).exitCode;
             case "member:revoke":

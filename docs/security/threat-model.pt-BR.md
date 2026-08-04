@@ -35,6 +35,7 @@ Ordenado pelo que custa perder.
 | **`ADMIN_API_SESSION_SECRET`** | Assina o cookie de sessão. Quem o tiver forja um administrador. |
 | **`ADMIN_API_TOKEN`** | Abre o `/api/*`. Compartilhado com o `play`. |
 | **E-mails dos membros** | Dado pessoal sob a LGPD. Pouco volume, mas é um diretório de quem trabalha aqui. |
+| **Os registros de moderação** (`ban`, `report`) | Dado pessoal de outro tipo: uma acusação que uma pessoa nomeada fez sobre outra, e a evidência de uma decisão que alguém tomou. Append-only, legível só por administrador. Ver [F8](#f8--denúncias-guardam-acusações-sem-política-de-retenção). |
 
 ## 3. Fronteiras de confiança
 
@@ -211,6 +212,20 @@ servir algo caro.
 
 **Ação:** gerar um de verdade (`openssl rand -base64 48`) antes de qualquer deploy que não seja um clone local. É
 item de checklist de go-live, não mudança de código.
+
+### F8 — Denúncias guardam acusações sem política de retenção
+
+**Severidade: baixa.** Uma linha de `report` é o relato de uma pessoa nomeada sobre o comportamento de outra,
+guardado para sempre, legível por todo administrador e por quem tiver shell no container. Nada a expira e não existe
+desfecho "improcedente" — o P3 guarda denúncias e para aí (ADR-0005, decisão #4), porque ainda não há dono da
+triagem.
+
+O endereço de IP deliberadamente **não** é guardado (decisão #3): é o único campo que chegaria com obrigação de
+retenção junto, e não existe coluna para ele. Sobra o comentário como a parte sensível.
+
+**Mitigação:** definir um prazo de retenção quando houver dono da triagem, e apagar nesse ritmo. Até lá a população é
+pequena e a exposição é limitada por quem tem `admin`. Apagar uma linha é SQL direto, documentado no guia de setup —
+o caminho do direito ao esquecimento existe mesmo sem nada automatizando.
 
 ## 7. Antes do go-live
 

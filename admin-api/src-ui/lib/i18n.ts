@@ -72,6 +72,25 @@ const en = {
     areaTypeMeeting: "Meeting",
 
     protectedTagHint: 'The "{tag}" tag is assigned with direct SQL and cannot be granted here.',
+
+    tabModeration: "Moderation",
+    moderationBans: "Bans",
+    moderationReports: "Reports",
+    moderationReadOnly:
+        "Read-only. A ban is issued from the world, where you can see who you are throwing out; a report is written by the user who makes it. Removing either is direct SQL — see the setup guide.",
+    columnWhen: "When",
+    columnBannedUser: "Banned",
+    columnIssuedBy: "By",
+    columnMessage: "Message",
+    columnReported: "Reported",
+    columnReporter: "Reported by",
+    columnComment: "Comment",
+    noBans: "Nobody has been banned.",
+    noReports: "Nothing has been reported.",
+    noComment: "No comment given.",
+    banStillReconnects:
+        "A ban removes somebody from the running session. It does not yet survive a reconnection — see ADR-0005, decision #2.",
+    moderationLoadFailed: "The moderation records could not be loaded.",
 } as const;
 
 export type Messages = Record<keyof typeof en, string>;
@@ -139,6 +158,25 @@ const ptBR: Messages = {
     areaTypeMeeting: "Reunião",
 
     protectedTagHint: 'A tag "{tag}" é atribuída por SQL direto e não pode ser concedida aqui.',
+
+    tabModeration: "Moderação",
+    moderationBans: "Bans",
+    moderationReports: "Denúncias",
+    moderationReadOnly:
+        "Somente leitura. Um ban é aplicado dentro do mundo, onde dá para ver quem está sendo expulso; uma denúncia é escrita por quem a faz. Remover qualquer um dos dois é SQL direto — veja o guia de setup.",
+    columnWhen: "Quando",
+    columnBannedUser: "Banido",
+    columnIssuedBy: "Por",
+    columnMessage: "Mensagem",
+    columnReported: "Denunciado",
+    columnReporter: "Denunciado por",
+    columnComment: "Comentário",
+    noBans: "Ninguém foi banido.",
+    noReports: "Nada foi denunciado.",
+    noComment: "Sem comentário.",
+    banStillReconnects:
+        "Um ban tira a pessoa da sessão em andamento. Ele ainda não sobrevive a uma reconexão — veja o ADR-0005, decisão #2.",
+    moderationLoadFailed: "Não foi possível carregar os registros de moderação.",
 };
 
 const catalogues: Record<string, Messages> = { en, "pt-BR": ptBR };

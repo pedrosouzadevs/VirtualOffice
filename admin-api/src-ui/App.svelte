@@ -1,11 +1,12 @@
 <script lang="ts">
     import MembersView from "./MembersView.svelte";
+    import ModerationView from "./ModerationView.svelte";
     import RoomsView from "./RoomsView.svelte";
     import * as api from "./lib/api";
     import type { Member } from "./lib/api";
     import { t } from "./lib/i18n";
 
-    type Tab = "members" | "rooms";
+    type Tab = "members" | "rooms" | "moderation";
 
     let me = $state<Member | null>(null);
     let error = $state<string | null>(null);
@@ -19,12 +20,20 @@
     let tab = $state<Tab>(readTab());
 
     function readTab(): Tab {
-        return typeof window !== "undefined" && window.location.hash === "#rooms" ? "rooms" : "members";
+        if (typeof window === "undefined") {
+            return "members";
+        }
+
+        return window.location.hash === "#rooms"
+            ? "rooms"
+            : window.location.hash === "#moderation"
+              ? "moderation"
+              : "members";
     }
 
     function show(next: Tab): void {
         tab = next;
-        window.location.hash = next === "rooms" ? "#rooms" : "";
+        window.location.hash = next === "members" ? "" : `#${next}`;
     }
 
     $effect(() => {
@@ -72,6 +81,14 @@
         <button class="tab" class:active={tab === "rooms"} aria-current={tab === "rooms"} onclick={() => show("rooms")}>
             {t.tabRooms}
         </button>
+        <button
+            class="tab"
+            class:active={tab === "moderation"}
+            aria-current={tab === "moderation"}
+            onclick={() => show("moderation")}
+        >
+            {t.tabModeration}
+        </button>
     </nav>
 
     {#if error !== null}
@@ -82,8 +99,10 @@
 
     {#if tab === "members"}
         <MembersView {me} onMeChanged={(member) => (me = member)} />
-    {:else}
+    {:else if tab === "rooms"}
         <RoomsView />
+    {:else}
+        <ModerationView />
     {/if}
 </div>
 

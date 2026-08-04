@@ -2,7 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
     grantTag,
     listAudit,
+    listBans,
     listMembers,
+    listReports,
     listTags,
     revokeTag,
     setMemberName,
@@ -11,7 +13,9 @@ import {
 import type { DatabaseConnection } from "../../src/Infrastructure/Database/connection";
 import { LoggingAdminAlerter } from "../../src/Infrastructure/Alerting/LoggingAdminAlerter";
 import { DrizzleAuditLogRepository } from "../../src/Infrastructure/Repositories/DrizzleAuditLogRepository";
+import { DrizzleBanRepository } from "../../src/Infrastructure/Repositories/DrizzleBanRepository";
 import { DrizzleMemberRepository } from "../../src/Infrastructure/Repositories/DrizzleMemberRepository";
+import { DrizzleReportRepository } from "../../src/Infrastructure/Repositories/DrizzleReportRepository";
 import { DrizzleTagRepository } from "../../src/Infrastructure/Repositories/DrizzleTagRepository";
 import { setupTestDatabase, truncateAll } from "./helpers/testDatabase";
 
@@ -37,6 +41,8 @@ beforeEach(async () => {
         // Real, so a refused `admin` grant is proven to alert rather than merely to fail. Its webhook is unset, so
         // it only writes to the log.
         alerter: new LoggingAdminAlerter(undefined),
+        bans: new DrizzleBanRepository(connection.db),
+        reports: new DrizzleReportRepository(connection.db),
         out: (line) => output.push(line),
     };
 });
@@ -321,6 +327,71 @@ describe("member:list and tag:list", () => {
             await listAudit(context, undefined);
 
             expect(printed()).toBe("Nothing recorded yet.");
+        });
+    });
+
+    describe("ban:list", () => {
+        it("shows who was banned, by whom, and with what message", async () => {
+            await context.bans.record({
+                identifier: "troublemaker@example.com",
+                displayName: "Trouble Maker",
+                message: "User banned by admin boss@example.com",
+                roomUrl: "/~/maps/office.wam",
+                issuedBy: "boss@example.com",
+            });
+            output = [];
+
+            await listBans(context);
+
+            expect(printed()).toContain("troublemaker@example.com");
+            expect(printed()).toContain("boss@example.com");
+            expect(printed()).toContain("User banned by admin boss@example.com");
+            expect(printed()).toContain("1 ban(s).");
+        });
+
+        it("says so when nobody has been banned", async () => {
+            await listBans(context);
+
+            expect(printed()).toBe("Nobody has been banned.");
+        });
+    });
+
+    describe("report:list", () => {
+        it("shows the comment in full, which is the point of a report", async () => {
+            const comment = "They kept shouting in the meeting room, and would not stop when asked twice.";
+            await context.reports.record({
+                reportedIdentifier: "troublemaker@example.com",
+                reporterIdentifier: "alice@example.com",
+                comment,
+                roomUrl: "/~/maps/office.wam",
+            });
+            output = [];
+
+            await listReports(context);
+
+            expect(printed()).toContain("alice@example.com reported troublemaker@example.com");
+            expect(printed()).toContain(comment);
+            expect(printed()).toContain("1 report(s).");
+        });
+
+        it("says so plainly when a report carried no comment at all", async () => {
+            await context.reports.record({
+                reportedIdentifier: "troublemaker@example.com",
+                reporterIdentifier: "alice@example.com",
+                comment: "",
+                roomUrl: "",
+            });
+            output = [];
+
+            await listReports(context);
+
+            expect(printed()).toContain("(no comment)");
+        });
+
+        it("says so when nothing has been reported", async () => {
+            await listReports(context);
+
+            expect(printed()).toBe("Nothing has been reported.");
         });
     });
 });

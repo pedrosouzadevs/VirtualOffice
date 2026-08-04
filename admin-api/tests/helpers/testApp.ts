@@ -314,7 +314,14 @@ export class StubBanRepository implements BanRepository {
 export class StubReportRepository implements ReportRepository {
     readonly reports: ReportRecord[] = [];
 
-    record(entry: NewReport): Promise<ReportRecord> {
+    constructor(existing: readonly NewReport[] = []) {
+        for (const entry of existing) {
+            this.add(entry);
+        }
+    }
+
+    /** Synchronous so the constructor can seed without an unawaited promise. */
+    private add(entry: NewReport): ReportRecord {
         const recorded: ReportRecord = {
             ...entry,
             reportedIdentifier: normalizeIdentifier(entry.reportedIdentifier),
@@ -324,7 +331,11 @@ export class StubReportRepository implements ReportRepository {
         };
         this.reports.push(recorded);
 
-        return Promise.resolve(recorded);
+        return recorded;
+    }
+
+    record(entry: NewReport): Promise<ReportRecord> {
+        return Promise.resolve(this.add(entry));
     }
 
     listRecent(limit: number): Promise<ReportRecord[]> {
@@ -428,6 +439,9 @@ export interface DashboardTestApp {
     readonly tags: StubTagRepository;
     /** Inspect `entries` to assert what a mutation recorded. */
     readonly audit: StubAuditLogRepository;
+    /** Seeded by the test; the moderation screens are read-only, so nothing under `/admin` ever writes here. */
+    readonly bans: StubBanRepository;
+    readonly reports: StubReportRepository;
     /** Inspect `raised` to assert what a mutation shouted about. */
     readonly alerter: StubAdminAlerter;
     readonly authenticator: StubOidcAuthenticator;
@@ -454,6 +468,9 @@ export async function serveDashboardTestApp(
         uiDirectory?: string;
         /** Omitted means `INTERNAL_MAP_STORAGE_URL` is unset, which the rooms screen must report distinctly. */
         rooms?: RoomCatalogue;
+        /** Bans that happened before the test starts. Issued from `play`, never from the dashboard (ADR-0005). */
+        bans?: readonly NewBan[];
+        reports?: readonly NewReport[];
     } = {},
 ): Promise<DashboardTestApp> {
     // One catalogue behind both repositories: a tag created by a grant must be findable by the revoke that follows.
@@ -462,6 +479,8 @@ export async function serveDashboardTestApp(
     const tags = new StubTagRepository(catalogue);
     const audit = new StubAuditLogRepository();
     const alerter = new StubAdminAlerter();
+    const bans = new StubBanRepository(options.bans ?? []);
+    const reports = new StubReportRepository(options.reports ?? []);
     const authenticator = new StubOidcAuthenticator(options.loginAs ?? "john.doe@example.com");
     let now = options.now ?? new Date();
 
@@ -469,6 +488,8 @@ export async function serveDashboardTestApp(
         memberRepository: members,
         tagRepository: tags,
         auditLog: audit,
+        banRepository: bans,
+        reportRepository: reports,
         roomCatalogue: options.rooms,
         // A path that cannot exist, so the "not built" branch is what runs unless a test asks otherwise. Falling back
         // to the real `dist-ui` would make these tests depend on whether somebody had run the build.
@@ -488,6 +509,8 @@ export async function serveDashboardTestApp(
         tags,
         audit,
         alerter,
+        bans,
+        reports,
         authenticator,
         setNow: (value: Date) => {
             now = value;

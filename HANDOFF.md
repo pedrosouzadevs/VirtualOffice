@@ -10,8 +10,8 @@ nos documentos linkados.
 
 ## Current Status
 
-**P0, P1 e P2 inteiras entregues, verificadas e commitadas.** O que resta antes de uso real não é código de feature —
-está em [Antes de qualquer uso real](#antes-de-qualquer-uso-real).
+**O F3 inteiro está entregue: P0, P1, P2 e P3, verificadas e commitadas.** O que resta antes de uso real não é código
+de feature — está em [Antes de qualquer uso real](#antes-de-qualquer-uso-real).
 
 O `play` já consome o `admin-api` de verdade: tags e `canEdit` vêm do Postgres, e não mais da claim OIDC. O ambiente
 de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versionado).
@@ -21,8 +21,9 @@ de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-com
 | P0 (E1–E6) | 4 endpoints bloqueantes, Postgres, bootstrap idempotente, `play` ligado | ✅ entregue |
 | P1 (F0–F3) | `/api/members*`, `/api/*/tags`, CLI de gestão, docs, e2e | ✅ entregue |
 | P2 (G0–G4) | Dashboard: barreira de sessão, API, UI Svelte, salas e áreas, auditoria | ✅ entregue |
+| P3 (H0–H3) | Moderação: ban, report, `sameWorld`, telas, CLI e docs | ✅ entregue |
 
-**Verificação atual:** 285 testes unitários, 73 de integração (Postgres real), 8 e2e (Playwright, executados contra a
+**Verificação atual:** 329 testes unitários, 93 de integração (Postgres real), 9 e2e (Playwright, executados contra a
 stack rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O fluxo foi exercido ponta a ponta no
 navegador contra o mock OIDC real: login, conceder tag, ver o `canEdit` mudar no `/api/room/access`, e a entrada de
 auditoria nomeando quem concedeu.
@@ -36,9 +37,11 @@ Nesta ordem, e não pule o ADR-0002 — ele é o contrato:
 2. [`docs/adr/0003-member-and-tag-management.pt-BR.md`](docs/adr/0003-member-and-tag-management.pt-BR.md) — a P1
 3. [`docs/adr/0004-admin-dashboard.pt-BR.md`](docs/adr/0004-admin-dashboard.pt-BR.md) — a P2, com a **revisão da
    decisão #8** no fim dela: o `admin` só se atribui por SQL
-4. [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md) — o STRIDE e o que continua aberto
-5. [`admin-api/AGENTS.md`](admin-api/AGENTS.md) — as convenções do pacote
-6. [`docs/SETUP-ADMIN-API.pt-BR.md`](docs/SETUP-ADMIN-API.pt-BR.md) — subir, verificar, gerir permissões, rollback
+4. [`docs/adr/0005-moderation.pt-BR.md`](docs/adr/0005-moderation.pt-BR.md) — a P3, com as **oito correções de
+   contrato** e a decisão #2, que diz o que o ban *não* faz
+5. [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md) — o STRIDE e o que continua aberto
+6. [`admin-api/AGENTS.md`](admin-api/AGENTS.md) — as convenções do pacote
+7. [`docs/SETUP-ADMIN-API.pt-BR.md`](docs/SETUP-ADMIN-API.pt-BR.md) — subir, verificar, gerir permissões, rollback
 
 ---
 
@@ -102,9 +105,7 @@ que mais custam:
 
 ---
 
-## Pending
-
-### P2 — o dashboard (próximo trabalho)
+### P2 — o dashboard
 
 Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md). Fatias:
 
@@ -119,7 +120,39 @@ Desenho completo e aprovado no [ADR-0004](docs/adr/0004-admin-dashboard.pt-BR.md
 **Os dez testes obrigatórios do ADR-0004 estão cobertos.** A dívida que o G1 abriu — mutações sem log — foi paga no
 G4, e o log é escrito pelo serviço compartilhado, então a CLI também registra.
 
-### Fora da P2, em aberto no roadmap
+### P3 — moderação, o conserto
+
+Desenho no [ADR-0005](docs/adr/0005-moderation.pt-BR.md), **aceito**. Não era feature nova: banir e reportar estavam
+quebrados desde o P0/E6, porque essas rotas não passam por capability e o pusher as chamava incondicionalmente contra
+o nosso 404. No `handleBanPlayerMessage` o `emitBan` vem *depois* do `await`, então o usuário nem era expulso.
+
+| Fatia | Escopo | Estado |
+|---|---|---|
+| **H0** | Tabela `ban`, `POST /api/ban` com auditoria, `GET /api/ban` respondendo os dois campos | ✅ entregue |
+| **H1** | Tabela `report` e `POST /api/report`, corpo JSON com `reportWorldSlug` | ✅ entregue |
+| **H2** | `GET /api/room/sameWorld` sobre o `RoomCatalogue` do G3 | ✅ entregue |
+| **H3** | Telas de moderação, `ban:list` e `report:list`, docs bilíngues, e2e do ban | ✅ entregue |
+
+**Os dez testes obrigatórios do ADR-0005 estão cobertos**, incluindo o #10: o e2e dirige a UI real — o administrador
+expulsa alguém pela caixa de vídeo, a vítima cai na tela `BANNED`, e o `GET /api/ban` confirma o registro.
+
+**Descoberta que o ADR-0005 não previa: o `play` não tem UI de ban.** O `#kickoff-user` do menu da caixa de vídeo
+expulsa a pessoa da *reunião* (um evento privado de space), e o `ActionMediaBox.svelte` tem um `ban()` comentado com
+`TODO: implement ban user`. O único remetente de `banPlayerMessage` hoje é o evento `banUser` do `IframeListener`,
+ou seja, a API de scripting. É por lá que o e2e dispara o ban — todo o resto do caminho é produção. **Quem for
+ligar o ban de verdade precisa primeiro de um botão**, e o lugar natural é o `ban()` comentado.
+
+Quatro coisas ficaram de fora, deliberadamente e por escrito:
+
+- **O ban não sobrevive à reconexão.** Nada chama o `verifyBanUser`; fazê-lo colar é mudança no `play`, fora do F3.
+  É o próximo item pequeno e óbvio do roadmap.
+- **Reports não notificam ninguém.** Tabela e telas; o `AdminAlerter` é a costura pronta para quando houver dono da
+  triagem.
+- **Não há como levantar um ban pela aplicação.** SQL direto, documentado no setup, pelo mesmo motivo do
+  `member:delete`.
+- **Não há botão de banir no `play`** — ver o parágrafo acima. O backend está inteiro; falta a superfície.
+
+### Fora do F3, em aberto no roadmap
 
 - **F2 (Azure Entra ID)** — o `OPID_WOKA_NAME_POLICY=allow_override_opid` já está preparado no `.env.template`, mas
   só tem efeito quando um provedor emitir claim de username. O mock emite `name`, e o `OPENID_USERNAME_CLAIM` tem
@@ -197,17 +230,14 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**P3 — moderação**, a última fase do F3. O [ADR-0005](docs/adr/0005-moderation.pt-BR.md) está escrito e **proposto,
-aguardando aceite**; nenhuma linha de código foi escrita.
+**F2 — Azure Entra ID.** É o próximo do roadmap e destrava aposentar o mock OIDC. O
+`OPID_WOKA_NAME_POLICY=allow_override_opid` já está preparado no `.env.template` esperando um provedor que emita
+claim de username.
 
-> **Isto não é feature nova, é conserto.** Ban e report **estão quebrados agora** por causa do próprio P0: essas
-> rotas não passam por capability, então o pusher as chama incondicionalmente desde que o `ADMIN_API_URL` foi
-> setado, e nós respondemos 404. No `handleBanPlayerMessage` o `emitBan` vem *depois* do `await`, então o usuário
-> **nem é expulso**. O ADR-0005 tem oito correções de contrato, no mesmo espírito das seis do ADR-0002.
-
-Fatias: **H0** ban (conserta a expulsão) → **H1** report → **H2** `sameWorld` → **H3** telas, CLI e docs.
-
-Depois do P3, o **F2 (Azure Entra ID)**, que é o próximo do roadmap e destrava aposentar o mock OIDC.
+Antes ou depois dele, um trabalho pequeno e bem delimitado que o P3 deixou visível de propósito: **fazer o ban
+sobreviver à reconexão**. Hoje o `emitBan` tira a pessoa da sessão e ela pode voltar em seguida, porque nada chama o
+`verifyBanUser`. O nosso `GET /api/ban` já responde certo — falta o pusher perguntar, na conexão. É mudança no
+`play`, e reabre a decisão #3 do ADR-0005 (o IP, que hoje é aceito e descartado).
 
 ### Antes de qualquer uso real
 
@@ -282,10 +312,34 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
 16. **`/admin/*` sem configuração responde 503 e o processo sobe assim mesmo.** Fazer o `admin-api` morrer por causa
     do dashboard pendura o `play` — é o item 1 desta lista por outro caminho.
 
+17. **O `GET /api/ban` responde `is_banned` *e* `message`, sempre.** O `AdminBannedData` exige os dois, e o caminho
+    de quem **não** está banido é o de todo usuário em toda conexão. Responder só `{is_banned:false}` quebra o parse
+    para todo mundo.
+
+18. **O `GET /api/ban` lê o usuário do parâmetro `token`.** O comentário OpenAPI do próprio pusher chama de "o uuid
+    do usuário"; o código manda `token`. Ler o nome documentado responde "não banido" para todo mundo, em silêncio.
+
+19. **O `POST /api/ban` e o `POST /api/report` só exigem quem banir/denunciar.** Tudo o mais tem padrão seguro. O
+    pusher aguarda essas chamadas antes de agir e engole a falha no Sentry — recusar aqui reproduz exatamente o bug
+    que o P3 consertou.
+
+20. **A tabela `ban` não tem coluna de IP, e as tabelas `ban` e `report` não têm chave estrangeira.** O IP é decisão
+    #3 do ADR-0005 (LGPD), com teste de integração contra o schema real. A ausência de FK é o que permite banir um
+    visitante anônimo e o que impede apagar a conta de levantar o ban.
+
+21. **O `/api/room/sameWorld` responde 502 ou 501 quando não consegue ler as salas — nunca lista vazia.** Lista vazia
+    é mentira em formato de sucesso: a mensagem global não chega a ninguém e o administrador vê sucesso.
+
 ### Também não mexer sem conversar
 
 - **`docker-compose.yaml`:** o `play` depende do healthcheck do `admin-api`, que depende do Postgres. Essa cadeia
   existe para evitar a armadilha do item 1 na subida.
-- **`play/src/pusher/services/AdminApi.ts` e `libs/messages/src/index.ts`:** foram tocados para mover o schema. O
-  typecheck do `play` tem **436 erros pré-existentes** (matrix-js-sdk, sentry, grpc) — esse é o baseline, medido nas
-  duas árvores. Qualquer número diferente disso é regressão.
+- **`play/src/pusher/services/AdminApi.ts`, `play/src/pusher/services/ShortMapDescription.ts`,
+  `libs/messages/src/index.ts`, `libs/map-editor/src/types.ts` e `libs/shared-utils/src/SharedAdminApi.ts`:** foram
+  tocados **só** para mover schemas para o `@workadventure/messages` e re-exportar de onde estavam. Nenhum import de
+  nenhum pacote mudou. O typecheck do `play` tem **436 erros pré-existentes** (matrix-js-sdk, sentry, grpc) — esse é
+  o baseline, medido nas duas árvores. O `map-storage` tem **7**, todos de tipagem do `@grpc/grpc-js`. Qualquer
+  número diferente disso é regressão.
+- **O `auditLog` e o `roomCatalogue` são dependências de topo do `createServer`, não do dashboard.** Os dois ganharam
+  um segundo leitor/escritor fora do `/admin/*` no P3 (`POST /api/ban` e `GET /api/room/sameWorld`). Devolvê-los para
+  dentro do `adminDashboard` quebra os dois endpoints quando o dashboard está desligado — sem erro visível.
