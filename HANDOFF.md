@@ -197,7 +197,17 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**A P2 está completa.** O que resta é a lista abaixo, e nada dela é código de feature.
+**P3 — moderação**, a última fase do F3. O [ADR-0005](docs/adr/0005-moderation.pt-BR.md) está escrito e **proposto,
+aguardando aceite**; nenhuma linha de código foi escrita.
+
+> **Isto não é feature nova, é conserto.** Ban e report **estão quebrados agora** por causa do próprio P0: essas
+> rotas não passam por capability, então o pusher as chama incondicionalmente desde que o `ADMIN_API_URL` foi
+> setado, e nós respondemos 404. No `handleBanPlayerMessage` o `emitBan` vem *depois* do `await`, então o usuário
+> **nem é expulso**. O ADR-0005 tem oito correções de contrato, no mesmo espírito das seis do ADR-0002.
+
+Fatias: **H0** ban (conserta a expulsão) → **H1** report → **H2** `sameWorld` → **H3** telas, CLI e docs.
+
+Depois do P3, o **F2 (Azure Entra ID)**, que é o próximo do roadmap e destrava aposentar o mock OIDC.
 
 ### Antes de qualquer uso real
 
