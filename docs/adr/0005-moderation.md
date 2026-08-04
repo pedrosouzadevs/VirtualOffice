@@ -91,6 +91,11 @@ on the roadmap, and worth not pretending is included here.
 We implement `GET /api/ban` anyway, for two reasons: it is a lookup on a table P3 builds regardless, and a 404 on a
 path the pusher's own interface declares is a trap for whoever wires that caller up later.
 
+> **Revised 2026-08-04 by [ADR-0006](0006-dashboard-issued-bans.md).** A ban now *does* survive reconnection — not
+> by the pusher calling `verifyBanUser`, but by our own `/api/room/access` answering `ErrorApiData` for a banned
+> identifier, which the pusher already turns into a refused connection. No `play` change was needed after all, and
+> the IP decision (#3) was not reopened. What this section says remained true for the whole of P3.
+
 ## Decision 3 — IP addresses are accepted and not stored
 
 `GET /api/ban` receives `ipAddress`. Storing it would let bans follow a device rather than an account.
@@ -169,7 +174,7 @@ ADR-0003 decision #2 gives.
 | **H0** | The `ban` table, `POST /api/ban`, `GET /api/ban` answering both required fields. Fixes the kick. |
 | **H1** | The `report` table and `POST /api/report`. Fixes the lost report. |
 | **H2** | `GET /api/room/sameWorld` over the existing `RoomCatalogue`. |
-| **H3** | Dashboard: bans and reports as read-only screens; CLI `ban:list` and `report:list`; bilingual docs. |
+| **H3** | Dashboard: bans and reports as read-only screens; CLI `ban:list` and `report:list`; bilingual docs. *Revised: [ADR-0006](0006-dashboard-issued-bans.md) later made the dashboard issue bans too; reports stay read-only.* |
 
 H0 first because it is the one with a user-visible failure attached today.
 

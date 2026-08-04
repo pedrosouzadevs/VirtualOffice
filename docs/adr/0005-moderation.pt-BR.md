@@ -92,6 +92,12 @@ Implementamos o `GET /api/ban` mesmo assim, por dois motivos: é uma consulta a 
 qualquer jeito, e um 404 num caminho que a própria interface do pusher declara é uma armadilha para quem ligar aquele
 chamador depois.
 
+> **Revisada em 2026-08-04 pelo [ADR-0006](0006-dashboard-issued-bans.pt-BR.md).** Um ban agora *sobrevive* à
+> reconexão — não pelo pusher chamar o `verifyBanUser`, mas pelo nosso próprio `/api/room/access` responder
+> `ErrorApiData` para identificador banido, que o pusher já transforma em conexão recusada. No fim nenhuma mudança
+> no `play` foi necessária, e a decisão do IP (#3) não foi reaberta. O que esta seção diz permaneceu verdade durante
+> todo o P3.
+
 ## Decisão 3 — Endereços de IP são aceitos e não são guardados
 
 O `GET /api/ban` recebe `ipAddress`. Guardá-lo permitiria que o ban seguisse um dispositivo em vez de uma conta.
@@ -171,7 +177,7 @@ motivo da decisão #2 do ADR-0003.
 | **H0** | A tabela `ban`, o `POST /api/ban`, e o `GET /api/ban` respondendo os dois campos obrigatórios. Conserta a expulsão. |
 | **H1** | A tabela `report` e o `POST /api/report`. Conserta o report perdido. |
 | **H2** | O `GET /api/room/sameWorld` sobre o `RoomCatalogue` que já existe. |
-| **H3** | Dashboard: bans e reports como telas de leitura; CLI `ban:list` e `report:list`; docs bilíngues. |
+| **H3** | Dashboard: bans e reports como telas de leitura; CLI `ban:list` e `report:list`; docs bilíngues. *Revisada: o [ADR-0006](0006-dashboard-issued-bans.pt-BR.md) depois fez a dashboard também emitir bans; denúncias seguem só-leitura.* |
 
 O H0 vem primeiro porque é o que tem uma falha visível ao usuário hoje.
 
