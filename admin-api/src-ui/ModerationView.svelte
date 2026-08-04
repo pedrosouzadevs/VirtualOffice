@@ -9,6 +9,12 @@
     let loading = $state(true);
     let error = $state<string | null>(null);
 
+    /** The ban form (ADR-0006, decision #1). */
+    let banIdentifier = $state("");
+    let banMessage = $state("");
+    let banning = $state(false);
+    let notice = $state<string | null>(null);
+
     /**
      * Both lists are loaded together.
      *
@@ -24,6 +30,38 @@
             error = t.moderationLoadFailed;
         } finally {
             loading = false;
+        }
+    }
+
+    async function issueBan(event: SubmitEvent): Promise<void> {
+        event.preventDefault();
+
+        const identifier = banIdentifier.trim();
+        if (identifier === "" || banning) {
+            return;
+        }
+
+        // A native confirm, like the self-revocation warning: banning is the most consequential click this
+        // dashboard has, and it must never happen from an accidental Enter in the wrong field.
+        if (!window.confirm(t.banConfirm.replace("{identifier}", identifier))) {
+            return;
+        }
+
+        banning = true;
+        try {
+            const result = await api.issueBan(identifier, banMessage);
+
+            // The two outcomes are both successes with different follow-ups; the screen says which one happened
+            // instead of letting the administrator guess whether the person is already gone.
+            notice = (result.kicked ? t.banIssuedKicked : t.banIssuedNotKicked).replace("{identifier}", identifier);
+            error = null;
+            banIdentifier = "";
+            banMessage = "";
+            await load();
+        } catch (cause) {
+            error = cause instanceof api.ApiError ? cause.message : t.banFailed;
+        } finally {
+            banning = false;
         }
     }
 
@@ -44,16 +82,40 @@
     </div>
 {/if}
 
-<p class="note">{t.moderationReadOnly}</p>
+{#if notice !== null}
+    <div class="banner" role="status">
+        <span>{notice}</span>
+        <button onclick={() => (notice = null)}>{t.dismiss}</button>
+    </div>
+{/if}
+
+<p class="note">{t.moderationNote}</p>
 
 {#if loading}
     <div class="empty-state">{t.loading}</div>
 {:else}
     <section>
         <h2>{t.moderationBans}</h2>
-        <!-- Said on the screen, not only in the ADR: an administrator who believes a ban is permanent will not
-             understand why the same person is back a minute later. -->
-        <p class="note">{t.banStillReconnects}</p>
+
+        <form class="ban-form" onsubmit={issueBan}>
+            <input
+                type="text"
+                bind:value={banIdentifier}
+                placeholder={t.banFormIdentifier}
+                aria-label={t.banFormIdentifier}
+                disabled={banning}
+            />
+            <input
+                type="text"
+                bind:value={banMessage}
+                placeholder={t.banFormMessage}
+                aria-label={t.banFormMessage}
+                disabled={banning}
+            />
+            <button type="submit" class="danger" disabled={banning || banIdentifier.trim() === ""}>
+                {t.banFormSubmit}
+            </button>
+        </form>
 
         {#if bans.length === 0}
             <div class="empty-state">{t.noBans}</div>
@@ -144,5 +206,27 @@
     .comment {
         white-space: pre-wrap;
         max-width: 32rem;
+    }
+
+    .ban-form {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .ban-form input {
+        flex: 1 1 14rem;
+    }
+
+    /* The most consequential button on the dashboard should not look like a refresh. */
+    .danger {
+        border-color: var(--danger, #b91c1c);
+        color: var(--danger, #b91c1c);
+    }
+
+    .danger:hover:not(:disabled) {
+        background: var(--danger, #b91c1c);
+        color: white;
     }
 </style>

@@ -9,6 +9,7 @@ import type { MemberRepository } from "../../src/Application/Ports/MemberReposit
 import type { ReportRepository } from "../../src/Application/Ports/ReportRepository";
 import type { NewReport, ReportRecord } from "../../src/Domain/Report";
 import type { RoomCatalogue } from "../../src/Application/Ports/RoomCatalogue";
+import type { WorldKicker } from "../../src/Application/Ports/WorldKicker";
 import type { TagRepository } from "../../src/Application/Ports/TagRepository";
 import type { RoomAccessConfiguration } from "../../src/Application/RoomAccessService";
 import { normalizeEmail, normalizeIdentifier, type Member, type MemberSummary } from "../../src/Domain/Member";
@@ -344,6 +345,25 @@ export class StubReportRepository implements ReportRepository {
 }
 
 /**
+ * Records kicks instead of delivering them.
+ *
+ * Implemented rather than swallowed: ADR-0006's mandatory tests are about the kick being *attempted after the
+ * record* and its failure being survivable, and both need the attempt to be observable.
+ */
+export class StubWorldKicker implements WorldKicker {
+    readonly kicks: { identifier: string; message: string }[] = [];
+
+    /** Set to make delivery fail, standing in for an unreachable or refusing pusher. */
+    delivered = true;
+
+    kick(identifier: string, message: string): Promise<boolean> {
+        this.kicks.push({ identifier, message });
+
+        return Promise.resolve(this.delivered);
+    }
+}
+
+/**
  * Collects alerts instead of shouting them.
  *
  * Implemented rather than swallowed: whether an alert was raised is the assertion for threat model F1, and a fake
@@ -468,9 +488,11 @@ export async function serveDashboardTestApp(
         uiDirectory?: string;
         /** Omitted means `INTERNAL_MAP_STORAGE_URL` is unset, which the rooms screen must report distinctly. */
         rooms?: RoomCatalogue;
-        /** Bans that happened before the test starts. Issued from `play`, never from the dashboard (ADR-0005). */
+        /** Bans that happened before the test starts. */
         bans?: readonly NewBan[];
         reports?: readonly NewReport[];
+        /** Omitted means the kick channel is not configured, which a dashboard ban must survive (ADR-0006). */
+        kicker?: WorldKicker;
     } = {},
 ): Promise<DashboardTestApp> {
     // One catalogue behind both repositories: a tag created by a grant must be findable by the revoke that follows.
@@ -491,6 +513,7 @@ export async function serveDashboardTestApp(
         banRepository: bans,
         reportRepository: reports,
         roomCatalogue: options.rooms,
+        worldKicker: options.kicker,
         // A path that cannot exist, so the "not built" branch is what runs unless a test asks otherwise. Falling back
         // to the real `dist-ui` would make these tests depend on whether somebody had run the build.
         dashboardUiDirectory: options.uiDirectory ?? "/nonexistent-dashboard-build",

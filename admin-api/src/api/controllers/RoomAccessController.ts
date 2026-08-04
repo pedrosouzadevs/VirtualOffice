@@ -1,8 +1,13 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import type { CompanionCatalogue } from "../../Application/CompanionCatalogue";
+import type { BanRepository } from "../../Application/Ports/BanRepository";
 import type { MemberRepository } from "../../Application/Ports/MemberRepository";
-import { buildRoomAccess, type RoomAccessConfiguration } from "../../Application/RoomAccessService";
+import {
+    buildBannedRoomAccess,
+    buildRoomAccess,
+    type RoomAccessConfiguration,
+} from "../../Application/RoomAccessService";
 import type { WokaCatalogue } from "../../Application/WokaCatalogue";
 
 /**
@@ -49,6 +54,7 @@ export class RoomAccessController {
     constructor(
         private readonly app: Express,
         private readonly members: MemberRepository,
+        private readonly bans: BanRepository,
         private readonly wokaCatalogue: WokaCatalogue,
         private readonly companionCatalogue: CompanionCatalogue,
         private readonly configuration: RoomAccessConfiguration,
@@ -74,6 +80,16 @@ export class RoomAccessController {
                 }
 
                 const { userIdentifier, playUri, characterTextureIds, companionTextureId, accessToken } = query.data;
+
+                // The door (ADR-0006, decision #2). A separate, explicit branch so the rule below it stays whole:
+                // banned is a fact we recorded about this identifier, unknown is the absence of one.
+                const ban = await this.bans.findActive(userIdentifier);
+
+                if (ban !== undefined) {
+                    // 200 on purpose: the pusher's axios throws on non-2xx and would swallow this message.
+                    res.status(200).json(buildBannedRoomAccess(ban));
+                    return;
+                }
 
                 // An unknown visitor is not an error: they enter with no tags. Failing here would mean nobody new
                 // could ever join the world.

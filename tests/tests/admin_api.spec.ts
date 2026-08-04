@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import Map from "./utils/map";
 import Menu from "./utils/menu";
@@ -5,6 +6,20 @@ import { getPage } from "./utils/auth";
 import { isMobile } from "./utils/isMobile";
 import { evaluateScript } from "./utils/scripting";
 import { publicTestMapUrl } from "./utils/urls";
+
+/**
+ * Deletes every ban this suite issued.
+ *
+ * Not housekeeping — a correctness requirement since ADR-0006: `/api/room/access` refuses banned identifiers, so a
+ * leftover ban on the shared `alice.doe@example.com` would lock Member1 out of every later suite, in a way that
+ * looks like a login flake. Straight through the container because lifting a ban deliberately has no API.
+ */
+function deleteBansFor(identifier: string): void {
+    execSync(
+        `docker exec virtualoffice-admin-api-db-1 psql -U admin_api -d admin_api -c "delete from ban where identifier = '${identifier}'; delete from audit_log where target_email = '${identifier}' and action = 'member.banned';"`,
+        { stdio: "ignore" },
+    );
+}
 
 /**
  * End-to-end proof that authorisation comes from `admin-api`'s database rather than the OIDC claim
@@ -91,6 +106,7 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
      * and what this test exercises. Everything after that line is the production path.
      */
     test("banning somebody actually removes them @oidc", async ({ browser, request }) => {
+        test.info().annotations.push({ type: "cleanup", description: "bans for alice.doe@example.com are deleted" });
         const room = publicTestMapUrl("tests/E2E/empty.json", "admin_api_ban");
 
         // john.doe@example.com, holding "admin" from the bootstrap. `handleBanPlayerMessage` returns early for
@@ -130,5 +146,19 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
             is_banned: true,
             message: "User banned by admin john.doe@example.com",
         });
+
+        // Since ADR-0006 the door also refuses her: the very connection endpoint answers the error variant now.
+        const door = await request.get("http://admin-api.workadventure.localhost/api/room/access", {
+            params: { userIdentifier: "alice.doe@example.com", playUri: room, "characterTextureIds[]": "male1" },
+            headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
+        });
+
+        expect(door.status()).toBe(200);
+        expect(await door.json()).toMatchObject({ status: "error", code: "USER_BANNED" });
+    });
+
+    test.afterEach(() => {
+        // Always, pass or fail: a leftover ban would lock Member1 out of every later suite through the door.
+        deleteBansFor("alice.doe@example.com");
     });
 });

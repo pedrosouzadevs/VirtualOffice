@@ -138,25 +138,41 @@ expulsa alguém pela caixa de vídeo, a vítima cai na tela `BANNED`, e o `GET /
 
 **Descoberta que o ADR-0005 não previa: o `play` não tem UI de ban.** O `#kickoff-user` do menu da caixa de vídeo
 expulsa a pessoa da *reunião* (um evento privado de space), e o `ActionMediaBox.svelte` tem um `ban()` comentado com
-`TODO: implement ban user`. O único remetente de `banPlayerMessage` hoje é o evento `banUser` do `IframeListener`,
-ou seja, a API de scripting. É por lá que o e2e dispara o ban — todo o resto do caminho é produção. **Quem for
-ligar o ban de verdade precisa primeiro de um botão**, e o lugar natural é o `ban()` comentado.
+`TODO: implement ban user`. O único remetente de `banPlayerMessage` é o evento `banUser` da API de scripting — é por
+lá que o e2e do #10 dispara. Essa descoberta é o que originou o ADR-0006, abaixo.
 
-Quatro coisas ficaram de fora, deliberadamente e por escrito:
+### ADR-0006 — bans emitidos pela dashboard
 
-- **O ban não sobrevive à reconexão.** Nada chama o `verifyBanUser`; fazê-lo colar é mudança no `play`, fora do F3.
-  É o próximo item pequeno e óbvio do roadmap.
+Decisão de produto (2026-08-04): **a dashboard é a superfície que emite bans** — o botão do `play` fica de fora.
+[ADR-0006](docs/adr/0006-dashboard-issued-bans.pt-BR.md), aceito e entregue, revisando a decisão #2 do ADR-0005 e a
+regra só-leitura do H3. Um ban da dashboard faz três coisas, nesta ordem:
+
+1. **Registra** — `banIdentifier`, o mesmo serviço do caminho do pusher, com auditoria nomeando o administrador
+   **logado** (atribuição melhor que a do `byUserUuid`).
+2. **Fecha a porta** — o `/api/room/access` responde `ErrorApiData` (`USER_BANNED`, HTTP **200**) para identificador
+   banido. O pusher recusa a conexão e o login; **o ban sobrevive à reconexão sem nenhuma mudança no `play`** e sem
+   chamador para o `verifyBanUser`.
+3. **Expulsa, best-effort** — pelo `/ws/admin/rooms` do próprio pusher, que estava dormente porque ninguém nunca
+   setou o `ADMIN_SOCKETS_TOKEN`. O JWT é HS256 sobre esse token compartilhado; salas agrupadas por
+   `roomId.split("/")[5]`, a esquisitice do pusher, presa por teste. Falha responde `kicked: false` e não desfaz
+   nada.
+
+Config nova (padrões de dev no compose): `ADMIN_SOCKETS_TOKEN`, `PLAY_URL`, `INTERNAL_PLAY_URL` — **este último é a
+porta 3001**, o app de WebSocket do pusher, não a 3000 do HTTP.
+
+Continuam de fora, deliberadamente e por escrito:
+
 - **Reports não notificam ninguém.** Tabela e telas; o `AdminAlerter` é a costura pronta para quando houver dono da
   triagem.
-- **Não há como levantar um ban pela aplicação.** SQL direto, documentado no setup, pelo mesmo motivo do
-  `member:delete`.
-- **Não há botão de banir no `play`** — ver o parágrafo acima. O backend está inteiro; falta a superfície.
+- **Não há como levantar um ban pela aplicação.** SQL direto, documentado no setup — o que "levantar" significa
+  continua sem decisão, e um botão decidiria sem querer. **Atenção nos e2e:** com a porta fechada, um ban esquecido
+  no banco tranca o usuário de teste de todas as suítes seguintes; os specs limpam com `deleteBansFor` no
+  finally/afterEach.
 
 ### Fora do F3, em aberto no roadmap
 
-- **F2 (Azure Entra ID)** — o `OPID_WOKA_NAME_POLICY=allow_override_opid` já está preparado no `.env.template`, mas
-  só tem efeito quando um provedor emitir claim de username. O mock emite `name`, e o `OPENID_USERNAME_CLAIM` tem
-  padrão `username`.
+- **F2 (Azure Entra ID)** — o config swap está entregue (ver Next Step); falta a validação em staging com tenant
+  real.
 - **`MemberData.name` fica nulo** no fluxo normal — o `/api/room/access` não recebe nome do pusher. Contornável pelo
   `member:set-name`. Decisão registrada no ADR-0003 (#2).
 - **Sem `member:delete`** na CLI. Removido por SQL; documentado no setup.
@@ -331,6 +347,20 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
 
 21. **O `/api/room/sameWorld` responde 502 ou 501 quando não consegue ler as salas — nunca lista vazia.** Lista vazia
     é mentira em formato de sucesso: a mensagem global não chega a ninguém e o administrador vê sucesso.
+
+22. **A porta do ban responde HTTP 200 com `ErrorApiData` — nunca 4xx.** O axios do pusher lança em não-2xx e troca
+    a resposta por um "Connection error" genérico: a pessoa banida perderia a mensagem escrita para ela e o log
+    culparia conectividade. E **banido ≠ desconhecido** — a invariante #9 continua: desconhecido não-banido entra.
+
+23. **A expulsão é best-effort e nunca falha o ban.** O registro e a porta vêm antes; o kick responde
+    `kicked: false` quando não dá. O inverso deixaria um soluço do pusher des-registrar uma moderação.
+
+24. **O `INTERNAL_PLAY_URL` aponta para a porta 3001** — o app de WebSocket do pusher. A 3000 é o HTTP; o
+    `/ws/admin/rooms` não existe lá, e o kick degradaria para `false` silenciosamente em todo ban.
+
+25. **O agrupamento do kick usa `roomId.split("/")[5]`, literalmente.** É o filtro do próprio pusher
+    (`IoSocketController`), esquisitice inclusa: para `/~/maps/x.wam` cai no nome do arquivo. Há teste fixando isso;
+    "consertar" o parsing aqui quebra a entrega do kick sem nenhum erro visível.
 
 ### Também não mexer sem conversar
 

@@ -102,6 +102,9 @@ services:
       SECRET_KEY: "$SECRET_KEY"
       ADMIN_API_URL: "${ADMIN_API_URL:-}"
       ADMIN_API_TOKEN: "$ADMIN_API_TOKEN"
+      # Mounts /ws/admin/rooms, the channel a dashboard ban kicks through (ADR-0006). Shared with admin-api below,
+      # interpolated from the same .env so the two sides cannot drift. Development default; override for anything real.
+      ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:-dev-only-admin-sockets-token-change-me}"
       MAP_STORAGE_API_TOKEN: "FFVSGBSGBSGFB23SFGBSFG4BS"
       API_URL: back:50051
       DISABLE_ANONYMOUS: $DISABLE_ANONYMOUS
@@ -391,6 +394,13 @@ services:
       # Read only by the dashboard's room list (ADR-0004, G3). GET /maps on map-storage is unauthenticated, so
       # there is no token here — the same call "play" makes from LocalAdmin. Empty it to switch that screen off.
       INTERNAL_MAP_STORAGE_URL: "${INTERNAL_MAP_STORAGE_URL:-http://map-storage:3000}"
+      # The kick channel (ADR-0006): the pusher's /ws/admin/rooms websocket, reached in-network, naming rooms by the
+      # public URL browsers connect with. Empty ADMIN_SOCKETS_TOKEN degrades a dashboard ban to record-plus-door.
+      ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:-dev-only-admin-sockets-token-change-me}"
+      PLAY_URL: "${PLAY_URL:-http://play.workadventure.localhost}"
+      # 3001, not 3000: the pusher serves HTTP on 3000 and every /ws/ endpoint on a second uWS app on 3001 —
+      # the same split the play-ws Traefik router encodes.
+      INTERNAL_PLAY_URL: "${INTERNAL_PLAY_URL:-http://play:3001}"
       # Optional. Alerts always reach the log with an [ADMIN-ALERT] marker; this also POSTs them as JSON.
       ADMIN_API_ALERT_WEBHOOK_URL: "${ADMIN_API_ALERT_WEBHOOK_URL:-}"
       # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's

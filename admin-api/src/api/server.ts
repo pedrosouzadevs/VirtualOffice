@@ -9,6 +9,7 @@ import type { BanRepository } from "../Application/Ports/BanRepository";
 import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
 import type { ReportRepository } from "../Application/Ports/ReportRepository";
 import type { RoomCatalogue } from "../Application/Ports/RoomCatalogue";
+import type { WorldKicker } from "../Application/Ports/WorldKicker";
 import { CompanionCatalogue } from "../Application/CompanionCatalogue";
 import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
 import type { MemberRepository } from "../Application/Ports/MemberRepository";
@@ -71,6 +72,14 @@ export interface ServerDependencies {
      * Absent when `INTERNAL_MAP_STORAGE_URL` is unset. Both readers then say so distinctly instead of guessing.
      */
     roomCatalogue?: RoomCatalogue;
+
+    /**
+     * Removes somebody from the running world when the dashboard bans them (ADR-0006, decision #3).
+     *
+     * Absent when the kick channel is not configured (`ADMIN_SOCKETS_TOKEN` and friends): a dashboard ban is then
+     * still recorded and the door still closes — only the immediate removal is skipped, and the endpoint says so.
+     */
+    worldKicker?: WorldKicker;
 
     /**
      * Where every mutation is recorded (ADR-0004, decision #5).
@@ -197,7 +206,13 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
     new AdminTagsController(app, dependencies.tagRepository);
     new AdminAuditController(app, dependencies.auditLog);
     new AdminRoomsController(app, dependencies.roomCatalogue, dependencies.memberRepository);
-    new AdminModerationController(app, dependencies.banRepository, dependencies.reportRepository);
+    new AdminModerationController(app, {
+        bans: dependencies.banRepository,
+        reports: dependencies.reportRepository,
+        audit: dependencies.auditLog,
+        members: dependencies.memberRepository,
+        kicker: dependencies.worldKicker,
+    });
 
     mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
 }
@@ -275,6 +290,7 @@ export function createServer(dependencies: ServerDependencies): Express {
     new RoomAccessController(
         app,
         dependencies.memberRepository,
+        dependencies.banRepository,
         wokaCatalogue,
         companionCatalogue,
         dependencies.roomAccessConfiguration,

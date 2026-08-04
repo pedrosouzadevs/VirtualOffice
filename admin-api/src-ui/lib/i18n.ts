@@ -76,8 +76,18 @@ const en = {
     tabModeration: "Moderation",
     moderationBans: "Bans",
     moderationReports: "Reports",
-    moderationReadOnly:
-        "Read-only. A ban is issued from the world, where you can see who you are throwing out; a report is written by the user who makes it. Removing either is direct SQL — see the setup guide.",
+    moderationNote:
+        "Banning removes the person now and keeps them out when they reconnect. Lifting a ban, or deleting a report, is direct SQL — see the setup guide.",
+
+    banFormIdentifier: "Email (or visitor id) to ban",
+    banFormMessage: "Message shown to the banned person (optional)",
+    banFormSubmit: "Ban",
+    banConfirm:
+        "Ban “{identifier}”? They will be removed from the world and will not be able to come back until the ban is lifted with direct SQL.",
+    banIssuedKicked: "“{identifier}” was banned and removed from the world.",
+    banIssuedNotKicked:
+        "“{identifier}” was banned. They could not be removed right now, but they cannot reconnect — the ban holds at the door.",
+    banFailed: "The ban could not be issued.",
     columnWhen: "When",
     columnBannedUser: "Banned",
     columnIssuedBy: "By",
@@ -88,8 +98,6 @@ const en = {
     noBans: "Nobody has been banned.",
     noReports: "Nothing has been reported.",
     noComment: "No comment given.",
-    banStillReconnects:
-        "A ban removes somebody from the running session. It does not yet survive a reconnection — see ADR-0005, decision #2.",
     moderationLoadFailed: "The moderation records could not be loaded.",
 } as const;
 
@@ -162,8 +170,18 @@ const ptBR: Messages = {
     tabModeration: "Moderação",
     moderationBans: "Bans",
     moderationReports: "Denúncias",
-    moderationReadOnly:
-        "Somente leitura. Um ban é aplicado dentro do mundo, onde dá para ver quem está sendo expulso; uma denúncia é escrita por quem a faz. Remover qualquer um dos dois é SQL direto — veja o guia de setup.",
+    moderationNote:
+        "Banir remove a pessoa agora e a mantém fora quando reconectar. Levantar um ban, ou apagar uma denúncia, é SQL direto — veja o guia de setup.",
+
+    banFormIdentifier: "E-mail (ou id de visitante) a banir",
+    banFormMessage: "Mensagem mostrada à pessoa banida (opcional)",
+    banFormSubmit: "Banir",
+    banConfirm:
+        "Banir “{identifier}”? A pessoa será removida do mundo e não conseguirá voltar até o ban ser levantado por SQL direto.",
+    banIssuedKicked: "“{identifier}” foi banido(a) e removido(a) do mundo.",
+    banIssuedNotKicked:
+        "“{identifier}” foi banido(a). Não deu para remover agora, mas a pessoa não consegue reconectar — o ban vale na porta.",
+    banFailed: "Não foi possível aplicar o ban.",
     columnWhen: "Quando",
     columnBannedUser: "Banido",
     columnIssuedBy: "Por",
@@ -174,8 +192,6 @@ const ptBR: Messages = {
     noBans: "Ninguém foi banido.",
     noReports: "Nada foi denunciado.",
     noComment: "Sem comentário.",
-    banStillReconnects:
-        "Um ban tira a pessoa da sessão em andamento. Ele ainda não sobrevive a uma reconexão — veja o ADR-0005, decisão #2.",
     moderationLoadFailed: "Não foi possível carregar os registros de moderação.",
 };
 

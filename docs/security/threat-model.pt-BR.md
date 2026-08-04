@@ -34,6 +34,7 @@ Ordenado pelo que custa perder.
 | **O log de auditoria** (`audit_log`) | O único registro de quem mudou o quê. Inútil se puder ser editado, e irreconstituível se tiver buracos. |
 | **`ADMIN_API_SESSION_SECRET`** | Assina o cookie de sessão. Quem o tiver forja um administrador. |
 | **`ADMIN_API_TOKEN`** | Abre o `/api/*`. Compartilhado com o `play`. |
+| **`ADMIN_SOCKETS_TOKEN`** | Abre o `/ws/admin/rooms` do pusher e assina a expulsão que um ban da dashboard entrega (ADR-0006). Quem o tiver remove qualquer um do mundo em andamento — não bane, mas perturba à vontade. Compartilhado com o `play`. |
 | **E-mails dos membros** | Dado pessoal sob a LGPD. Pouco volume, mas é um diretório de quem trabalha aqui. |
 | **Os registros de moderação** (`ban`, `report`) | Dado pessoal de outro tipo: uma acusação que uma pessoa nomeada fez sobre outra, e a evidência de uma decisão que alguém tomou. Append-only, legível só por administrador. Ver [F8](#f8--denúncias-guardam-acusações-sem-política-de-retenção). |
 
@@ -44,6 +45,9 @@ Ordenado pelo que custa perder.
 3. **`admin-api` → Postgres** — só nosso; nenhum outro serviço tem credencial.
 4. **`admin-api` → provedor OIDC** — externo. Responde *quem*; nunca decide *o que pode*.
 5. **`admin-api` → `map-storage`** — interno e **sem autenticação**. Ver [F3](#f3--o-catálogo-de-salas-é-legível-por-qualquer-coisa-na-rede).
+6. **`admin-api` → o `/ws/admin/rooms` do pusher** — de saída, interno, autenticado por JWT HS256 sobre o
+   `ADMIN_SOCKETS_TOKEN` (ADR-0006). Mão única: nada desse canal volta para o nosso estado; um pusher comprometido
+   no máximo ignora expulsões.
 
 ## 4. A passada do STRIDE
 
@@ -230,6 +234,8 @@ o caminho do direito ao esquecimento existe mesmo sem nada automatizando.
 ## 7. Antes do go-live
 
 - [ ] **F7** — trocar o `ADMIN_API_SESSION_SECRET` por um valor gerado
+- [ ] Trocar o `ADMIN_SOCKETS_TOKEN` por um valor gerado — o padrão do compose é conhecimento público, e o token
+      expulsa qualquer um do mundo (ADR-0006)
 - [ ] **F1** — decidir entre as opções acima; implementar a (b) se escolhida
 - [ ] HTTPS confirmado num deploy de verdade, com o cookie de sessão observado carregando `Secure`
 - [ ] `ADMIN_API_TRUST_PROXY` batendo com a topologia real — `false` se não houver nada na frente, ou o limite de

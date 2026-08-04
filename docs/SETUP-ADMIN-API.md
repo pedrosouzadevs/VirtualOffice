@@ -373,31 +373,50 @@ Removing your own `admin` tag is allowed, including when you are the last admini
 docker compose restart admin-api
 ```
 
-## Moderation (ADR-0005)
+## Moderation (ADR-0005, revised by ADR-0006)
 
-Banning and reporting happen **inside the world**, in `play`. `admin-api` records both, and the dashboard and CLI
-read them back.
+**Bans are issued from the dashboard** — the Moderation tab has the form. A dashboard ban does three things, in this
+order:
 
-> **`play` has no ban button yet.** The action menu on a video box offers "kick off", which removes somebody from the
-> *meeting* rather than the world, and `ActionMediaBox.svelte` carries a commented-out `ban()` marked
-> `TODO: implement ban user`. The only sender of `banPlayerMessage` today is the scripting API's `banUser` event —
-> which is what the end-to-end test uses, and what an administrator's map script can use meanwhile. Everything behind
-> that trigger works; what is missing is the surface.
+1. **Records** who banned whom, with what message — the append-only `ban` table plus an audit entry naming the
+   logged-in administrator.
+2. **Closes the door:** `/api/room/access`, the endpoint the pusher calls on every connection and login, answers the
+   error variant for a banned identifier. That is what makes a ban survive reconnection
+   ([ADR-0006, decision #2](adr/0006-dashboard-issued-bans.md)) — no `verifyBanUser` caller needed.
+3. **Kicks, best-effort:** `admin-api` asks the pusher to remove the person from the running world over the
+   `/ws/admin/rooms` channel. When that fails the screen says so — the person is out at the latest when their
+   session ends, and can never reconnect either way.
+
+Reporting still happens inside the world (any user, from the action menu), and reports stay read-only everywhere.
+
+> `play` itself still ships no ban button — `ActionMediaBox.svelte` carries a commented-out `ban()` marked
+> `TODO: implement ban user` — and that is now a decision rather than a gap: one issuing surface, the dashboard
+> (ADR-0006, decision #1). The scripting API's `banUser` event remains available to map scripts.
+
+### The kick channel
+
+Three values, all defaulted for development in `docker-compose.yaml`:
+
+| Variable | What it does |
+|---|---|
+| `ADMIN_SOCKETS_TOKEN` | Shared secret: mounts the pusher's `/ws/admin/rooms` endpoint **and** signs `admin-api`'s kick. Generate a real one for any deployment: `openssl rand -base64 48`. |
+| `PLAY_URL` | The world's public origin — what a pusher room id starts with. |
+| `INTERNAL_PLAY_URL` | The pusher's in-network address (`http://play:3001`), where the websocket connects. |
+
+Any of them missing degrades a dashboard ban to record-plus-door, reported as *"could not be removed right now"* —
+never an error. **Whoever holds `ADMIN_SOCKETS_TOKEN` can kick anyone** (not ban: the record needs the dashboard),
+so it is a real secret; the threat model lists it as an asset.
 
 ```bash
 docker compose exec admin-api npm run ban:list
 docker compose exec admin-api npm run report:list
 ```
 
-Also on the dashboard, under **Moderation**, and over HTTP behind the session: `GET /admin/api/bans` and
-`GET /admin/api/reports`, optionally `?limit=<n>`.
+Also on the dashboard, under **Moderation**, and over HTTP behind the session: `GET /admin/api/bans`,
+`POST /admin/api/bans` and `GET /admin/api/reports`.
 
-Four things worth knowing before you rely on any of it:
+Three things worth knowing before you rely on any of it:
 
-- **A ban does not survive a reconnection, and P3 does not change that.** It removes the person from the session they
-  are in; they may come straight back. Nothing in the pusher calls `verifyBanUser`, so our `GET /api/ban` is answered
-  by nobody today. Making a ban stick is a change in `play`, deliberately left out of F3 —
-  [ADR-0005, decision #2](adr/0005-moderation.md) says so plainly rather than implying enforcement that is not there.
 - **Nothing is notified.** A report lands in a table and waits to be read. No email, no webhook, no queue, until
   somebody owns triage — a channel nobody agreed to watch is worse than a list somebody checks.
 - **No IP address is stored.** `GET /api/ban` receives one and drops it: it is personal data under the LGPD, it
@@ -408,15 +427,16 @@ Four things worth knowing before you rely on any of it:
 
 ### Lifting a ban, or deleting a report
 
-Direct SQL, like member deletion — there is no button and no command, because P3 does not decide what lifting a ban
-means and a button would be deciding by accident:
+Direct SQL, like member deletion — there is no button and no command, because what lifting a ban *means* is still
+undecided and a button would decide it by accident (ADR-0006 kept ADR-0005's reasoning here):
 
 ```bash
 docker compose exec admin-api-db psql -U admin_api -d admin_api -c \
   "delete from ban where identifier = 'alguem@empresa.com';"
 ```
 
-Since nothing enforces a ban on reconnect yet, this changes what `GET /api/ban` answers and nothing else.
+The door checks the **most recent** ban for the identifier, so the delete must remove every row naming them — the
+statement above does. From the next connection attempt on, the person is let back in.
 
 ## Rolling back
 

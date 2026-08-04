@@ -69,6 +69,12 @@ export const PUBLIC_MAP_STORAGE_URL = env.PUBLIC_MAP_STORAGE_URL;
 export const INTERNAL_MAP_STORAGE_URL = env.INTERNAL_MAP_STORAGE_URL;
 export const ADMIN_API_ALERT_WEBHOOK_URL = env.ADMIN_API_ALERT_WEBHOOK_URL;
 
+// --- The kick channel (ADR-0006) -----------------------------------------------------------------------------------
+
+export const ADMIN_SOCKETS_TOKEN = env.ADMIN_SOCKETS_TOKEN;
+export const PLAY_URL = env.PLAY_URL;
+export const INTERNAL_PLAY_URL = env.INTERNAL_PLAY_URL;
+
 export const DISABLE_ANONYMOUS = env.DISABLE_ANONYMOUS;
 export const ENABLE_CHAT = env.ENABLE_CHAT;
 export const ENABLE_CHAT_UPLOAD = env.ENABLE_CHAT_UPLOAD;

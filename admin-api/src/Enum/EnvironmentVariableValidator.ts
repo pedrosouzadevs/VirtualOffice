@@ -138,6 +138,29 @@ export const EnvironmentVariables = z.object({
      */
     INTERNAL_MAP_STORAGE_URL: optionalString(),
 
+    // --- The kick channel (ADR-0006, decision #3) ----------------------------------------------------------------
+
+    /**
+     * Shared secret of the pusher's `/ws/admin/rooms` websocket — the same variable `play` reads, from the same
+     * root `.env`. Setting it is what mounts the endpoint there and enables the kick here; without it a dashboard
+     * ban is still recorded and the door still closes, only the courtesy of an immediate kick is skipped.
+     */
+    ADMIN_SOCKETS_TOKEN: optionalString(),
+
+    /**
+     * The world's public origin, e.g. `http://play.workadventure.localhost` — what a room URL starts with by the
+     * time it is a pusher `roomId`. The kick names rooms exactly as the pusher knows them, and the pusher knows them
+     * by the URL the browser connected with.
+     */
+    PLAY_URL: optionalString(),
+
+    /**
+     * In-network address of the pusher's **websocket** app, e.g. `http://play:3001`. Where the kick actually
+     * connects. Not 3000: the pusher serves HTTP and websockets from two separate uWS apps on two ports, the same
+     * split the `play-ws` Traefik router encodes.
+     */
+    INTERNAL_PLAY_URL: optionalString(),
+
     /**
      * Where security alerts are POSTed as JSON — a Slack or Teams incoming webhook, or anything that accepts one.
      *

@@ -23,6 +23,12 @@ A third one, from [ADR-0005](../docs/adr/0005-moderation.md): **`/api/ban`, `/ap
 are gated by no capability at all**, so the pusher calls them the moment `ADMIN_API_URL` is set. There is no
 negotiation and no way to opt out — an unimplemented route here is a broken feature in `play`, not a disabled one.
 
+Moderation ([ADR-0006](../docs/adr/0006-dashboard-issued-bans.md)): the dashboard **issues** bans. `/api/room/access`
+answers `ErrorApiData` (HTTP **200**, never 4xx — the pusher's axios throws on non-2xx) for a banned identifier,
+which is what makes a ban survive reconnection; a banned identifier is a separate branch from an unknown one, whose
+invariant is untouched. The kick rides the pusher's `/ws/admin/rooms` (`ADMIN_SOCKETS_TOKEN`, websocket app on port
+**3001**), is best-effort, and never fails the ban.
+
 ## Two route spaces, two credentials, no overlap
 
 | Space | Consumer | Credential | Guard |

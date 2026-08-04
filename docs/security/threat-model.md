@@ -34,6 +34,7 @@ Ranked by what losing it costs.
 | **The audit log** (`audit_log`) | The only record of who changed what. Worthless if it can be edited, and unreconstructible if it has gaps. |
 | **`ADMIN_API_SESSION_SECRET`** | Signs session cookies. Whoever has it can mint an administrator. |
 | **`ADMIN_API_TOKEN`** | Opens `/api/*`. Shared with `play`. |
+| **`ADMIN_SOCKETS_TOKEN`** | Opens the pusher's `/ws/admin/rooms` and signs the kick a dashboard ban delivers (ADR-0006). Whoever holds it can remove anyone from the running world — not ban them, but disrupt at will. Shared with `play`. |
 | **Member emails** | Personal data under the LGPD. Low volume, but it is a directory of who works here. |
 | **The moderation records** (`ban`, `report`) | Personal data of a different kind: an accusation one named person made about another, and evidence of a decision somebody took. Append-only, readable only by an administrator. See [F8](#f8--reports-hold-accusations-with-no-retention-policy). |
 
@@ -44,6 +45,9 @@ Ranked by what losing it costs.
 3. **`admin-api` → Postgres** — ours alone; no other service has credentials.
 4. **`admin-api` → the OIDC provider** — external. It answers *who*; it never decides *what they may do*.
 5. **`admin-api` → `map-storage`** — in-network and **unauthenticated**. See [F3](#f3--the-room-catalogue-is-readable-by-anything-on-the-network).
+6. **`admin-api` → the pusher's `/ws/admin/rooms`** — outbound, in-network, authenticated by an HS256 JWT over
+   `ADMIN_SOCKETS_TOKEN` (ADR-0006). One-way: nothing on this channel flows back into our state; a compromised
+   pusher can at worst ignore kicks.
 
 ## 4. STRIDE walk
 
@@ -229,6 +233,8 @@ the setup guide — the right-to-erasure path exists even though nothing automat
 ## 7. Before go-live
 
 - [ ] **F7** — replace `ADMIN_API_SESSION_SECRET` with a generated value
+- [ ] Replace `ADMIN_SOCKETS_TOKEN` with a generated value — the compose default is public knowledge, and the token
+      kicks anyone from the world (ADR-0006)
 - [ ] **F1** — decide between the options above; implement (b) if chosen
 - [ ] HTTPS confirmed on a real deployment, and the session cookie observed carrying `Secure`
 - [ ] `ADMIN_API_TRUST_PROXY` matching the actual topology — `false` if nothing sits in front, or the login rate

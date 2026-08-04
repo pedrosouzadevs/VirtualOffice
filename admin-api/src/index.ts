@@ -8,6 +8,9 @@ import {
     ADMIN_API_TOKEN,
     ADMIN_API_TRUST_PROXY,
     ADMIN_API_WORLD_NAME,
+    ADMIN_SOCKETS_TOKEN,
+    INTERNAL_PLAY_URL,
+    PLAY_URL,
     OPID_CLIENT_ID,
     OPID_CLIENT_ISSUER,
     OPID_CLIENT_SECRET,
@@ -59,6 +62,7 @@ import { bootstrapAdmin } from "./Application/BootstrapAdminService";
 import type { MapDetailsConfiguration } from "./Application/MapDetailsService";
 import { LoggingAdminAlerter } from "./Infrastructure/Alerting/LoggingAdminAlerter";
 import { MapStorageRoomCatalogue } from "./Infrastructure/MapStorage/MapStorageRoomCatalogue";
+import { AdminSocketWorldKicker } from "./Infrastructure/Play/AdminSocketWorldKicker";
 import { OpenIdConnectAuthenticator } from "./Infrastructure/Oidc/OpenIdConnectAuthenticator";
 import { createDatabaseConnection } from "./Infrastructure/Database/connection";
 import { runMigrations } from "./Infrastructure/Database/migrate";
@@ -145,6 +149,10 @@ async function start(): Promise<void> {
     const banRepository = new DrizzleBanRepository(connection.db);
     const reportRepository = new DrizzleReportRepository(connection.db);
     const auditLog = new DrizzleAuditLogRepository(connection.db);
+    const roomCatalogue =
+        INTERNAL_MAP_STORAGE_URL === undefined
+            ? undefined
+            : new MapStorageRoomCatalogue(INTERNAL_MAP_STORAGE_URL, PUBLIC_MAP_STORAGE_URL);
     await bootstrapAdmin(memberRepository, ADMIN_API_BOOTSTRAP_ADMIN_EMAIL);
 
     const app = createServer({
@@ -172,10 +180,20 @@ async function start(): Promise<void> {
         banRepository,
         reportRepository,
         auditLog,
-        roomCatalogue:
-            INTERNAL_MAP_STORAGE_URL === undefined
-                ? undefined
-                : new MapStorageRoomCatalogue(INTERNAL_MAP_STORAGE_URL, PUBLIC_MAP_STORAGE_URL),
+        roomCatalogue,
+        // The kick needs all four legs: the shared token (which is also what mounts the pusher's endpoint), both
+        // play addresses, and the room catalogue. Any missing one degrades a dashboard ban to record-plus-door,
+        // reported as kicked: false — never an error (ADR-0006, decision #3).
+        worldKicker:
+            ADMIN_SOCKETS_TOKEN !== undefined &&
+            INTERNAL_PLAY_URL !== undefined &&
+            PLAY_URL !== undefined &&
+            roomCatalogue !== undefined
+                ? new AdminSocketWorldKicker(
+                      { adminSocketsToken: ADMIN_SOCKETS_TOKEN, internalPlayUrl: INTERNAL_PLAY_URL, playUrl: PLAY_URL },
+                      roomCatalogue,
+                  )
+                : undefined,
         readinessChecks: [new PostgresReadinessCheck(connection.sql)],
         trustProxy: ADMIN_API_TRUST_PROXY,
         adminDashboard: dashboard.enabled

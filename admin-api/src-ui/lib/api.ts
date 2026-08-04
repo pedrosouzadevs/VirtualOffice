@@ -211,9 +211,23 @@ export interface Report {
     readonly createdAt: string;
 }
 
-/** The most recent bans, newest first. Read-only: bans are issued from the world, never from here. */
+/** The most recent bans, newest first. */
 export function listBans(): Promise<Ban[]> {
     return request<Ban[]>("/bans");
+}
+
+/**
+ * Issues a ban (ADR-0006): records it, closes the door, and asks the pusher to remove the person now.
+ *
+ * `kicked` is whether that last part was delivered. `false` does not weaken the ban — the person is out at the
+ * latest when their current session ends, and can never reconnect — but the screen should say which of the two
+ * happened rather than letting the administrator guess.
+ */
+export function issueBan(identifier: string, message: string): Promise<{ ban: Ban; kicked: boolean }> {
+    return request<{ ban: Ban; kicked: boolean }>("/bans", {
+        method: "POST",
+        body: JSON.stringify({ identifier, ...(message.trim() === "" ? {} : { message: message.trim() }) }),
+    });
 }
 
 /** The most recent reports, newest first. Read-only: reports are written by the users who make them. */

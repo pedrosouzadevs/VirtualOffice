@@ -5,6 +5,7 @@ import { canEditMap } from "../src/Application/RoomAccessService";
 import {
     closeStartedServers,
     serveTestApp,
+    StubBanRepository,
     StubMemberRepository,
     TEST_ADMIN_API_TOKEN,
     TEST_ROOM_ACCESS_CONFIGURATION,
@@ -62,6 +63,95 @@ describe("GET /api/room/access", () => {
 
         expect(response.status).toBe(200);
         expect(isFetchMemberDataByUuidResponse.safeParse(await response.json())).toMatchObject({ success: true });
+    });
+
+    describe("the door (ADR-0006, decision #2)", () => {
+        const ban = (identifier: string, message = "You have been banned by an admin") =>
+            new StubBanRepository([
+                { identifier, displayName: null, message, roomUrl: "/~/maps/office.wam", issuedBy: "boss@example.com" },
+            ]);
+
+        it("answers a banned member the error variant of the very union the pusher parses — with HTTP 200", async () => {
+            // 200 is the contract, not a nicety: the pusher's axios throws on any non-2xx and substitutes a generic
+            // "Connection error", which would cost the banned person the message written for them.
+            const url = await serveTestApp({
+                memberRepository: new StubMemberRepository([testMember("banned@example.com", ["editor"])]),
+                banRepository: ban("banned@example.com"),
+            });
+
+            const response = await roomAccess(url, {
+                userIdentifier: "banned@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+            });
+
+            expect(response.status).toBe(200);
+
+            const body = await bodyOf(response);
+
+            expect(isFetchMemberDataByUuidResponse.safeParse(body)).toMatchObject({ success: true });
+            expect(body).toMatchObject({
+                status: "error",
+                type: "error",
+                code: "USER_BANNED",
+                subtitle: "You have been banned by an admin",
+            });
+        });
+
+        it("closes the door on a banned anonymous visitor too", async () => {
+            // The pusher names an anonymous visitor with a uuid; a ban recorded against it must hold.
+            const url = await serveTestApp({ banRepository: ban("998ce839-3dea-4698-8b41-ebbdf7688ad9") });
+
+            const response = await roomAccess(url, {
+                userIdentifier: "998ce839-3dea-4698-8b41-ebbdf7688ad9",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+            });
+
+            expect(await bodyOf(response)).toMatchObject({ status: "error", code: "USER_BANNED" });
+        });
+
+        it("matches the ban whatever casing the pusher sends the identifier in", async () => {
+            const url = await serveTestApp({ banRepository: ban("Banned@Example.COM") });
+
+            const response = await roomAccess(url, {
+                userIdentifier: "banned@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+            });
+
+            expect(await bodyOf(response)).toMatchObject({ status: "error", code: "USER_BANNED" });
+        });
+
+        it("falls back to a readable sentence when the ban carries no message", async () => {
+            // The pusher may POST a ban with every optional field empty; the door must still say something human.
+            const url = await serveTestApp({ banRepository: ban("banned@example.com", "") });
+
+            const response = await roomAccess(url, {
+                userIdentifier: "banned@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+            });
+
+            expect(await bodyOf(response)).toMatchObject({
+                status: "error",
+                subtitle: "You have been banned from this world.",
+            });
+        });
+
+        it("leaves invariant #9 intact: an unknown, non-banned visitor still enters", async () => {
+            // Banned is a fact we recorded; unknown is the absence of one. The door must not blur that line.
+            const url = await serveTestApp({ banRepository: ban("somebody.else@example.com") });
+
+            const response = await roomAccess(url, {
+                userIdentifier: "stranger@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+            });
+
+            expect(response.status).toBe(200);
+            expect(await response.json()).toMatchObject({ status: "ok", tags: [], canEdit: false });
+        });
     });
 
     describe("an unknown visitor", () => {

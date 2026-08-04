@@ -1,4 +1,7 @@
+import { execSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
+import Map from "./utils/map";
+import { getPage } from "./utils/auth";
 
 /**
  * End-to-end proof of the administration dashboard (ADR-0004, G4): sign in through the identity provider, grant a tag
@@ -10,6 +13,18 @@ import { expect, test } from "@playwright/test";
 
 const DASHBOARD = "http://admin-api.workadventure.localhost";
 const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN ?? "123";
+
+/**
+ * Deletes every ban a test issued. Same helper as `admin_api.spec.ts`, same reason: since ADR-0006 the door refuses
+ * banned identifiers, so a leftover ban on the shared Member1 would lock her out of every later suite. Straight
+ * through the container because lifting a ban deliberately has no API.
+ */
+function deleteBansFor(identifier: string): void {
+    execSync(
+        `docker exec virtualoffice-admin-api-db-1 psql -U admin_api -d admin_api -c "delete from ban where identifier = '${identifier}'; delete from audit_log where target_email = '${identifier}' and action = 'member.banned';"`,
+        { stdio: "ignore" },
+    );
+}
 
 /**
  * A member nothing else touches.
@@ -136,5 +151,77 @@ test.describe("Administration dashboard @oidc @nomobile @nowebkit", () => {
         });
 
         expect(response.status()).toBe(401);
+    });
+
+    /**
+     * ADR-0006, mandatory test #8 — the whole ban, driven from the surface that issues it.
+     *
+     * The victim sits in a map-storage room on purpose: the kick channel names rooms from the room catalogue, so a
+     * `/_/`-style test map would record the ban and close the door but never reach her session.
+     */
+    test("banning from the dashboard removes the person and keeps them out @oidc", async ({
+        browser,
+        page,
+        request,
+    }) => {
+        // alice.doe@example.com, inside the world before the ban.
+        await using victim = await getPage(browser, "Member1", Map.url("empty"));
+
+        try {
+            // --- Sign in and reach the moderation tab ---------------------------------------------------------
+            await page.goto(`${DASHBOARD}/admin/`);
+            await page.fill("#Input_Username", "User1", { timeout: 40_000 });
+            await page.fill("#Input_Password", "pwd");
+            await page.click('button:has-text("Login")', { timeout: 50_000 });
+            await expect(page.getByText("john.doe@example.com").first()).toBeVisible({ timeout: 50_000 });
+
+            await page.getByRole("button", { name: /Moderation|Moderação/ }).click();
+
+            // --- Ban her through the form ---------------------------------------------------------------------
+            // The form asks for confirmation with a native dialog; accept it when it appears.
+            page.on("dialog", (dialog) => {
+                dialog.accept().catch(() => {
+                    // Already handled or the page is gone; either way the click below decides the test.
+                });
+            });
+
+            await page
+                .getByPlaceholder(/Email \(or visitor id\) to ban|E-mail \(ou id de visitante\) a banir/)
+                .fill("alice.doe@example.com");
+            await page.getByRole("button", { name: /^Ban$|^Banir$/ }).click();
+
+            // The screen says which of the two outcomes happened; with the channel configured it must be the kick.
+            await expect(page.getByText(/was banned and removed|foi banido\(a\) e removido\(a\)/)).toBeVisible({
+                timeout: 30_000,
+            });
+
+            // --- The victim is removed now… -------------------------------------------------------------------
+            await expect(victim.getByRole("heading", { name: "BANNED" })).toBeVisible({ timeout: 60_000 });
+
+            // --- …and stays out: the connection endpoint itself refuses her -----------------------------------
+            const door = await request.get(`${DASHBOARD}/api/room/access`, {
+                params: {
+                    userIdentifier: "alice.doe@example.com",
+                    playUri: Map.url("empty"),
+                    "characterTextureIds[]": "male1",
+                },
+                headers: { Authorization: ADMIN_API_TOKEN },
+            });
+
+            expect(door.status()).toBe(200);
+            expect(await door.json()).toMatchObject({ status: "error", code: "USER_BANNED" });
+
+            // --- And it is on the record, naming the dashboard administrator ----------------------------------
+            const bans = await page.evaluate(async () => {
+                const response = await fetch("/admin/api/bans");
+
+                return (await response.json()) as { identifier: string; issuedBy: string }[];
+            });
+
+            expect(bans[0]).toMatchObject({ identifier: "alice.doe@example.com", issuedBy: "john.doe@example.com" });
+        } finally {
+            // Always, pass or fail: a leftover ban locks Member1 out of every later suite through the door.
+            deleteBansFor("alice.doe@example.com");
+        }
     });
 });

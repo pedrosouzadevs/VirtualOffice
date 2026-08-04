@@ -1,4 +1,10 @@
-import type { ApplicationDefinitionInterface, CompanionDetail, WokaDetail } from "@workadventure/messages";
+import type {
+    ApplicationDefinitionInterface,
+    CompanionDetail,
+    ErrorApiErrorData,
+    WokaDetail,
+} from "@workadventure/messages";
+import type { BanRecord } from "../Domain/Ban";
 import { MAP_EDITOR_TAGS, type Member } from "../Domain/Member";
 
 /** One integration the world offers, e.g. Klaxoon or tldraw. */
@@ -62,6 +68,31 @@ export function canEditMap(playUri: string, tags: readonly string[], enableMapEd
     }
 
     return MAP_EDITOR_TAGS.some((tag) => tags.includes(tag));
+}
+
+/**
+ * The answer for somebody a ban keeps out (ADR-0006, decision #2).
+ *
+ * `/api/room/access` is the one endpoint the pusher calls on **every** connection and on login, so answering the
+ * error variant of its response union here is what makes a ban survive reconnection — with no `play` change and no
+ * caller for `verifyBanUser` needed.
+ *
+ * Shaped as `ErrorApiErrorData` and answered with **HTTP 200**: the pusher's axios throws on any non-2xx and
+ * substitutes a generic "Connection error", which would cost the banned person the message an administrator wrote
+ * for them. `type: "error"` is terminal — the front shows its error screen and stops; `"retry"` would put the
+ * banned person in a polite reconnection loop against a door that will not open.
+ */
+export function buildBannedRoomAccess(ban: BanRecord): ErrorApiErrorData {
+    return {
+        status: "error",
+        type: "error",
+        // The same code the front's own hardcoded ban screen uses, so logs and screenshots read consistently
+        // whichever path refused the person.
+        code: "USER_BANNED",
+        title: "BANNED",
+        subtitle: ban.message.trim() === "" ? "You have been banned from this world." : ban.message,
+        details: "If you believe this is a mistake, contact an administrator.",
+    };
 }
 
 /**
