@@ -230,14 +230,16 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**F2 — Azure Entra ID.** É o próximo do roadmap e destrava aposentar o mock OIDC. O
-`OPID_WOKA_NAME_POLICY=allow_override_opid` já está preparado no `.env.template` esperando um provedor que emita
-claim de username.
+**F2 (Azure Entra ID) está entregue do lado que dá para entregar sem tenant: o config swap.** Os valores OIDC do
+`docker-compose.yaml` deixaram de ser hardcoded — interpolam do `.env` com o mock como padrão, então um clone limpo
+continua logando sem configurar nada, e produção troca de provedor preenchendo cinco variáveis. O
+[`docs/SETUP-CLOUD-AZURE.pt-BR.md`](docs/SETUP-CLOUD-AZURE.pt-BR.md) tem o passo a passo (scriptado e manual) e o
+[`docs/index/setup-entra-id.ps1`](docs/index/setup-entra-id.ps1) provisiona o app registration idempotente.
 
-Antes ou depois dele, um trabalho pequeno e bem delimitado que o P3 deixou visível de propósito: **fazer o ban
-sobreviver à reconexão**. Hoje o `emitBan` tira a pessoa da sessão e ela pode voltar em seguida, porque nada chama o
-`verifyBanUser`. O nosso `GET /api/ban` já responde certo — falta o pusher perguntar, na conexão. É mudança no
-`play`, e reabre a decisão #3 do ADR-0005 (o IP, que hoje é aceito e descartado).
+**O que resta do F2 precisa de um tenant real: a validação em staging** (F2/P0 do spec) — o checklist está na seção
+"Verificação" do setup doc. O mapeamento de tags que o spec previa ficou **obsoleto**: o F3 moveu autorização para o
+Postgres, então o Entra só fornece identidade. Aposentar o mock (F2/P2) fica deliberadamente para depois — sem ele
+não há login offline em dev.
 
 ### Antes de qualquer uso real
 
