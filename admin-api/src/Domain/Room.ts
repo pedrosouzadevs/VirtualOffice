@@ -18,8 +18,19 @@ export interface Room {
     /** The map's own name, or the path when it has none — a room is always identifiable by something. */
     readonly name: string;
 
+    /**
+     * The rest of what the map says about itself.
+     *
+     * Carried in full rather than trimmed to what one screen shows, because `/api/room/sameWorld` answers
+     * `ShortMapDescription`, which merges the whole of `WAMMetadata` at the top level — and because
+     * `LocalAdmin.getUrlRoomsFromSameWorld`, the implementation this replaces, spreads every metadata field it finds.
+     * Dropping one here would quietly remove it from the exploration screen in `play`.
+     */
     readonly description: string | undefined;
     readonly thumbnail: string | undefined;
+    readonly copyright: string | undefined;
+    readonly areasSearchable: number | undefined;
+    readonly entitiesSearchable: number | undefined;
 }
 
 /**

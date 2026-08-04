@@ -24,6 +24,7 @@ import { MapController } from "./controllers/MapController";
 import { MembersController } from "./controllers/MembersController";
 import { ReportController } from "./controllers/ReportController";
 import { RoomAccessController } from "./controllers/RoomAccessController";
+import { SameWorldController } from "./controllers/SameWorldController";
 import { TagsController } from "./controllers/TagsController";
 import { WokaListController } from "./controllers/WokaListController";
 import { AdminAuditController } from "./controllers/AdminAuditController";
@@ -59,6 +60,16 @@ export interface ServerDependencies {
 
     /** What users complained about (ADR-0005). Written by `/api/report`. */
     reportRepository: ReportRepository;
+
+    /**
+     * The world's rooms, read from `map-storage` (ADR-0004, G3).
+     *
+     * A top-level dependency rather than a dashboard one, for the same reason the audit log became one: the dashboard
+     * is no longer its only reader — `/api/room/sameWorld` serves it to the pusher (ADR-0005, H2).
+     *
+     * Absent when `INTERNAL_MAP_STORAGE_URL` is unset. Both readers then say so distinctly instead of guessing.
+     */
+    roomCatalogue?: RoomCatalogue;
 
     /**
      * Where every mutation is recorded (ADR-0004, decision #5).
@@ -113,13 +124,6 @@ export interface AdminDashboardDependencies {
 
     /** Where a refused `admin` grant, or a revoked one, is shouted about (threat model, F1). */
     readonly alerter: AdminAlerter;
-
-    /**
-     * The world's rooms, read from `map-storage` (ADR-0004, G3).
-     *
-     * Absent when `INTERNAL_MAP_STORAGE_URL` is unset — that one screen then says so, and nothing else changes.
-     */
-    readonly rooms?: RoomCatalogue;
 
     /** Overridable so the sliding-window and absolute-cap tests can drive the clock. */
     readonly now?: () => Date;
@@ -191,7 +195,7 @@ function mountAdminDashboard(app: Express, dependencies: ServerDependencies): vo
     new AdminMembersController(app, administration);
     new AdminTagsController(app, dependencies.tagRepository);
     new AdminAuditController(app, dependencies.auditLog);
-    new AdminRoomsController(app, dashboard.rooms, dependencies.memberRepository);
+    new AdminRoomsController(app, dependencies.roomCatalogue, dependencies.memberRepository);
 
     mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
 }
@@ -265,6 +269,7 @@ export function createServer(dependencies: ServerDependencies): Express {
     new TagsController(app, dependencies.tagRepository);
     new BanController(app, { bans: dependencies.banRepository, audit: dependencies.auditLog });
     new ReportController(app, dependencies.reportRepository);
+    new SameWorldController(app, dependencies.roomCatalogue);
     new RoomAccessController(
         app,
         dependencies.memberRepository,

@@ -469,6 +469,7 @@ export async function serveDashboardTestApp(
         memberRepository: members,
         tagRepository: tags,
         auditLog: audit,
+        roomCatalogue: options.rooms,
         // A path that cannot exist, so the "not built" branch is what runs unless a test asks otherwise. Falling back
         // to the real `dist-ui` would make these tests depend on whether somebody had run the build.
         dashboardUiDirectory: options.uiDirectory ?? "/nonexistent-dashboard-build",
@@ -476,7 +477,6 @@ export async function serveDashboardTestApp(
             configuration: TEST_DASHBOARD_CONFIGURATION,
             authenticator,
             alerter,
-            rooms: options.rooms,
             now: () => now,
             rateLimit: options.rateLimit,
         },

@@ -32,6 +32,11 @@ const MapsResponse = z.object({
                     name: z.string().optional(),
                     description: z.string().optional(),
                     thumbnail: z.string().optional(),
+                    // Read but shown nowhere in the dashboard: `/api/room/sameWorld` answers the whole of
+                    // `WAMMetadata`, and `LocalAdmin` — the implementation it replaces — spreads every field.
+                    copyright: z.string().optional(),
+                    areasSearchable: z.number().optional(),
+                    entitiesSearchable: z.number().optional(),
                 })
                 .optional(),
         }),
@@ -97,6 +102,9 @@ export function toRooms(payload: unknown, publicMapStorageUrl: string): Room[] {
             name: map.metadata?.name ?? path,
             description: map.metadata?.description,
             thumbnail: map.metadata?.thumbnail,
+            copyright: map.metadata?.copyright,
+            areasSearchable: map.metadata?.areasSearchable,
+            entitiesSearchable: map.metadata?.entitiesSearchable,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
 }

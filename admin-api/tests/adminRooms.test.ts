@@ -21,7 +21,13 @@ describe("toRooms", () => {
                 maps: {
                     "maps/areas.wam": {
                         mapUrl: "http://example.com/areas.tmj",
-                        metadata: { name: "Areas", description: "A test map" },
+                        metadata: {
+                            name: "Areas",
+                            description: "A test map",
+                            copyright: "© VirtualOffice",
+                            areasSearchable: 2,
+                            entitiesSearchable: 5,
+                        },
                     },
                 },
             },
@@ -37,6 +43,11 @@ describe("toRooms", () => {
                 name: "Areas",
                 description: "A test map",
                 thumbnail: undefined,
+                // Read though no dashboard screen shows them: `/api/room/sameWorld` answers the whole of
+                // `WAMMetadata`, exactly as the `LocalAdmin` it replaces did (ADR-0005, H2).
+                copyright: "© VirtualOffice",
+                areasSearchable: 2,
+                entitiesSearchable: 5,
             },
         ]);
     });
@@ -138,6 +149,9 @@ const ROOM: Room = {
     name: "Areas",
     description: undefined,
     thumbnail: undefined,
+    copyright: undefined,
+    areasSearchable: undefined,
+    entitiesSearchable: undefined,
 };
 
 describe("GET /admin/api/rooms", () => {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CustomEntityDirection } from "@workadventure/messages";
+import { CustomEntityDirection, WAMMetadata } from "@workadventure/messages";
 
 export type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 
@@ -352,39 +352,12 @@ export const EntityCoordinates = z.object({
 export const WAMEntityData = EntityData.omit({ prefab: true, id: true });
 export type WAMEntityData = z.infer<typeof WAMEntityData>;
 
-export const WAMMetadata = z.object({
-    name: z.string().optional().nullable().describe("The name of the map."),
-    description: z
-        .string()
-        .optional()
-        .nullable()
-        .describe("A description of the map. Can be used in social networks when sharing a link to the map."),
-    copyright: z
-        .string()
-        .optional()
-        .nullable()
-        .describe(
-            "Copyright notice for this map. Can be a link to a license. Parts of this map like tilesets or images can have their own copyright.",
-        ),
-    thumbnail: z
-        .string()
-        .optional()
-        .nullable()
-        .describe(
-            "URL to a thumbnail image. This image will be used in social networks when sharing a link to the map.",
-        ),
-    areasSearchable: z
-        .number()
-        .optional()
-        .nullable()
-        .describe("Number of areas define as searchable by the map editor for the exploration mode."),
-    entitiesSearchable: z
-        .number()
-        .optional()
-        .nullable()
-        .describe("Number of entities define as searchable by the map editor for the exploration mode."),
-});
-export type WAMMetadata = z.infer<typeof WAMMetadata>;
+/**
+ * Moved to @workadventure/messages, so that `ShortMapDescription` — the Admin API contract that merges it — can live
+ * beside the other schemas both sides of that contract validate against. This package already depends on `messages`,
+ * so the definition had to move that way round rather than the other. Re-exported to keep every import unchanged.
+ */
+export { WAMMetadata };
 
 export const WAMVendor = z
     .unknown()

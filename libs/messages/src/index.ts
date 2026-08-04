@@ -17,6 +17,8 @@ export * from "./JsonMessages/MetaTagManifestIcon";
 export * from "./JsonMessages/PlayerTextures";
 export * from "./JsonMessages/RegisterData";
 export * from "./JsonMessages/RoomRedirect";
+export * from "./JsonMessages/ShortMapDescription";
+export * from "./JsonMessages/WAMMetadata";
 export * from "./JsonMessages/OpidWokaNamePolicy";
 export * from "./JsonMessages/MeResponse";
 export * from "./JsonMessages/MeRequest";

@@ -172,6 +172,10 @@ async function start(): Promise<void> {
         banRepository,
         reportRepository,
         auditLog,
+        roomCatalogue:
+            INTERNAL_MAP_STORAGE_URL === undefined
+                ? undefined
+                : new MapStorageRoomCatalogue(INTERNAL_MAP_STORAGE_URL, PUBLIC_MAP_STORAGE_URL),
         readinessChecks: [new PostgresReadinessCheck(connection.sql)],
         trustProxy: ADMIN_API_TRUST_PROXY,
         adminDashboard: dashboard.enabled
@@ -179,10 +183,6 @@ async function start(): Promise<void> {
                   configuration: dashboard.configuration,
                   authenticator: new OpenIdConnectAuthenticator(dashboard.configuration),
                   alerter: new LoggingAdminAlerter(ADMIN_API_ALERT_WEBHOOK_URL),
-                  rooms:
-                      INTERNAL_MAP_STORAGE_URL === undefined
-                          ? undefined
-                          : new MapStorageRoomCatalogue(INTERNAL_MAP_STORAGE_URL, PUBLIC_MAP_STORAGE_URL),
               }
             : undefined,
     });
