@@ -1,5 +1,5 @@
 /**
- * WorkAdventure Matrix profile: sync in-game name and WOKA to the Matrix global profile (`/profile`),
+ * ArqueumSpace Matrix profile: sync in-game name and WOKA to the Matrix global profile (`/profile`),
  * and resolve avatar URL / chat tint from that profile (with in-world WOKA fallback).
  */
 import type { MatrixClient } from "matrix-js-sdk";

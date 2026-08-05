@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-04
-- **Deciders:** VirtualOffice team
+- **Deciders:** ArqueumSpace team
 - **Languages:** this file (en-US) + [0006-dashboard-issued-bans.pt-BR.md](0006-dashboard-issued-bans.pt-BR.md), in lockstep
 - **Origin:** [ADR-0005](0005-moderation.md) H3 shipped moderation as read-only screens and discovered that `play`
   ships no ban button. This ADR answers the question that discovery opened. It **revises** ADR-0005 decisions #2 and

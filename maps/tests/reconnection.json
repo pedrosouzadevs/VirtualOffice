@@ -40,7 +40,7 @@
                     {
                      "fontfamily":"Sans Serif",
                      "pixelsize":11,
-                     "text":"Test:\nTest to be run on a remote site (not locally)\nOpen WorkAdventure in 2 tabs.\nClose the network connection (close Wifi, ...)\n\nResult:\nAfter a few seconds, WorkAdventure displays a \"reconnecting scene\"\n\nTest:\nResume network connection, without switching tabs (one tab on front)\n\nResult:\nWorkAdventure reconnects automatically. From the tab that resumed, you can connect to the other tab (that is not visible), therefore testing that the invisible tab has resumed too.",
+                     "text":"Test:\nTest to be run on a remote site (not locally)\nOpen ArqueumSpace in 2 tabs.\nClose the network connection (close Wifi, ...)\n\nResult:\nAfter a few seconds, ArqueumSpace displays a \"reconnecting scene\"\n\nTest:\nResume network connection, without switching tabs (one tab on front)\n\nResult:\nArqueumSpace reconnects automatically. From the tab that resumed, you can connect to the other tab (that is not visible), therefore testing that the invisible tab has resumed too.",
                      "wrap":true
                     },
                  "type":"",

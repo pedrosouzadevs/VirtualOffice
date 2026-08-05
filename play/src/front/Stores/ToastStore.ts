@@ -2,16 +2,16 @@ import { v4 } from "uuid";
 import { ConcatenateMapStore, MapStore } from "@workadventure/store-utils";
 import { derived } from "svelte/store";
 import type { Readable, Unsubscriber } from "svelte/store";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../types/component";
 
 export interface Toast {
-    component: WorkAdventureComponent;
-    props: WorkAdventureComponentProps;
+    component: ArqueumSpaceComponent;
+    props: ArqueumSpaceComponentProps;
 }
 
 export interface ToastInput {
-    component: WorkAdventureComponent;
-    props?: WorkAdventureComponentProps;
+    component: ArqueumSpaceComponent;
+    props?: ArqueumSpaceComponentProps;
 }
 
 export interface ToastSourceOptions {
@@ -33,7 +33,7 @@ export function createToastStore(initialSources: ToastSourceDefinition[] = []) {
 
     const store = {
         subscribe: combinedStore.subscribe.bind(combinedStore),
-        addToast: (toast: WorkAdventureComponent, props: WorkAdventureComponentProps, uuid?: string): void => {
+        addToast: (toast: ArqueumSpaceComponent, props: ArqueumSpaceComponentProps, uuid?: string): void => {
             const toastUuid = uuid ?? v4();
             innerStore.set(toastUuid, {
                 component: toast,

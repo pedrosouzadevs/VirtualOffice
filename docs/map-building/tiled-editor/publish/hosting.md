@@ -5,7 +5,7 @@ sidebar_position: 30
 # Self-Hosting your Map
 
 :::caution Legacy
-There are several ways to host your map. The recommended way is to [host your map on the WorkAdventure server](./wa-hosted) directly.
+There are several ways to host your map. The recommended way is to [host your map on the ArqueumSpace server](./wa-hosted) directly.
 You can also host your map on [GitHub Pages](./github-pages). Self-hosting is the most complex option and is only recommended if you have special privacy needs or if you want maximum freedom.
 :::
 
@@ -14,7 +14,7 @@ The ["Host your Map with GitHub Pages" documentation](./github-pages.md) page pr
 But using GitHub pages is not necessary. You can host your maps on any web server.
 
 :::caution
-If you decide to host your maps on your own web server, you must **configure CORS headers** in your browser to allow access from WorkAdventure.
+If you decide to host your maps on your own web server, you must **configure CORS headers** in your browser to allow access from ArqueumSpace.
 :::
 
 ## Building your map
@@ -27,14 +27,14 @@ When you start from the "map starter kit", you can build your map by running the
 npm run build
 ```
 
-This will run a process that will optimize your map for WorkAdventure. It will rewrite all the tilesets, removing
+This will run a process that will optimize your map for ArqueumSpace. It will rewrite all the tilesets, removing
 any unused Tiles. If you are using the scripting API, it will also compile and bundle any Typescript file.
 
 The build process will create a `dist` directory that contains the optimized map. It is this `dist` directory that you will need to host on your web server.
 
 ## Configuring CORS headers
 
-CORS headers ([Cross Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)) are useful when a website want to make some resources accessible to another website. This is exactly what we want to do. We want the map you are designing to be accessible from the WorkAdventure domain (`play.workadventu.re`).
+CORS headers ([Cross Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)) are useful when a website want to make some resources accessible to another website. This is exactly what we want to do. We want the map you are designing to be accessible from the ArqueumSpace domain (`play.workadventu.re`).
 
 :::caution
 If you are using the "scripting API", only allowing the `play.workadventu.re` will not be enough. You will need to allow `*`

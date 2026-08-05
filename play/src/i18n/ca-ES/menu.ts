@@ -57,9 +57,9 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "Cancel·lació d'eco",
             enableAdvancedNoiseReduction: "Activa la reducció avançada del soroll",
             noiseSuppressionMode: "Mode de supressió de soroll:",
-            workAdventureNoiseSuppression: "Supressió de soroll de WorkAdventure",
+            workAdventureNoiseSuppression: "Supressió de soroll de ArqueumSpace",
             workAdventureNoiseSuppressionDescription:
-                "Processa el micròfon amb la supressió de soroll de WorkAdventure.",
+                "Processa el micròfon amb la supressió de soroll de ArqueumSpace.",
             recommended: "Recomanat",
             browserNoiseSuppression: "Supressió de soroll del navegador",
             browserNoiseSuppressionDescription: "Utilitza la supressió de soroll integrada al navegador.",
@@ -73,7 +73,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "Mode no present",
             explanation:
-                'Quan la pestanya de WorkAdventure al seu navegador no és visible, WorkAdventure cambia al "mode no present"',
+                'Quan la pestanya de ArqueumSpace al seu navegador no és visible, ArqueumSpace cambia al "mode no present"',
             cameraToggle: 'Mantenir la càmera activa en "mode no present"',
             microphoneToggle: 'Mantenir el micròfon actiu en "mode no present"',
         },
@@ -122,7 +122,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "Començar",
             description:
-                "WorkAdventure us permet crear un espai en línia per comunicar-vos espontàneament amb altres. I tot comença creant el vostre propi espai. Escolliu entre una gran selecció de mapes prefabricats pel nostre equip.",
+                "ArqueumSpace us permet crear un espai en línia per comunicar-vos espontàneament amb altres. I tot comença creant el vostre propi espai. Escolliu entre una gran selecció de mapes prefabricats pel nostre equip.",
         },
         createMap: {
             title: "Crear el vostre mapa",

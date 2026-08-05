@@ -57,8 +57,8 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "에코 제거",
             enableAdvancedNoiseReduction: "고급 소음 감소 활성화",
             noiseSuppressionMode: "소음 억제 모드:",
-            workAdventureNoiseSuppression: "WorkAdventure 소음 억제",
-            workAdventureNoiseSuppressionDescription: "WorkAdventure의 소음 억제로 마이크를 처리합니다.",
+            workAdventureNoiseSuppression: "ArqueumSpace 소음 억제",
+            workAdventureNoiseSuppressionDescription: "ArqueumSpace의 소음 억제로 마이크를 처리합니다.",
             recommended: "권장",
             browserNoiseSuppression: "브라우저 소음 억제",
             browserNoiseSuppressionDescription: "브라우저에 내장된 소음 억제를 사용합니다.",
@@ -70,7 +70,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         },
         privacySettings: {
             title: "자리 비움 모드",
-            explanation: '브라우저에서 WorkAdventure 탭이 보이지 않을 때 WorkAdventure는 "자리 비움 모드"로 전환됩니다',
+            explanation: '브라우저에서 ArqueumSpace 탭이 보이지 않을 때 ArqueumSpace는 "자리 비움 모드"로 전환됩니다',
             cameraToggle: '"자리 비움 모드"에서 카메라 활성 상태 유지',
             microphoneToggle: '"자리 비움 모드"에서 마이크 활성 상태 유지',
         },
@@ -118,7 +118,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "시작하기",
             description:
-                "WorkAdventure를 사용하면 다른 사람들과 자발적으로 소통할 수 있는 온라인 공간을 만들 수 있습니다. 모든 것은 자신만의 공간을 만드는 것에서 시작됩니다. 저희 팀이 제작한 다양한 사전 제작 지도 중에서 선택하세요.",
+                "ArqueumSpace를 사용하면 다른 사람들과 자발적으로 소통할 수 있는 온라인 공간을 만들 수 있습니다. 모든 것은 자신만의 공간을 만드는 것에서 시작됩니다. 저희 팀이 제작한 다양한 사전 제작 지도 중에서 선택하세요.",
         },
         createMap: {
             title: "지도 만들기",

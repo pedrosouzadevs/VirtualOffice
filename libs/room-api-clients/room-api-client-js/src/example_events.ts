@@ -8,13 +8,13 @@ if (!apiKey) {
 
 const client = createRoomApiClient(
   apiKey,
-  "room-api.workadventure.localhost",
+  "room-api.arqueum.localhost",
   80,
 );
 
 // URL of the room you wish to interact with
 const roomUrl =
-  "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json";
+  "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json";
 
 // Name of the event with which you want to interact
 const eventName = "my-event";

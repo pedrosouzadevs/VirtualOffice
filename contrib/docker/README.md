@@ -1,7 +1,7 @@
-# Self-hosting WorkAdventure using Docker Compose
+# Self-hosting ArqueumSpace using Docker Compose
 
 > [!IMPORTANT]
-> **VirtualOffice fork:** the deployment guide for THIS repository is
+> **ArqueumSpace fork:** the deployment guide for THIS repository is
 > [docs/SETUP-DEPLOY.md](../../docs/SETUP-DEPLOY.md) ([pt-BR](../../docs/SETUP-DEPLOY.pt-BR.md)). The compose file
 > here differs from upstream's in two load-bearing ways: the five Node services are **built from this repository**
 > (`VERSION` is a local tag, not an upstream release — the upstream images lack this fork's changes), and the
@@ -18,13 +18,13 @@ In order to perform the install, you will need a server, with a domain name poin
 
 A relatively small server (2 CPUs, 4GB RAM) will allow you to host meetings with up to 300 concurrent users.
 
-The WorkAdventure server itself does not need many resources. However, the Coturn and Livekit servers will need to be
+The ArqueumSpace server itself does not need many resources. However, the Coturn and Livekit servers will need to be
 much more powerful, as they are handling the video streams. See the Livekit and Coturn documentation for correctly
 sizing those servers.
 
 > [!WARNING]  
-> WorkAdventure uses WebRTC for audio/video connections. WebRTC in turns, require an HTTPS connection with a valid
-> certificate. As a result, you need a domain name pointing on your server. You cannot access WorkAdventure directly
+> ArqueumSpace uses WebRTC for audio/video connections. WebRTC in turns, require an HTTPS connection with a valid
+> certificate. As a result, you need a domain name pointing on your server. You cannot access ArqueumSpace directly
 > by the server IP address, as the HTTPS certificate can only be issued for a domain name.
 
 ## The default install structure
@@ -33,7 +33,7 @@ The default docker-compose file is available here: [`docker-compose.prod.yaml`](
 
 In this docker-compose file, you will find:
 
-- A reverse-proxy (Traefik) that dispatches requests to the WorkAdventure containers and handles HTTPS termination. HTTPS certificates will be automatically generated using LetsEncrypt.
+- A reverse-proxy (Traefik) that dispatches requests to the ArqueumSpace containers and handles HTTPS termination. HTTPS certificates will be automatically generated using LetsEncrypt.
 - A play container (NodeJS) that serves static files for the "game" (HTML/JS/CSS) and is the point of entry for users (you can start many if you want to increase performance)
 - A back container (NodeJS) that shares your rooms information
 - A map-storage container (NodeJS) that serves your maps and provides map-editing features
@@ -56,14 +56,14 @@ graph LR
 ```
 
 > **Note**
-> You can host your maps on the WorkAdventure server itself (using the dedicated map-storage container), or outside
-> of the WorkAdventure server, on any [properly configured HTTP server](../../docs/maps/hosting.md) (Nginx, Apache...). 
+> You can host your maps on the ArqueumSpace server itself (using the dedicated map-storage container), or outside
+> of the ArqueumSpace server, on any [properly configured HTTP server](../../docs/maps/hosting.md) (Nginx, Apache...). 
 > The default docker-compose file does **not** contain a container dedicated to hosting maps. The documentation and
 
 ## Getting started
 
 > **Note**
-> These installation instructions are for production only. If you are looking to install WorkAdventure
+> These installation instructions are for production only. If you are looking to install ArqueumSpace
 > on you local development machine, head over to the [main README](../../README.md).
 
 ### 1. Install Docker
@@ -81,7 +81,7 @@ Edit the `.env` file.
 
 For your environment to start, you will need to at least configure:
 
-- **VERSION**: the version of WorkAdventure to install. See below for more information.
+- **VERSION**: the version of ArqueumSpace to install. See below for more information.
 - **SECRET_KEY**: a random key used to generate JWT secrets
 - **DOMAIN**: your domain name (without any "https://" prefix)
 - **MAP_STORAGE_AUTHENTICATION_USER**: the username for the map-storage container 
@@ -157,7 +157,7 @@ docker-compose logs -f
 
 ### 5. Uploading your first map
 
-Before starting using WorkAdventure, you will need to upload your first map.
+Before starting using ArqueumSpace, you will need to upload your first map.
 
 #### Uploading from the map starter kit
 
@@ -177,33 +177,33 @@ You will be asked to authenticate. Use the credentials you configured in the `.e
 
 You should see a link to the map you just uploaded.
 
-Are you connected? Congratulations! Share the URL with your friends and start using WorkAdventure!
+Are you connected? Congratulations! Share the URL with your friends and start using ArqueumSpace!
 
 Not working? Jump to the [troubleshooting section](#troubleshooting).
 
 ### Post-installation steps
 
-You can now customize your WorkAdventure instance by modifying the `.env` file.
+You can now customize your ArqueumSpace instance by modifying the `.env` file.
 
 Please be sure to configure Jitsi, as it is the default video conferencing solution for large room,
 and Turn settings to ensure video is correctly relayed, even if your clients are in a restricted network.
 
 Keeping your server secure is also important. You can configure the `SECURITY_EMAIL` environment variable
-to receive security notifications from the WorkAdventure core team.
-You will be notified if your WorkAdventure version contains a known security flaw.
+to receive security notifications from the ArqueumSpace core team.
+You will be notified if your ArqueumSpace version contains a known security flaw.
 
 #### Adding authentication
 
-WorkAdventure does not provide its own authentication system. Instead, you can connect WorkAdventure to an OpenID Connect
+ArqueumSpace does not provide its own authentication system. Instead, you can connect ArqueumSpace to an OpenID Connect
 authentication provider (like Google, GitHub, or any other provider).
 
-If you want to connect WorkAdventure to an authentication provider, you can follow the [OpenID Connect documentation](../../docs/others/self-hosting/openid.md).
+If you want to connect ArqueumSpace to an authentication provider, you can follow the [OpenID Connect documentation](../../docs/others/self-hosting/openid.md).
 
 When OpenID is configured, you should set up a list of restricted users [allowed to access the inline map editor](../../docs/map-building/inline-editor/index.md).
 
 #### Enabling meeting recording
 
-WorkAdventure supports recording meetings using Livekit Egress. Recordings are stored in an S3-compatible storage bucket.
+ArqueumSpace supports recording meetings using Livekit Egress. Recordings are stored in an S3-compatible storage bucket.
 
 To enable this feature, you will need to configure Livekit Egress and provide S3 credentials in the `.env` file.
 
@@ -215,18 +215,18 @@ You can follow the [Meeting Recording documentation](../../docs/others/self-host
 
 #### Connecting to a chat server
 
-WorkAdventure can connect to a [Matrix server](https://matrix.org/) to provide chat features.
+ArqueumSpace can connect to a [Matrix server](https://matrix.org/) to provide chat features.
 Matrix is a decentralized chat protocol that allows you to host your own chat server.
 
-With Matrix integration configured, you can chat with other users, even when they are not connected to WorkAdventure.
-For instance, a user can chat with you from a Matrix client like Element on his mobile phone, while you are in WorkAdventure.
+With Matrix integration configured, you can chat with other users, even when they are not connected to ArqueumSpace.
+For instance, a user can chat with you from a Matrix client like Element on his mobile phone, while you are in ArqueumSpace.
 
 You can follow the [Matrix documentation](../../docs/others/self-hosting/matrix.md) to learn how to configure your Matrix server
-and connect it to WorkAdventure.
+and connect it to ArqueumSpace.
 
-## Upgrading WorkAdventure
+## Upgrading ArqueumSpace
 
-The upgrade path will depend on the installation of WorkAdventure you are using.
+The upgrade path will depend on the installation of ArqueumSpace you are using.
 
 #### If you are using the `docker-compose.prod.yaml` file without any changes:
 

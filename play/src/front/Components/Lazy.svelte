@@ -1,10 +1,10 @@
 <!-- https://lihautan.com/notes/svelte-lazy-load/ -->
 <script lang="ts">
-    import type { WorkAdventureComponent } from "../../types/component";
+    import type { ArqueumSpaceComponent } from "../../types/component";
 
     interface Props {
         when: boolean;
-        component: () => Promise<{ default: WorkAdventureComponent }>;
+        component: () => Promise<{ default: ArqueumSpaceComponent }>;
         onload?: () => void;
         onloaded?: () => void;
         onerror?: () => void;
@@ -13,7 +13,7 @@
 
     let { when = false, component, onload, onloaded, onerror, ...rest }: Props = $props();
 
-    let loading: Promise<{ default: WorkAdventureComponent }> | null = $state(null);
+    let loading: Promise<{ default: ArqueumSpaceComponent }> | null = $state(null);
 
     $effect(() => {
         if (when) {

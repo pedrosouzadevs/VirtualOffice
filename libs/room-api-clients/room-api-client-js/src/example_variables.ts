@@ -9,12 +9,12 @@ if (!apiKey) {
 
 const client = createRoomApiClient(
   apiKey,
-  "room-api.workadventure.localhost",
+  "room-api.arqueum.localhost",
   80,
 );
 
 const roomUrl =
-  "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json";
+  "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json";
 const variableName = "textField";
 
 async function init() {

@@ -1,6 +1,6 @@
 import { derived, get, writable } from "svelte/store";
 import { v4 } from "uuid";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../types/component";
 
 export const bannerVisible = writable(true);
 export const currentBannerIndex = writable(0);
@@ -8,8 +8,8 @@ export const showPopup = writable(false);
 
 interface Popup {
     uuid: string;
-    component: WorkAdventureComponent;
-    props: WorkAdventureComponentProps;
+    component: ArqueumSpaceComponent;
+    props: ArqueumSpaceComponentProps;
     callback?: () => void;
 }
 
@@ -20,8 +20,8 @@ function createPopupStore() {
     return {
         subscribe,
         addPopup: (
-            popup: WorkAdventureComponent,
-            props: WorkAdventureComponentProps,
+            popup: ArqueumSpaceComponent,
+            props: ArqueumSpaceComponentProps,
             uuid: string | undefined,
         ): void => {
             update((list: Popup[]) => {

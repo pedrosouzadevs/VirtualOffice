@@ -17,7 +17,7 @@ const notification: DeepPartial<Translation["notification"]> = {
         title: "Accés a les notificacions denegat",
         permissionDenied: "Permís denegat",
         content:
-            "No et perdis cap discussió. Activa les notificacions per ser notificat quan algú vulgui parlar amb tu, fins i tot si no estàs a la pestanya de WorkAdventure.",
+            "No et perdis cap discussió. Activa les notificacions per ser notificat quan algú vulgui parlar amb tu, fins i tot si no estàs a la pestanya de ArqueumSpace.",
         firefoxContent:
             'Si us plau, marca la casella "Recordar aquesta decisió" si no vols que Firefox continuï demanant-te l\'autorització.',
         refresh: "Actualitzar",

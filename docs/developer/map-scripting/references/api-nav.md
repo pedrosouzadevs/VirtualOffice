@@ -24,7 +24,7 @@ WA.nav.openTab("https://www.wikipedia.org/");
 WA.nav.goToPage(url: string): void
 ```
 
-Opens the webpage at "url" in your browser in place of WorkAdventure. WorkAdventure will be completely unloaded.
+Opens the webpage at "url" in your browser in place of ArqueumSpace. ArqueumSpace will be completely unloaded.
 
 Example:
 
@@ -72,7 +72,7 @@ Example:
 
 ```ts
 const coWebsite = await WA.nav.openCoWebSite("https://www.wikipedia.org/");
-const coWebsiteWorkAdventure = await WA.nav.openCoWebSite(
+const coWebsiteArqueumSpace = await WA.nav.openCoWebSite(
   "https://workadventu.re/",
   true,
   "",
@@ -105,10 +105,10 @@ const coWebsites = await WA.nav.getCoWebSites();
 WA.nav.goToLogin(): Promise<void>
 ```
 
-Closes WorkAdventure and opens the login page in your browser.
+Closes ArqueumSpace and opens the login page in your browser.
 
 :::caution
-If you are using the self-hosted version of WorkAdventure, the call will fail if no OpenID provider is configured.
+If you are using the self-hosted version of ArqueumSpace, the call will fail if no OpenID provider is configured.
 :::
 
 Example:

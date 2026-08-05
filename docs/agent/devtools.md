@@ -1,7 +1,7 @@
 # Chrome DevTools MCP
 
-If you have access to the ChromeDevTools MCP server, WorkAdventure is available at:
+If you have access to the ChromeDevTools MCP server, ArqueumSpace is available at:
 
 ```
-http://play.workadventure.localhost
+http://play.arqueum.localhost
 ```

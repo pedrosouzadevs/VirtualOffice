@@ -4,27 +4,27 @@ import { Subject } from "rxjs";
 import type {
     IframeMessagePortMap,
     MessagePortIframeEvent,
-    MessagePortWorkAdventureEvent,
+    MessagePortArqueumSpaceEvent,
 } from "../Events/MessagePortEvents";
 import { iframeMessagePortTypeGuards } from "../Events/MessagePortEvents";
 
 type MessagePortMessageEvent<K extends keyof IframeMessagePortMap> = MessageEvent<MessagePortIframeEvent<K>["data"]>;
 
-interface CheckedWorkAdventureMessagePortInterface<K extends keyof IframeMessagePortMap> {
+interface CheckedArqueumSpaceMessagePortInterface<K extends keyof IframeMessagePortMap> {
     readonly messages: Observable<MessagePortMessageEvent<K>>;
     readonly closeEvent: Observable<void>;
 
-    postMessage(message: z.infer<MessagePortWorkAdventureEvent<K>["data"]>): void;
+    postMessage(message: z.infer<MessagePortArqueumSpaceEvent<K>["data"]>): void;
     close(): void;
 }
 
 /**
  * A wrapper around a MessagePort that ensures the messages sent and received conform to a specific type.
- * This class is used on the WorkAdventure side to communicate with the iframes.
+ * This class is used on the ArqueumSpace side to communicate with the iframes.
  */
-export class CheckedWorkAdventureMessagePort<
+export class CheckedArqueumSpaceMessagePort<
     K extends keyof IframeMessagePortMap,
-> implements CheckedWorkAdventureMessagePortInterface<K> {
+> implements CheckedArqueumSpaceMessagePortInterface<K> {
     private readonly port: MessagePort;
     private readonly _messages: Subject<MessagePortMessageEvent<K>> = new Subject<MessagePortMessageEvent<K>>();
     public readonly messages: Observable<MessagePortMessageEvent<K>> = this._messages.asObservable();
@@ -43,7 +43,7 @@ export class CheckedWorkAdventureMessagePort<
         };
     }
 
-    postMessage(message: z.infer<MessagePortWorkAdventureEvent<K>["data"]>): void {
+    postMessage(message: z.infer<MessagePortArqueumSpaceEvent<K>["data"]>): void {
         this.port.postMessage(message);
     }
 

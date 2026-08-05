@@ -1,6 +1,6 @@
-# AGENTS.md - WorkAdventure Monorepo
+# AGENTS.md - ArqueumSpace Monorepo
 
-WorkAdventure is a TypeScript monorepo (npm workspaces) for building collaborative virtual worlds.
+ArqueumSpace is a TypeScript monorepo (npm workspaces) for building collaborative virtual worlds.
 
 ## Instruction scope
 

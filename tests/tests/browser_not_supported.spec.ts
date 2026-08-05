@@ -23,7 +23,7 @@ test.describe("Browser Not Supported Page", () => {
             });
         });
 
-        // Navigate to a WorkAdventure map
+        // Navigate to a ArqueumSpace map
         await page.goto(publicTestMapUrl("tests/E2E/empty.json", "browser_not_supported", RENDERER_MODE));
 
         // Wait for the browser not supported page to appear
@@ -42,14 +42,14 @@ test.describe("Browser Not Supported Page", () => {
         await expect(message).toBeVisible();
 
         // Verify the description is displayed
-        await expect(page.getByText(/Your browser is too old to run WorkAdventure/)).toBeVisible();
+        await expect(page.getByText(/Your browser is too old to run ArqueumSpace/)).toBeVisible();
 
         // Verify "What can you do?" section is displayed
         await expect(page.getByText("What can you do?")).toBeVisible();
 
         // Verify the options are displayed
         await expect(page.getByText(/Update.*to the latest version/, { exact: false })).toBeVisible();
-        await expect(page.getByText(/Leave WorkAdventure and use a different browser/)).toBeVisible();
+        await expect(page.getByText(/Leave ArqueumSpace and use a different browser/)).toBeVisible();
 
         // Verify both buttons are present and visible
         const updateButton = page.getByTestId("update-browser-button");

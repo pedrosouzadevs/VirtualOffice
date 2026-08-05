@@ -57,9 +57,9 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "Annulation de l'écho",
             enableAdvancedNoiseReduction: "Activer la réduction avancée du bruit",
             noiseSuppressionMode: "Mode de réduction du bruit :",
-            workAdventureNoiseSuppression: "Réduction du bruit WorkAdventure",
+            workAdventureNoiseSuppression: "Réduction du bruit ArqueumSpace",
             workAdventureNoiseSuppressionDescription:
-                "Traite votre microphone avec la réduction du bruit de WorkAdventure.",
+                "Traite votre microphone avec la réduction du bruit de ArqueumSpace.",
             recommended: "Recommandé",
             browserNoiseSuppression: "Réduction du bruit du navigateur",
             browserNoiseSuppressionDescription: "Utilise la réduction du bruit intégrée à votre navigateur.",
@@ -73,7 +73,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "Mode absent",
             explanation:
-                "Quand l'onglet WorkAdventure de votre navigateur n'est pas visible, WorkAdventure passe en \"mode absent\"",
+                "Quand l'onglet ArqueumSpace de votre navigateur n'est pas visible, ArqueumSpace passe en \"mode absent\"",
             cameraToggle: 'Garder la caméra activée en "mode absent"',
             microphoneToggle: 'Garder le microphone activé en "mode absent"',
         },
@@ -122,7 +122,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "Pour commencer",
             description:
-                "WorkAdventure vous permet de créer un espace en ligne pour communiquer spontanément avec d'autres personnes. Et tout commence par la création de votre propre espace. Choisissez parmi une large sélection de cartes préfabriquées par notre équipe.",
+                "ArqueumSpace vous permet de créer un espace en ligne pour communiquer spontanément avec d'autres personnes. Et tout commence par la création de votre propre espace. Choisissez parmi une large sélection de cartes préfabriquées par notre équipe.",
         },
         createMap: {
             title: "Créer votre carte",

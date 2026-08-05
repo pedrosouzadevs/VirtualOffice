@@ -11,7 +11,7 @@ async function initListeners() {
     WA.room.onEnterLayer('first_website').subscribe(async () => {
         first_website = await WA.ui.website.open({
             allowApi: true,
-            url: "http://maps.workadventure.localhost/tests/UIWebsite/index.php",
+            url: "http://maps.arqueum.localhost/tests/UIWebsite/index.php",
             position: {
                 vertical: "middle",
                 horizontal: "middle",

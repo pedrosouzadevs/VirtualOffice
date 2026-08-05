@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Event
 
-The WorkAdventure event system allows to exchange messages between players of a same map, in real-time.
+The ArqueumSpace event system allows to exchange messages between players of a same map, in real-time.
 
 See the [events documentation](../events.md) for an introduction to the "events" concept.
 

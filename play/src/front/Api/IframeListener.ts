@@ -58,7 +58,7 @@ import type { ReceiveEventEvent } from "./Events/ReceiveEventEvent";
 import type { StartStreamInBubbleEvent } from "./Events/ProximityMeeting/StartStreamInBubbleEvent";
 import type { IframeMessagePortMap, IframeSuccessMessagePortEvent } from "./Events/MessagePortEvents";
 import { isIframeMessagePortWrapper } from "./Events/MessagePortEvents";
-import { CheckedWorkAdventureMessagePort } from "./Iframe/CheckedWorkAdventureMessagePort";
+import { CheckedArqueumSpaceMessagePort } from "./Iframe/CheckedArqueumSpaceMessagePort";
 import type { AddButtonActionBarEvent, RemoveButtonActionBarEvent } from "./Events/Ui/ButtonActionBarEvent";
 import { ScriptLoadedError } from "./ScriptLoadedError";
 
@@ -69,7 +69,7 @@ type AnswererCallback<T extends keyof IframeQueryMap> = (
 
 type OpenMessagePortAnswererCallback<T extends keyof IframeMessagePortMap> = (
     data: IframeMessagePortMap[T]["data"],
-    port: CheckedWorkAdventureMessagePort<T>,
+    port: CheckedArqueumSpaceMessagePort<T>,
     source: MessageEventSource | null,
 ) => void | PromiseLike<void>;
 
@@ -300,9 +300,9 @@ class IframeListener {
                         isIframeQueryWrapper(payload)
                     ) {
                         console.warn(
-                            "It seems an iFrame is trying to communicate with WorkAdventure but was not explicitly granted the permission to do so. " +
-                                "If you are looking to use the WorkAdventure Scripting API inside an iFrame, you should allow the " +
-                                'iFrame to communicate with WorkAdventure by checking the "Allow API" checkbox (if you are using the map editor) or using the "openWebsiteAllowApi" property in your map (if you are using Tiled), or passing "true" as a second' +
+                            "It seems an iFrame is trying to communicate with ArqueumSpace but was not explicitly granted the permission to do so. " +
+                                "If you are looking to use the ArqueumSpace Scripting API inside an iFrame, you should allow the " +
+                                'iFrame to communicate with ArqueumSpace by checking the "Allow API" checkbox (if you are using the map editor) or using the "openWebsiteAllowApi" property in your map (if you are using Tiled), or passing "true" as a second' +
                                 "parameter to WA.nav.openCoWebSite() (if you are using the scripting API).",
                         );
                     }
@@ -321,7 +321,7 @@ class IframeListener {
                             return;
                         }
 
-                        const messagePort = new CheckedWorkAdventureMessagePort(port, payload.type);
+                        const messagePort = new CheckedArqueumSpaceMessagePort(port, payload.type);
 
                         if (!message.source) {
                             throw new Error("Message is missing a source");
@@ -600,7 +600,7 @@ class IframeListener {
                         } else if (iframeEvent.type == KLAXOON_ACTIVITY_PICKER_EVENT) {
                             // dispacth event on windows
                             const event = new MessageEvent(
-                                "AcitivityPickerFromWorkAdventure",
+                                "AcitivityPickerFromArqueumSpace",
                                 message as unknown as MessageEventInit<unknown>,
                             );
                             window.dispatchEvent(event);

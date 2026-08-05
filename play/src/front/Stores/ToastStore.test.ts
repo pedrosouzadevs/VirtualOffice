@@ -1,11 +1,11 @@
 import { get, writable } from "svelte/store";
 import { describe, expect, it, vi } from "vitest";
-import type { WorkAdventureComponent } from "../../types/component";
+import type { ArqueumSpaceComponent } from "../../types/component";
 import { createToastStore } from "./ToastStore";
 import type { ToastInput } from "./ToastStore";
 
-const FirstToast = (() => undefined) as unknown as WorkAdventureComponent;
-const SecondToast = (() => undefined) as unknown as WorkAdventureComponent;
+const FirstToast = (() => undefined) as unknown as ArqueumSpaceComponent;
+const SecondToast = (() => undefined) as unknown as ArqueumSpaceComponent;
 
 describe("ToastStore", () => {
     it("adds and removes imperative toasts", () => {

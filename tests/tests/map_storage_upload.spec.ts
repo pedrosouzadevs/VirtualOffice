@@ -189,7 +189,7 @@ test.describe("Map-storage Upload API @nomobile", () => {
                 "upload",
                 (process.env.MAP_STORAGE_PROTOCOL ?? "http") +
                     "://bad:credentials@" +
-                    (process.env.MAP_STORAGE_ENDPOINT ?? "map-storage.workadventure.localhost"),
+                    (process.env.MAP_STORAGE_ENDPOINT ?? "map-storage.arqueum.localhost"),
             ).toString(),
             {
                 multipart: {

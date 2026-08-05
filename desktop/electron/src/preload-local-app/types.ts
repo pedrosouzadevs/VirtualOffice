@@ -8,7 +8,7 @@ export type Server = {
 
 export { SettingsData };
 
-export type WorkAdventureLocalAppApi = {
+export type ArqueumSpaceLocalAppApi = {
     desktop: boolean;
     isDevelopment: () => Promise<boolean>;
     getVersion: () => Promise<string>;

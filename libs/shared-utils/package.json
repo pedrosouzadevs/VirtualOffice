@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
-  "author": "WorkAdventure",
+  "author": "ArqueumSpace",
   "license": "ISC",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",

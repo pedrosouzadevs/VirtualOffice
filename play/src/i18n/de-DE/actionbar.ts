@@ -166,7 +166,7 @@ const actionbar: DeepPartial<Translation["actionbar"]> = {
         },
         calendar: {
             title: "Kalender",
-            desc: "Sehen Sie sich Ihre bevorstehenden Besprechungen an und treten Sie ihnen direkt von WorkAdventure aus bei.",
+            desc: "Sehen Sie sich Ihre bevorstehenden Besprechungen an und treten Sie ihnen direkt von ArqueumSpace aus bei.",
         },
         todolist: {
             title: "Aufgabenliste",

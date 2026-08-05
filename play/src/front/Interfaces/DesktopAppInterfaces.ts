@@ -10,7 +10,7 @@ export interface DesktopCapturerSource {
     thumbnailURL: string;
 }
 
-export type WorkAdventureDesktopApi = {
+export type ArqueumSpaceDesktopApi = {
     desktop: boolean;
     isDevelopment: () => Promise<boolean>;
     getVersion: () => Promise<string>;

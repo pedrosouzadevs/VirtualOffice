@@ -18,7 +18,7 @@ const reportBody = (overrides: Record<string, unknown> = {}) =>
         reportedUserUuid: "troublemaker@example.com",
         reportedUserComment: "Kept shouting in the meeting room",
         reporterUserUuid: "alice@example.com",
-        reportWorldSlug: "http://play.workadventure.localhost/~/maps/office.wam",
+        reportWorldSlug: "http://play.arqueum.localhost/~/maps/office.wam",
         ...overrides,
     });
 
@@ -51,7 +51,7 @@ describe("POST /api/report", () => {
                 reportedIdentifier: "troublemaker@example.com",
                 reporterIdentifier: "alice@example.com",
                 comment: "Kept shouting in the meeting room",
-                roomUrl: "http://play.workadventure.localhost/~/maps/office.wam",
+                roomUrl: "http://play.arqueum.localhost/~/maps/office.wam",
             },
         ]);
     });

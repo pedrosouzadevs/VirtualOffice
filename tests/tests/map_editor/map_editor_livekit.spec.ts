@@ -87,7 +87,7 @@ test.describe("Map editor @oidc @nomobile @nowebkit", () => {
         // Delete space connection in the backend
         // This simulates a backend restart, as the space connection will be closed
         const result = await request.post(
-            "http://api.workadventure.localhost/debug/close-space-connection?spaceName=localWorld.5w0szy-foobar&token=123",
+            "http://api.arqueum.localhost/debug/close-space-connection?spaceName=localWorld.5w0szy-foobar&token=123",
         );
         expect(result.status()).toBe(200);
 

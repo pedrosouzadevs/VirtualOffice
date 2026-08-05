@@ -138,14 +138,14 @@ import type {
 } from "./ConnexionModels";
 import { localUserStore } from "./LocalUserStore";
 import { ConnectionClosedError } from "./ConnectionClosedError";
-import { WorkAdventureWebSocket } from "./WorkAdventureWebSocket";
+import { ArqueumSpaceWebSocket } from "./ArqueumSpaceWebSocket";
 
 // This must be greater than RoomManager's PING_INTERVAL
 const manualPingDelay = 100_000;
 const recordingQueryTimeoutMs = 60_000;
 
 export class RoomConnection implements RoomConnection {
-    public readonly socket: WorkAdventureWebSocket;
+    public readonly socket: ArqueumSpaceWebSocket;
     public readonly websocketReconnectingStream: Observable<boolean>;
     private userId: number | null = null;
     private _closed = false;
@@ -324,7 +324,7 @@ export class RoomConnection implements RoomConnection {
             subProtocols = [token];
         }
 
-        this.socket = new WorkAdventureWebSocket(url, subProtocols);
+        this.socket = new ArqueumSpaceWebSocket(url, subProtocols);
         this.websocketReconnectingStream = this.socket.reconnectingStream;
 
         this.socket.onopen = () => {
@@ -1195,7 +1195,7 @@ export class RoomConnection implements RoomConnection {
     }
 
     public emitMapEditorModifyArea(commandId: string, config: AtLeast<AreaData, "id">): void {
-        // We need to round the values because previous versions of WorkAdventure saved them as floats
+        // We need to round the values because previous versions of ArqueumSpace saved them as floats
         if (config.x !== undefined) {
             config.x = Math.round(config.x);
         }

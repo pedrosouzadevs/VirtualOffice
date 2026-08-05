@@ -175,10 +175,10 @@ class AdminApi implements AdminInterface {
              *     parameters:
              *      - name: "playUri"
              *        in: "query"
-             *        description: "The full URL of WorkAdventure"
+             *        description: "The full URL of ArqueumSpace"
              *        required: true
              *        type: "string"
-             *        example: "http://play.workadventure.localhost/@/teamSlug/worldSLug/roomSlug"
+             *        example: "http://play.arqueum.localhost/@/teamSlug/worldSLug/roomSlug"
              *      - name: "userId"
              *        in: "query"
              *        description: "The identifier of the current user \n It can be undefined or an uuid or an email"
@@ -312,10 +312,10 @@ class AdminApi implements AdminInterface {
              *        type: "string"
              *      - name: "playUri"
              *        in: "query"
-             *        description: "The full URL of WorkAdventure"
+             *        description: "The full URL of ArqueumSpace"
              *        required: true
              *        type: "string"
-             *        example: "http://play.workadventure.localhost/@/teamSlug/worldSLug/roomSlug"
+             *        example: "http://play.arqueum.localhost/@/teamSlug/worldSLug/roomSlug"
              *      - name: "ipAddress"
              *        in: "query"
              *        description: "IP Address of the user logged in, allows you to check whether a user has been banned or not"
@@ -419,10 +419,10 @@ class AdminApi implements AdminInterface {
          *        type: "string"
          *      - name: "playUri"
          *        in: "query"
-         *        description: "The full URL of WorkAdventure"
+         *        description: "The full URL of ArqueumSpace"
          *        required: true
          *        type: "string"
-         *        example: "http://play.workadventure.localhost/@/teamSlug/worldSlug/roomSlug"
+         *        example: "http://play.arqueum.localhost/@/teamSlug/worldSlug/roomSlug"
          *     responses:
          *       200:
          *         description: The details of the member
@@ -1298,10 +1298,10 @@ class AdminApi implements AdminInterface {
      *     parameters:
      *      - name: "roomUrl"
      *        in: "query"
-     *        description: "The full URL to the current WorkAdventure room"
+     *        description: "The full URL to the current ArqueumSpace room"
      *        required: true
      *        type: "string"
-     *        example: "http://play.workadventure.localhost/@/teamSlug/worldSlug/roomSlug"
+     *        example: "http://play.arqueum.localhost/@/teamSlug/worldSlug/roomSlug"
      *      - name: "userIdentifier"
      *        in: "query"
      *        description: "The identifier of the current user. It can be undefined, a UUID, or an email."

@@ -40,7 +40,7 @@
                     {
                      "fontfamily":"Sans Serif",
                      "pixelsize":11,
-                     "text":"Test:\nOpen this page in Chrome.\nOpen Chrome Task Manager (Shift - Esc)\n\nResult:\nThe WorkAdventure tab should take about 10% of CPU.\nThe GPU should almost consume nothing (~4%)",
+                     "text":"Test:\nOpen this page in Chrome.\nOpen Chrome Task Manager (Shift - Esc)\n\nResult:\nThe ArqueumSpace tab should take about 10% of CPU.\nThe GPU should almost consume nothing (~4%)",
                      "wrap":true
                     },
                  "type":"",

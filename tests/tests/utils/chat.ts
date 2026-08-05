@@ -10,7 +10,7 @@ class Chat {
     }
 
     async checkNameInChat(page: Page, name: string, timeout = 30_000) {
-        await expect(page.frameLocator("iframe#chatWorkAdventure").locator("aside.chatWindow div.users")).toContainText(
+        await expect(page.frameLocator("iframe#chatArqueumSpace").locator("aside.chatWindow div.users")).toContainText(
             name,
             { timeout },
         );
@@ -144,7 +144,7 @@ class Chat {
             .locator(".actions .action.react")
             .click();
         await page
-            .frameLocator("iframe#chatWorkAdventure")
+            .frameLocator("iframe#chatArqueumSpace")
             .locator(".emoji-picker .emoji-picker__emojis button.emoji-picker__emoji")
             .first()
             .click();

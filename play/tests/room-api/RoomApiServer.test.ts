@@ -51,7 +51,7 @@ describe("RoomApiServer", () => {
                             readVariable: (request: VariableRequest, callback: (error: any, response: any) => void) => {
                                 if (
                                     request.room ===
-                                        "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json" &&
+                                        "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json" &&
                                     request.name === "test"
                                 ) {
                                     return callback(null, "Test Value");
@@ -71,7 +71,7 @@ describe("RoomApiServer", () => {
                             ) => {
                                 if (
                                     request.room ===
-                                        "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json" &&
+                                        "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json" &&
                                     request.name === "test"
                                 ) {
                                     return callback(null, null);
@@ -107,7 +107,7 @@ describe("RoomApiServer", () => {
             const metadata = new Metadata();
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                 } satisfies VariableRequest,
                 metadata,
@@ -147,7 +147,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "invalid",
                 } satisfies VariableRequest,
                 metadata,
@@ -169,7 +169,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                 } satisfies VariableRequest,
                 metadata,
@@ -188,7 +188,7 @@ describe("RoomApiServer", () => {
             const metadata = new Metadata();
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                 } satisfies VariableRequest,
                 destroy: (error: Error | undefined) => {
@@ -231,7 +231,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                 } satisfies VariableRequest,
                 destroy: (error: Error | undefined) => {},
@@ -269,7 +269,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                 } satisfies VariableRequest,
                 destroy: (error: Error | undefined) => {},
@@ -304,7 +304,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                 } satisfies VariableRequest,
                 destroy: (error: Error | undefined) => {},
@@ -350,7 +350,7 @@ describe("RoomApiServer", () => {
             const metadata = new Metadata();
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                     value: "test",
                 } satisfies SaveVariableRequest,
@@ -392,7 +392,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "invalid",
                     value: "test",
                 } satisfies SaveVariableRequest,
@@ -415,7 +415,7 @@ describe("RoomApiServer", () => {
 
             const call = {
                 request: {
-                    room: "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json",
+                    room: "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json",
                     name: "test",
                     value: "test",
                 } satisfies SaveVariableRequest,

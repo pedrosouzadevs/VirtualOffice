@@ -10,7 +10,7 @@ This feature is experimental. The signature of the function might change in the 
 
 ## Understanding the concept of a space
 
-A **space** is a data structure in WorkAdventure that allows you to group users from the same world, even if they are on different maps. Spaces let you start an audio/video conversation between users without entering a bubble or meeting room.
+A **space** is a data structure in ArqueumSpace that allows you to group users from the same world, even if they are on different maps. Spaces let you start an audio/video conversation between users without entering a bubble or meeting room.
 
 With the scripting API, you can join a space, be notified when users join or leave, dynamically track information about group members, and manage space metadata.
 

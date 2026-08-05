@@ -105,7 +105,7 @@ export interface MessagePortIframeEvent<T extends keyof IframeMessagePortMap> {
     data: IframeMessagePortMap[T]["iframeEvents"];
 }
 
-export interface MessagePortWorkAdventureEvent<T extends keyof IframeMessagePortMap> {
+export interface MessagePortArqueumSpaceEvent<T extends keyof IframeMessagePortMap> {
     type: T;
     data: IframeMessagePortMap[T]["workAdventureEvents"];
 }

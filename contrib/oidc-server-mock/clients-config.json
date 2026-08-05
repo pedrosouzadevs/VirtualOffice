@@ -6,9 +6,9 @@
     "AllowedGrantTypes": ["authorization_code"],
     "AllowAccessTokensViaBrowser": true,
     "RedirectUris": [
-      "http://*.workadventure.localhost",
+      "http://*.arqueum.localhost",
       "https://*.test.workadventu.re",
-      "http://admin-api.workadventure.localhost/admin/callback"
+      "http://admin-api.arqueum.localhost/admin/callback"
     ],
     "RequirePkce": false,
     "AllowedScopes": ["openid", "profile", "email", "tags-scope", "some-app-scope-1"],
@@ -23,9 +23,9 @@
     "AllowedGrantTypes": ["authorization_code"],
     "AllowAccessTokensViaBrowser": true,
     "RedirectUris": [
-      "http://*.workadventure.localhost",
+      "http://*.arqueum.localhost",
       "https://*.test.workadventu.re",
-      "http://admin-api.workadventure.localhost/admin/callback"
+      "http://admin-api.arqueum.localhost/admin/callback"
     ],
     "AllowedScopes": ["openid", "profile", "email", "tags-scope", "some-app-scope-1"],
     "IdentityTokenLifetime": 3600,

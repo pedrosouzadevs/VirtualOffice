@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "svelte/store";
 import type { RemoteVideoTrack } from "livekit-client";
-import type { WorkAdventureComponent } from "../../types/component";
+import type { ArqueumSpaceComponent } from "../../types/component";
 import type { PeerStatus } from "../WebRtc/RemotePeer";
 import type { WebRtcStats } from "../Components/Video/WebRtcStats";
 import type { VideoConfig } from "../Api/Events/Ui/PlayVideoEvent";
@@ -34,7 +34,7 @@ export interface ScriptingVideoStreamable {
 
 export interface ComponentStreamable {
     type: "component";
-    component: WorkAdventureComponent;
+    component: ArqueumSpaceComponent;
     readonly isBlocked: Readable<boolean>;
 }
 

@@ -2,15 +2,15 @@ import type { ComputePositionConfig } from "@floating-ui/dom";
 import { arrow, autoUpdate, computePosition, flip, limitShift, offset, shift } from "@floating-ui/dom";
 import { writable } from "svelte/store";
 import { v4 } from "uuid";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../types/component";
 import type { ArrowAction, ContentAction } from "./svelte-floatingui";
 
 export const floatingUiComponents = writable(
     new Map<
         string,
         {
-            componentType: WorkAdventureComponent;
-            props?: WorkAdventureComponentProps;
+            componentType: ArqueumSpaceComponent;
+            props?: ArqueumSpaceComponentProps;
             action: ContentAction;
             arrowAction: ArrowAction | undefined;
             zIndex: number;
@@ -28,8 +28,8 @@ export const floatingUiComponents = writable(
  */
 export function showFloatingUi(
     referenceNode: Element,
-    component: WorkAdventureComponent,
-    props: WorkAdventureComponentProps,
+    component: ArqueumSpaceComponent,
+    props: ArqueumSpaceComponentProps,
     options?: Partial<ComputePositionConfig>,
     offsetMainAxis = 0,
     withArrow = true,

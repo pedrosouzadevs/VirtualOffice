@@ -17,7 +17,7 @@ const notification: DeepPartial<Translation["notification"]> = {
         title: "通知へのアクセス拒否",
         permissionDenied: "拒否されました",
         content:
-            "会話を見逃さない。WorkAdventure タブを開いていなくても、誰かがあなたと話したがっていることを通知できるように、通知を有効にしてください。",
+            "会話を見逃さない。ArqueumSpace タブを開いていなくても、誰かがあなたと話したがっていることを通知できるように、通知を有効にしてください。",
         firefoxContent:
             "Firefox が継続的に許可を求めないようにするには、「この決定を記憶する」チェックボックスをクリックしてください。",
         refresh: "更新",

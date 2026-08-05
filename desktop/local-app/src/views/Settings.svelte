@@ -64,7 +64,7 @@
                 <ToggleSwitch
                 id="toggle-autostart"
                 value={$settings.auto_launch_enabled}
-                title="Autostart WorkAdventure after your PC started"
+                title="Autostart ArqueumSpace after your PC started"
                 on:change={(e) => saveAutoLaunch(e.detail)}
                 />
             </InputField>

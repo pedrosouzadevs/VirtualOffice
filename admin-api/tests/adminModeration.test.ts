@@ -185,7 +185,7 @@ describe("POST /admin/api/bans (ADR-0006)", () => {
         await issue(app.url, session.headers, { identifier: "Victim@Example.COM", message: "No shouting" });
 
         const door = await fetch(
-            `${app.url}/api/room/access?userIdentifier=victim@example.com&playUri=http://play.workadventure.localhost/~/maps/office.wam&characterTextureIds=male1`,
+            `${app.url}/api/room/access?userIdentifier=victim@example.com&playUri=http://play.arqueum.localhost/~/maps/office.wam&characterTextureIds=male1`,
             { headers: { Authorization: TEST_ADMIN_API_TOKEN } },
         );
 

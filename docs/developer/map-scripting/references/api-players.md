@@ -29,7 +29,7 @@ await WA.players.configureTracking({
 ## About the "nearby" zone
 
 :::caution
-WorkAdventure has an aggressive optimization mechanism where your client will only receive information from players
+ArqueumSpace has an aggressive optimization mechanism where your client will only receive information from players
 that are in the player's viewport (or in a zone near the current viewport). This means that from the scripting API,
 you cannot listen to every user in a room. You can only listen to users that your player can actually see.
 :::
@@ -130,7 +130,7 @@ WA.players.onPlayerLeaves: Observable<RemotePlayerInterface>;
 
 :::caution
 The name might be a bit misleading. As explained in the [Enabling players tracking section](#enabling-players-tracking),
-WorkAdventure only tracks players close to you. So `onPlayerEnters` will only be triggered when a remote player
+ArqueumSpace only tracks players close to you. So `onPlayerEnters` will only be triggered when a remote player
 is getting close to your viewport. Same thing for `onPlayerLeaves`. On a gigantic map, you cannot have the knowledge
 of users entering the map that are far from you. You are however 100% sure that if the remote player can be seen
 on the screen, the `onPlayerEnters` event was triggered.
@@ -236,7 +236,7 @@ remotePlayer.state.onVariableChange("score").subscribe((value: unknown) => {
 ## Listen to a variable changes for all players
 
 It is not uncommon to want to track the same variables for all remote players.
-In this case, instead of subscribing to each and every player, WorkAdventure offers
+In this case, instead of subscribing to each and every player, ArqueumSpace offers
 a shortcut method:
 
 ```typescript

@@ -6,17 +6,17 @@ import { closeStartedServers, serveTestApp, TEST_ADMIN_API_TOKEN } from "./helpe
 
 const auth = { headers: { Authorization: TEST_ADMIN_API_TOKEN } };
 
-const ROOM_URL = "http://play.workadventure.localhost/~/maps/office.wam";
+const ROOM_URL = "http://play.arqueum.localhost/~/maps/office.wam";
 
 /** A room as `map-storage` describes it, metadata and all. */
 const office: Room = {
     path: "maps/office.wam",
     roomUrl: "/~/maps/office.wam",
-    wamUrl: "http://map-storage.workadventure.localhost/maps/office.wam",
+    wamUrl: "http://map-storage.arqueum.localhost/maps/office.wam",
     name: "The office",
     description: "Where everybody sits",
     thumbnail: "http://example.com/office.png",
-    copyright: "© VirtualOffice",
+    copyright: "© ArqueumSpace",
     areasSearchable: 3,
     entitiesSearchable: 7,
 };
@@ -25,7 +25,7 @@ const office: Room = {
 const bare: Room = {
     path: "maps/bare.wam",
     roomUrl: "/~/maps/bare.wam",
-    wamUrl: "http://map-storage.workadventure.localhost/maps/bare.wam",
+    wamUrl: "http://map-storage.arqueum.localhost/maps/bare.wam",
     name: "maps/bare.wam",
     description: undefined,
     thumbnail: undefined,
@@ -69,10 +69,10 @@ describe("GET /api/room/sameWorld", () => {
         expect(parsed[0]).toMatchObject({
             name: "The office",
             roomUrl: "/~/maps/office.wam",
-            wamUrl: "http://map-storage.workadventure.localhost/maps/office.wam",
+            wamUrl: "http://map-storage.arqueum.localhost/maps/office.wam",
             description: "Where everybody sits",
             thumbnail: "http://example.com/office.png",
-            copyright: "© VirtualOffice",
+            copyright: "© ArqueumSpace",
             areasSearchable: 3,
             entitiesSearchable: 7,
         });

@@ -16,7 +16,7 @@ const notification: DeepPartial<Translation["notification"]> = {
     help: {
         title: "通知存取被拒絕",
         permissionDenied: "權限被拒絕",
-        content: "不要錯過任何討論。啟用通知，以便在有人想與您交談時收到通知，即使您不在 WorkAdventure 分頁上。",
+        content: "不要錯過任何討論。啟用通知，以便在有人想與您交談時收到通知，即使您不在 ArqueumSpace 分頁上。",
         firefoxContent: "如果您不希望 Firefox 繼續要求授權，請勾選「記住此決定」核取方塊。",
         refresh: "重新整理",
         continue: "不使用通知繼續",

@@ -1,8 +1,8 @@
-# Copilot Instructions for WorkAdventure
+# Copilot Instructions for ArqueumSpace
 
 ## Repository Overview
 
-WorkAdventure is a comprehensive platform for creating customizable collaborative virtual worlds (metaverse). The project consists of multiple interconnected services built with TypeScript/JavaScript, using modern web technologies including Phaser.js game engine, Svelte, and Docker for development.
+ArqueumSpace is a comprehensive platform for creating customizable collaborative virtual worlds (metaverse). The project consists of multiple interconnected services built with TypeScript/JavaScript, using modern web technologies including Phaser.js game engine, Svelte, and Docker for development.
 
 ### High-Level Details
 
@@ -60,7 +60,7 @@ docker-compose up
 # To disable OIDC (for anonymous access):
 # docker-compose -f docker-compose.yaml -f docker-compose-no-oidc.yaml up
 
-# Access: http://play.workadventure.localhost/_/global/maps.workadventure.localhost/starter/map.json
+# Access: http://play.arqueum.localhost/_/global/maps.arqueum.localhost/starter/map.json
 ```
 
 ### Manual Build / Typecheck
@@ -210,7 +210,7 @@ lsof -ti:3000,3001,8080,9229 | xargs kill -9
 ## I18n
 
 Any message added to the code should be translated in the supported languages.
-WorkAdventure uses typesafe-i18n and the translation files are in `play/src/i18n/[language]/[module].ts`
+ArqueumSpace uses typesafe-i18n and the translation files are in `play/src/i18n/[language]/[module].ts`
 
 Audit missing translation keys with the helper script:
 

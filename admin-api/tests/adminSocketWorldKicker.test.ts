@@ -7,7 +7,7 @@ import {
     toRoomIds,
 } from "../src/Infrastructure/Play/AdminSocketWorldKicker";
 
-const PLAY = "http://play.workadventure.localhost";
+const PLAY = "http://play.arqueum.localhost";
 
 describe("toRoomIds", () => {
     it("builds the URL the pusher knows a room by: the public origin plus the in-world path", () => {

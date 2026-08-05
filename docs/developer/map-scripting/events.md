@@ -4,7 +4,7 @@ sidebar_position: 20
 
 # Events
 
-The WorkAdventure scripting API runs in the browser of each player. If you want to exchange data between users of
+The ArqueumSpace scripting API runs in the browser of each player. If you want to exchange data between users of
 a same map, you have 2 options:
 
 - Using [variables](./variables.md)

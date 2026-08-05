@@ -96,7 +96,7 @@ Dependências novas no `admin-api`: `jose`, `openid-client`, `cookie-parser` —
 
 ### Correções de contrato encontradas lendo o código
 
-Seis afirmações da documentação do WorkAdventure não correspondem ao código. Estão detalhadas no ADR-0002; as duas
+Seis afirmações da documentação do ArqueumSpace não correspondem ao código. Estão detalhadas no ADR-0002; as duas
 que mais custam:
 
 - **404 no `/api/capabilities` pendura o pusher.** O `initialise()` faz retry sem limite, o `app.init()` o aguarda, e
@@ -217,7 +217,7 @@ Continuam de fora, deliberadamente e por escrito:
 
 ### O wildcard do mock OIDC não casa com hífen
 
-Custou tempo e o ADR-0004 afirmava o contrário. O `RedirectUris: ["http://*.workadventure.localhost"]` do mock **não
+Custou tempo e o ADR-0004 afirmava o contrário. O `RedirectUris: ["http://*.arqueum.localhost"]` do mock **não
 casa hostname com hífen** — `adminapi` passa, `admin-api` e `map-storage` não, qualquer que seja o caminho. Aparece
 como `invalid_request / Invalid redirect_uri` na página de erro do próprio provedor, o que parece erro nosso.
 
@@ -226,7 +226,7 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ### Pré-requisitos que não são óbvios
 
-- **Entrada no hosts** (já adicionada nesta máquina): `127.0.0.1 admin-api.workadventure.localhost`. Navegadores e
+- **Entrada no hosts** (já adicionada nesta máquina): `127.0.0.1 admin-api.arqueum.localhost`. Navegadores e
   `curl` resolvem `*.localhost` sozinhos; o node não. Sem ela, todo `fetch` do e2e falha com `ENOTFOUND`.
   **Serviço novo = entrada nova no hosts.**
 - **`map-storage/tests/assets.zip`** é artefato gerado e não versionado; **nenhum** teste de map_editor roda sem ele.

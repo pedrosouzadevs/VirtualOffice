@@ -1,7 +1,7 @@
 {
     "name": "admin-api",
     "version": "1.0.0",
-    "description": "VirtualOffice Admin API: members, tags and permissions (implements the contract the pusher expects)",
+    "description": "ArqueumSpace Admin API: members, tags and permissions (implements the contract the pusher expects)",
     "type": "module",
     "main": "index.js",
     "private": true,

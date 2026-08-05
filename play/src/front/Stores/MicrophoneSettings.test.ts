@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildMicrophoneAudioConstraints, getEffectiveNoiseSuppressionProvider } from "./MicrophoneSettings";
 
 describe("getEffectiveNoiseSuppressionProvider", () => {
-    it("keeps WorkAdventure as the default provider", () => {
+    it("keeps ArqueumSpace as the default provider", () => {
         expect(
             getEffectiveNoiseSuppressionProvider({
                 provider: "workadventure",
@@ -44,7 +44,7 @@ describe("buildMicrophoneAudioConstraints", () => {
         sampleRateSupported: true,
     };
 
-    it("keeps browser microphone processing enabled by default when WorkAdventure noise suppression is off", () => {
+    it("keeps browser microphone processing enabled by default when ArqueumSpace noise suppression is off", () => {
         const constraints = buildMicrophoneAudioConstraints(defaultOptions);
 
         expect(constraints).toMatchObject({
@@ -106,7 +106,7 @@ describe("buildMicrophoneAudioConstraints", () => {
         });
     });
 
-    it("disables native processing and requests 16 kHz for active WorkAdventure noise suppression", () => {
+    it("disables native processing and requests 16 kHz for active ArqueumSpace noise suppression", () => {
         expect(
             buildMicrophoneAudioConstraints({
                 ...defaultOptions,
@@ -122,7 +122,7 @@ describe("buildMicrophoneAudioConstraints", () => {
         });
     });
 
-    it("falls back to browser noise suppression when WorkAdventure noise suppression failed", () => {
+    it("falls back to browser noise suppression when ArqueumSpace noise suppression failed", () => {
         expect(
             buildMicrophoneAudioConstraints({
                 ...defaultOptions,

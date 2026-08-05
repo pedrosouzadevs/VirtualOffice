@@ -123,7 +123,7 @@ describe("MemberData.id and userUuid must be the same identifier", () => {
         const roomAccess = (await (
             await fetch(
                 `${url}/api/room/access?userIdentifier=alice%40example.com&playUri=${encodeURIComponent(
-                    "http://play.workadventure.localhost/~/maps/areas.wam",
+                    "http://play.arqueum.localhost/~/maps/areas.wam",
                 )}`,
                 auth,
             )

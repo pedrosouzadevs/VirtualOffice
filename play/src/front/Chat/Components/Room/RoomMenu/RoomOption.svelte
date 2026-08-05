@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { WorkAdventureComponent } from "../../../../../types/component";
+    import type { ArqueumSpaceComponent } from "../../../../../types/component";
 
     interface Props {
-        IconComponent: WorkAdventureComponent;
+        IconComponent: ArqueumSpaceComponent;
         title: string;
         /** Optional second line, e.g. a small colored tag (see {@link tagText}). */
         tagText?: string;

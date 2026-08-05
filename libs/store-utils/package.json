@@ -17,7 +17,7 @@
     "test:watch": "vitest watch",
     "test:cov": "vitest run --coverage"
   },
-  "author": "WorkAdventure",
+  "author": "ArqueumSpace",
   "license": "ISC",
   "devDependencies": {
     "@types/debug": "^4.1.13",

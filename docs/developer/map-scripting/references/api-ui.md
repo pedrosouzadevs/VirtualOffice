@@ -338,7 +338,7 @@ Opening a modal in the center of the screen:
 
 ```ts
 WA.ui.modal.openModal({
-    title: "WorkAdventure website",
+    title: "ArqueumSpace website",
     src: 'https://workadventu.re',
     allow: "geolocation",
     allowApi: true,
@@ -356,7 +356,7 @@ Opening a modal on the right side:
 
 ```ts
     WA.ui.modal.openModal({
-        title: "WorkAdventure website",
+        title: "ArqueumSpace website",
         src: 'https://workadventu.re',
         allow: "fullscreen",
         position: "right"
@@ -369,7 +369,7 @@ Opening a modal on the left side:
 
 ```ts
     WA.ui.modal.openModal({
-        title: "WorkAdventure website",
+        title: "ArqueumSpace website",
         src: 'https://workadventu.re',
         position: "left"
     });
@@ -502,7 +502,7 @@ allows you to decide in which menu you want the button to appear. Possible value
 ## Open / Close banner
 
 :::caution
-The open/close banner API is **experimental**. It means the compatibility with future versions of WorkAdventure is not
+The open/close banner API is **experimental**. It means the compatibility with future versions of ArqueumSpace is not
 guaranteed and we might break the signature of these methods at any moment. Use at your own risk.
 :::
 
@@ -564,7 +564,7 @@ WA.ui.banner.closeBanner();
 ## Play a video
 
 :::caution
-The "play a video" API is **experimental**. It means the compatibility with future versions of WorkAdventure is not
+The "play a video" API is **experimental**. It means the compatibility with future versions of ArqueumSpace is not
 guaranteed and we might break the signature of these methods at any moment. Use at your own risk.
 :::
 

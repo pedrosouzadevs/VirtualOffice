@@ -48,11 +48,11 @@ class App {
     }
 
     public listen(): void {
-        this.app.listen(HTTP_PORT, () => console.info(`WorkAdventure HTTP API starting on port ${HTTP_PORT}!`));
+        this.app.listen(HTTP_PORT, () => console.info(`ArqueumSpace HTTP API starting on port ${HTTP_PORT}!`));
 
         if (PROMETHEUS_PORT && this.prometheusApp) {
             this.prometheusApp.listen(PROMETHEUS_PORT, () =>
-                console.info(`WorkAdventure Prometheus API starting on port ${PROMETHEUS_PORT}!`),
+                console.info(`ArqueumSpace Prometheus API starting on port ${PROMETHEUS_PORT}!`),
             );
         }
     }
@@ -87,7 +87,7 @@ class App {
             if (err) {
                 throw err;
             }
-            console.log("WorkAdventure HTTP/2 API starting on port %d!", GRPC_PORT);
+            console.log("ArqueumSpace HTTP/2 API starting on port %d!", GRPC_PORT);
             server.start();
         });
     }

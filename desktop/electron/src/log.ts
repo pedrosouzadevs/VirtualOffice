@@ -6,7 +6,7 @@ function onError(e: Error) {
     try {
         log.error(e);
 
-        dialog.showErrorBox("WorkAdventure - A JavaScript error occurred", e.stack || "");
+        dialog.showErrorBox("ArqueumSpace - A JavaScript error occurred", e.stack || "");
     } catch (logError) {
         console.error(e);
     }

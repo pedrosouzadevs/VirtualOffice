@@ -12,7 +12,7 @@ import {
     testMember,
 } from "./helpers/testApp";
 
-const BASE = "http://play.workadventure.localhost";
+const BASE = "http://play.arqueum.localhost";
 const EDITABLE_ROOM = `${BASE}/~/maps/areas.wam`;
 const EXTERNAL_ROOM = `${BASE}/_/global/maps.workadventu.re/starter/map.json`;
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { get } from "svelte/store";
-import type { WorkAdventureComponent } from "../../types/component";
+import type { ArqueumSpaceComponent } from "../../types/component";
 import { floatingUiComponents, showFloatingUi } from "./svelte-floatingui-show";
 
 // jsdom has neither ResizeObserver nor IntersectionObserver, which autoUpdate() relies on.
@@ -14,7 +14,7 @@ vi.mock("@floating-ui/dom", () => ({
     limitShift: () => ({}),
 }));
 
-const TestComponent = (() => undefined) as unknown as WorkAdventureComponent;
+const TestComponent = (() => undefined) as unknown as ArqueumSpaceComponent;
 const referenceNode = {} as Element;
 
 afterEach(() => {

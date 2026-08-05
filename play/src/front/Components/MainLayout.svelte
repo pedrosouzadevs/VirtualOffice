@@ -42,7 +42,7 @@
     import { selectedRoomStore } from "../Chat/Stores/SelectRoomStore";
     import { chatNotificationStore } from "../Stores/ProximityNotificationStore";
     import { analyticsClient } from "../Administration/AnalyticsClient";
-    import type { WorkAdventureComponent } from "../../types/component";
+    import type { ArqueumSpaceComponent } from "../../types/component";
     import { LL } from "../../i18n/i18n-svelte";
     import { mapEditorSideBarWidthStore } from "./MapEditor/MapEditorSideBarWidthStore";
     import ActionBar from "./ActionBar/ActionBar.svelte";
@@ -83,7 +83,7 @@
     import { IconArrowsMinimize, IconMessageCircle2, IconUserPlus } from "@wa-icons";
 
     const loadDesktopCapturerSourcePicker = () =>
-        import("./Video/DesktopCapturerSourcePicker.svelte") as Promise<{ default: WorkAdventureComponent }>;
+        import("./Video/DesktopCapturerSourcePicker.svelte") as Promise<{ default: ArqueumSpaceComponent }>;
 
     /** When false, the right-hand participant strip in highlight fullscreen is collapsed (toggle with the edge arrow). */
     let highlightParticipantCamerasListOpen = $state(true);

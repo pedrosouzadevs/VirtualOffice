@@ -4,9 +4,9 @@ sidebar_position: 1
 
 # Map Building
 
-Welcome to the WorkAdventure map building documentation!
+Welcome to the ArqueumSpace map building documentation!
 
-This guide will provide you with instructions on how to edit and create maps for WorkAdventure, allowing you to
+This guide will provide you with instructions on how to edit and create maps for ArqueumSpace, allowing you to
 customize your virtual spaces and create engaging interactive experiences. There are two primary methods for editing
 maps: using the inline editor and utilizing Tiled.
 

@@ -1,7 +1,7 @@
 
 # @workadventure/room-api-client
 
-Easily create a GRPC client to connect your service to the [Room API](https://docs.workadventu.re/developer/room-api) of a [WorkAdventure](https://workadventu.re) server.
+Easily create a GRPC client to connect your service to the [Room API](https://docs.workadventu.re/developer/room-api) of a [ArqueumSpace](https://workadventu.re) server.
 
 
 ## Installation
@@ -21,8 +21,8 @@ to learn how to get your own API key.
 const client = createRoomApiClient("MY AWESOME KEY");
 ```
 
-By default, the client targets the official WorkAdventure server. If you are using a self-hosted version, you 
-must in addition pass in parameter the domain name and port of your WorkAdventure RoomApi endpoint.
+By default, the client targets the official ArqueumSpace server. If you are using a self-hosted version, you 
+must in addition pass in parameter the domain name and port of your ArqueumSpace RoomApi endpoint.
 
 ```typescript
 const client = createRoomApiClient("My AWESOME KEY", "play.example.com", "5221");
@@ -47,7 +47,7 @@ The Room API client allows you to set, read and track variables in a room using 
 import { createRoomApiClient } from "@workadventure/room-api-client";
 
 /**
- * By default, the client targets the official WorkAdventure server,
+ * By default, the client targets the official ArqueumSpace server,
  * but you can also define customs domain and port.
  * Example :
  * const client = createRoomApiClient("My AWESOME KEY", "mydomain.net", "5221");
@@ -118,7 +118,7 @@ The Room API client allows you to send and listen to events in a room using the 
 import { createRoomApiClient } from "@workadventure/room-api-client";
 
 /**
- * By default, the client targets the official WorkAdventure server,
+ * By default, the client targets the official ArqueumSpace server,
  * but you can also define customs domain and port.
  * Example :
  * const client = createRoomApiClient("My AWESOME KEY", "mydomain.net", "5221");

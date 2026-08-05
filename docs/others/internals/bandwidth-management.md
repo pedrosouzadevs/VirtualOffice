@@ -1,6 +1,6 @@
 # Bandwidth Management
 
-WorkAdventure allows users to control video and screen-sharing bandwidth consumption through configurable settings. This document explains how bandwidth management works across both P2P (WebRTC) and LiveKit connection modes.
+ArqueumSpace allows users to control video and screen-sharing bandwidth consumption through configurable settings. This document explains how bandwidth management works across both P2P (WebRTC) and LiveKit connection modes.
 
 ## Overview
 

@@ -2,13 +2,13 @@
 
 - **Status:** Accepted (implemented and field-validated on 2026-07-29)
 - **Date:** 2026-07-23
-- **Deciders:** VirtualOffice team
+- **Deciders:** ArqueumSpace team
 - **Languages:** [0001-area-owner-lock.pt-BR.md](0001-area-owner-lock.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
 - **Source spec:** [Spec 0001 — Feature Roadmap](../specs/0001-feature-roadmap.md), Feature 4.
 
 ## Context
 
-In VirtualOffice, each user owns an **area** inside a **single shared map** — their virtual office. The goal is to let the owner **close and reopen** their area at will, with a **persistent** lock, and to give that lock a **visual representation** — a semi-transparent red tint over the area while it is locked.
+In ArqueumSpace, each user owns an **area** inside a **single shared map** — their virtual office. The goal is to let the owner **close and reopen** their area at will, with a **persistent** lock, and to give that lock a **visual representation** — a semi-transparent red tint over the area while it is locked.
 
 > ⚠️ Premise corrected during design: a "room" here is an **area inside a map**, not its own map/URL. This ruled out `RoomRedirect` (which changes map) and the `/api/room/access` gate (which is map-level).
 

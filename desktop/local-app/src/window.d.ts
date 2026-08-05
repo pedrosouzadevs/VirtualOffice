@@ -1,7 +1,7 @@
-import type { WorkAdventureLocalAppApi } from "@wa-preload-local-app";
+import type { ArqueumSpaceLocalAppApi } from "@wa-preload-local-app";
 
 declare global {
     interface Window {
-        WAD: WorkAdventureLocalAppApi;
+        WAD: ArqueumSpaceLocalAppApi;
     }
 }

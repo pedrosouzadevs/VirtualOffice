@@ -32,7 +32,7 @@ export const initWindowKlaxoonActivityPicker = () => {
                     n.map((t) => t.join("=")).join(","),
                 );
             window.addEventListener(
-                "AcitivityPickerFromWorkAdventure",
+                "AcitivityPickerFromArqueumSpace",
                 function (t: any) {
                     const { type: e, payload: o } = t.data;
                     "activity-picker-result" === e && (i(o), s?.close());

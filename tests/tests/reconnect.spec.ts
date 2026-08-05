@@ -12,7 +12,7 @@ test.describe("Connection @nomobile @nowebkit", () => {
         test.skip(isMobile(page) || browserName === "webkit", "Skip on mobile and WebKit due to limitations");
     });
 
-    test("can succeed even if WorkAdventure starts while pusher is down @slow", async ({ browser }) => {
+    test("can succeed even if ArqueumSpace starts while pusher is down @slow", async ({ browser }) => {
         await using page = await getPage(browser, "Alice", publicTestMapUrl("tests/mousewheel.json", "reconnect"));
 
         //Simulation of offline network
@@ -35,7 +35,7 @@ test.describe("Connection @nomobile @nowebkit", () => {
     });*/
     });
 
-    test("can succeed on WAM file even if WorkAdventure starts while pusher is down @slow", async ({ browser }) => {
+    test("can succeed on WAM file even if ArqueumSpace starts while pusher is down @slow", async ({ browser }) => {
         await using page = await getPage(browser, "Alice", Map.url("empty"));
 
         //Simulation of offline network

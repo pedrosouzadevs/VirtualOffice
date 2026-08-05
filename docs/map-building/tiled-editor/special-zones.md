@@ -10,7 +10,7 @@ title: Special zones
 :::caution Important
 While the information below is still valid, we recommend you to use the new [inline map editor](../inline-editor/) to define silent areas
 or attach sounds to an area.
-The inline map editor is easier to use and can be accessed directly from WorkAdventure.
+The inline map editor is easier to use and can be accessed directly from ArqueumSpace.
 :::
 
 

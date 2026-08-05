@@ -1,7 +1,7 @@
 import { IframeApiContribution, openMessagePort } from "./IframeApiContribution";
 import { Space } from "./Spaces/Space";
 
-export class WorkAdventureSpacesCommands extends IframeApiContribution<WorkAdventureSpacesCommands> {
+export class ArqueumSpaceSpacesCommands extends IframeApiContribution<ArqueumSpaceSpacesCommands> {
     callbacks = [];
 
     /**
@@ -30,4 +30,4 @@ export class WorkAdventureSpacesCommands extends IframeApiContribution<WorkAdven
     }
 }
 
-export default new WorkAdventureSpacesCommands();
+export default new ArqueumSpaceSpacesCommands();

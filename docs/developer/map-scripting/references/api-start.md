@@ -4,10 +4,10 @@ sidebar_position: 1
 
 # Start
 
-### Waiting for WorkAdventure API to be available
+### Waiting for ArqueumSpace API to be available
 
-When your script / iFrame loads WorkAdventure, it takes a few milliseconds for your script / iFrame to exchange
-data with WorkAdventure. You should wait for the WorkAdventure API to be fully ready using the `WA.onInit()` method.
+When your script / iFrame loads ArqueumSpace, it takes a few milliseconds for your script / iFrame to exchange
+data with ArqueumSpace. You should wait for the ArqueumSpace API to be fully ready using the `WA.onInit()` method.
 
 ```
 WA.onInit(): Promise<void>

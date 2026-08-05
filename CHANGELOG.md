@@ -12,7 +12,7 @@
 ## Version 1.5.0
 ### Updates
 - Added support for login with OpenID Connect
-- New scripting library available to extend WorkAdventure: see [Scripting API Extra](https://github.com/workadventure/scripting-api-extra/)
+- New scripting library available to extend ArqueumSpace: see [Scripting API Extra](https://github.com/workadventure/scripting-api-extra/)
 - New menu design!
 - New `openTab` property (#1419)
 - Possible integration with Posthog (#1458)
@@ -123,7 +123,7 @@
 
 ### Updates
 
-- Added the emote feature to WorkAdventure. (@Kharhamel, @Tabascoeye)
+- Added the emote feature to ArqueumSpace. (@Kharhamel, @Tabascoeye)
   - The emote menu can be opened by clicking on your character.
   -  Clicking on one of its element will close the menu and play an emote above your character.
   -  This emote can be seen by other players.
@@ -138,7 +138,7 @@
   - If no contact data is found (either because the user is anonymous or because no admin backend), display an error card.
 
 - Mobile support has been improved
-  - WorkAdventure automatically sets the zoom level based on the viewport size to ensure a sensible size of the map is visible, whatever the viewport used
+  - ArqueumSpace automatically sets the zoom level based on the viewport size to ensure a sensible size of the map is visible, whatever the viewport used
   - Mouse wheel support to zoom in / out
   - Pinch support on mobile to zoom in / out
   - Improved virtual joystick size (adapts to the zoom level)

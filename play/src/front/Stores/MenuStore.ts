@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "svelte/store";
 import { derived, get, writable } from "svelte/store";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../types/component";
 import type { Translation } from "../../i18n/i18n-types";
 import { connectionManager } from "../Connection/ConnectionManager";
 import { localUserStore } from "../Connection/LocalUserStore";
@@ -292,7 +292,7 @@ export interface CustomButtonActionBarDescriptor {
     isGradient?: boolean | undefined;
 }
 
-interface RightActionBarButtonProps extends WorkAdventureComponentProps {
+interface RightActionBarButtonProps extends ArqueumSpaceComponentProps {
     first?: boolean;
     last?: boolean;
     classList?: string;
@@ -314,10 +314,10 @@ export const additionalRightButtonsMenu = derived(getAdditionalMenuItemStore("to
     return menuItems;
 });
 
-export type RightMenuItem<TProps extends WorkAdventureComponentProps = WorkAdventureComponentProps> = {
+export type RightMenuItem<TProps extends ArqueumSpaceComponentProps = ArqueumSpaceComponentProps> = {
     id: string;
     fallsInBurgerMenuStore: Writable<boolean>;
-    component: WorkAdventureComponent;
+    component: ArqueumSpaceComponent;
     props: TProps;
 };
 

@@ -1,6 +1,6 @@
 # Setup — deploy de produção (VPS Hostinger)
 
-> **Propósito.** Levar o VirtualOffice deste repositório a um único VPS servindo até ~30 usuários simultâneos, em um
+> **Propósito.** Levar o ArqueumSpace deste repositório a um único VPS servindo até ~30 usuários simultâneos, em um
 > domínio só, com login via Azure Entra ID e a Admin API mandando em permissões e moderação.
 > **Público.** Quem opera o servidor. Escrito contra um plano KVM da Hostinger (4 vCPU, 16 GB RAM, 200 GB NVMe,
 > 16 TB de tráfego) — qualquer VPS Ubuntu com esses números funciona igual.

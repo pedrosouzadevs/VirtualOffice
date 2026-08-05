@@ -1,6 +1,6 @@
 ---
 name: translate
-description: Fill missing WorkAdventure i18n translations by running the i18n diff in play/ and updating locale files under play/src/i18n. Use when asked to run npm run i18n:diff, fix missing translation keys, or complete locale modules.
+description: Fill missing ArqueumSpace i18n translations by running the i18n diff in play/ and updating locale files under play/src/i18n. Use when asked to run npm run i18n:diff, fix missing translation keys, or complete locale modules.
 ---
 
 # Translate

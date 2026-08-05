@@ -2,7 +2,7 @@ import type { Readable, Writable } from "svelte/store";
 import type { AvailabilityStatus } from "@workadventure/messages";
 import type { MapStore } from "@workadventure/store-utils";
 import type { MatrixClient, StateEvents } from "matrix-js-sdk";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../../types/component";
 import type { RoomConnection } from "../../Connection/RoomConnection";
 import type { PictureStore } from "../../Stores/PictureStore";
 
@@ -106,7 +106,7 @@ export interface ChatRoomMember {
     /** User list / merger color for Avatar letter & image background (Matrix rooms). */
     readonly avatarFallbackColor?: Readable<string | undefined>;
     /**
-     * Matrix: WorkAdventure name (own user: account_data; others: merger) shown in parens only when it differs from the Matrix display name.
+     * Matrix: ArqueumSpace name (own user: account_data; others: merger) shown in parens only when it differs from the Matrix display name.
      */
     readonly waDisplayNameIfDifferent?: Readable<string | undefined>;
 }
@@ -264,8 +264,8 @@ export interface ChatMessageReaction {
     readonly reacted: Readable<boolean>;
     readonly canReact: Readable<boolean>;
     readonly component: {
-        component: WorkAdventureComponent;
-        props: WorkAdventureComponentProps;
+        component: ArqueumSpaceComponent;
+        props: ArqueumSpaceComponentProps;
     };
 }
 

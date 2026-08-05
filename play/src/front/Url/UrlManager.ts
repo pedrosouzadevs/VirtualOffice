@@ -48,7 +48,7 @@ class UrlManager {
         localUserStore.setLastRoomUrl(room.href).catch((e) => console.error(e));
         const hash = window.location.hash;
         const search = room.search.toString();
-        history.pushState({}, "WorkAdventure", room.id + (search ? "?" + search : "") + hash);
+        history.pushState({}, "ArqueumSpace", room.id + (search ? "?" + search : "") + hash);
     }
 
     public getStartPositionNameFromUrl(): string | undefined {

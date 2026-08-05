@@ -316,7 +316,7 @@
         {
          "name":"mapDescription",
          "type":"string",
-         "value":"A perfect virtual office to get started with WorkAdventure!"
+         "value":"A perfect virtual office to get started with ArqueumSpace!"
         }, 
         {
          "name":"mapImage",
@@ -354,7 +354,7 @@
                 {
                  "name":"tilesetCopyright",
                  "type":"string",
-                 "value":"\u00a9 2021 WorkAdventure <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
+                 "value":"\u00a9 2021 ArqueumSpace <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
                 }],
          "spacing":0,
          "tilecount":100,
@@ -373,7 +373,7 @@
                 {
                  "name":"tilesetCopyright",
                  "type":"string",
-                 "value":"\u00a9 2021 WorkAdventure <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
+                 "value":"\u00a9 2021 ArqueumSpace <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
                 }],
          "spacing":0,
          "tilecount":100,
@@ -392,7 +392,7 @@
                 {
                  "name":"tilesetCopyright",
                  "type":"string",
-                 "value":"\u00a9 2021 WorkAdventure <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
+                 "value":"\u00a9 2021 ArqueumSpace <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
                 }],
          "spacing":0,
          "tilecount":121,
@@ -411,7 +411,7 @@
                 {
                  "name":"tilesetCopyright",
                  "type":"string",
-                 "value":"\u00a9 2021 WorkAdventure <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
+                 "value":"\u00a9 2021 ArqueumSpace <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
                 }],
          "spacing":0,
          "tilecount":121,
@@ -430,7 +430,7 @@
                 {
                  "name":"tilesetCopyright",
                  "type":"string",
-                 "value":"\u00a9 2021 WorkAdventure <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
+                 "value":"\u00a9 2021 ArqueumSpace <https:\/\/workadventu.re\/> \nLicence: WORKADVENTURE SPECIFIC RESOURCES LICENSE (see LICENSE.assets file)"
                 }],
          "spacing":0,
          "tilecount":12,

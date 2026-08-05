@@ -17,6 +17,6 @@ When editing an area or an entity, you can add the link property to it. You must
 
 1. You can define the way the action is triggered.
 2. You can define the link that will be opened when the player enters the area.
-3. Those settings are related to the way the action is triggered. You can choose to open the link in a new tab, or in a co‑website (an embedded website panel inside WorkAdventure). You can configure its size, whether it can be closed, etc.
+3. Those settings are related to the way the action is triggered. You can choose to open the link in a new tab, or in a co‑website (an embedded website panel inside ArqueumSpace). You can configure its size, whether it can be closed, etc.
 
 ![](../../images/editor/open_link.png)

@@ -1,8 +1,8 @@
 import type { Component } from "svelte";
 
-export type WorkAdventureComponentProps = Record<string, unknown>;
+export type ArqueumSpaceComponentProps = Record<string, unknown>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type WorkAdventureComponent<Props extends WorkAdventureComponentProps = any> = Component<
+export type ArqueumSpaceComponent<Props extends ArqueumSpaceComponentProps = any> = Component<
     Props,
     Record<string, unknown>,
     string

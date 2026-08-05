@@ -32,7 +32,7 @@
         }
     }
 
-    function closeModalAndContinueToWorkAdventure() {
+    function closeModalAndContinueToArqueumSpace() {
         processCallback(generatedSecretStorageKey);
         modals.close();
     }
@@ -100,7 +100,7 @@
         </div>
     {/snippet}
     {#snippet action()}
-        <button class="flex-1 justify-center" onclick={() => closeModalAndContinueToWorkAdventure()}>
+        <button class="flex-1 justify-center" onclick={() => closeModalAndContinueToArqueumSpace()}>
             {$LL.chat.e2ee.createRecoveryKey.buttons.cancel()}
         </button>
         {#if generatedSecretStorageKey === undefined}
@@ -116,7 +116,7 @@
                 variant="secondary"
                 disabled={!isPrivateKeyDownloaded}
                 class="disabled:text-gray-400 disabled:bg-gray-500 bg-secondary flex-1"
-                onclick={closeModalAndContinueToWorkAdventure}
+                onclick={closeModalAndContinueToArqueumSpace}
                 >{$LL.chat.e2ee.createRecoveryKey.buttons.continue()}
             </Button>
         {/if}

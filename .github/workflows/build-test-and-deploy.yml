@@ -14,6 +14,8 @@ concurrency:
 
 jobs:
   build-play:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -25,12 +27,14 @@ jobs:
       dockerfile: play/Dockerfile
       short_name: play
       # sentry_project: play
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
 
   build-back:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -41,11 +45,13 @@ jobs:
       dockerfile: back/Dockerfile
       short_name: back
       sentry_project: back
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
   build-uploader:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -56,11 +62,13 @@ jobs:
       dockerfile: uploader/Dockerfile
       short_name: uploader
       sentry_project: uploader
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
   build-maps:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -71,11 +79,13 @@ jobs:
       dockerfile: maps/Dockerfile
       short_name: maps
       sentry_project: maps
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./maps
 
   build-map-storage:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -86,11 +96,13 @@ jobs:
       dockerfile: map-storage/Dockerfile
       short_name: map-storage
       sentry_project: map-storage
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
   end-to-end-tests:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     name: "End to end tests with ${{ matrix.project }} ${{ matrix.shard }}/${{ matrix.nbShards }}"
     strategy:
       fail-fast: false
@@ -245,7 +257,7 @@ jobs:
           sed -i "s/MAP_STORAGE_API_TOKEN=/MAP_STORAGE_API_TOKEN=MYAWESOMEKEY/g" .env  
           sed -i "s/OPENID_PROMPT=/OPENID_PROMPT=login/g" .env
           sed -i "s/MAX_USERS_FOR_WEBRTC=4/MAX_USERS_FOR_WEBRTC=3/g" .env
-          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=http:\/\/livekit.workadventure.localhost/g" .env
+          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=http:\/\/livekit.arqueum.localhost/g" .env
           sed -i "s/LIVEKIT_API_KEY=/LIVEKIT_API_KEY=devkey/g" .env
           sed -i "s/LIVEKIT_API_SECRET=/LIVEKIT_API_SECRET=12345678901234567890123456789012/g" .env
           sed -i "s/#MAX_DISPLAYED_VIDEOS=16/MAX_DISPLAYED_VIDEOS=6/g" .env
@@ -293,7 +305,7 @@ jobs:
           docker image load --input /tmp/map-storage.tar.gz
           docker image load --input /tmp/uploader.tar.gz
           docker image ls -a
-      - name: Start WorkAdventure
+      - name: Start ArqueumSpace
         run: docker compose -f docker-compose.yaml -f docker-compose.e2e.yml -f docker-compose.livekit.yaml up -d --scale egress=2
 
         
@@ -333,8 +345,9 @@ jobs:
           retention-days: 30
 
   run-gitlab-saas-tests:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Run Gitlab SaaS tests"
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'release') || (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas') || contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'linked_to_saas_branch'))) }}
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && ((github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'release') || (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas') || contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'linked_to_saas_branch')))) }}
     runs-on: ubuntu-latest
     needs:
       - build-back
@@ -477,6 +490,7 @@ jobs:
           fail: ${{ steps.poll-pipeline.outputs.failed == 'true' }}
           recreate: true
   prod-single-domain-deploy-tests:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Test production docker compose (${{ matrix.shard }}/${{ matrix.nbShards }})"
     strategy:
       fail-fast: false
@@ -486,7 +500,7 @@ jobs:
             nbShards: 2
           - shard: 2
             nbShards: 2
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas')) }}
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && (github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas'))) }}
     needs:
       - build-play
       - build-back
@@ -523,7 +537,7 @@ jobs:
         run: |
           sed -i "s/SECRET_KEY=/SECRET_KEY=someSecret/g" .env
           sed -i "s/VERSION=master/VERSION=${DOCKER_TAG}/g" .env
-          sed -i "s/DOMAIN=workadventure.localhost/DOMAIN=play.workadventure.localhost/g" .env
+          sed -i "s/DOMAIN=arqueum.localhost/DOMAIN=play.arqueum.localhost/g" .env
           sed -i "s/MAP_STORAGE_AUTHENTICATION_USER=/MAP_STORAGE_AUTHENTICATION_USER=john.doe/g" .env
           sed -i "s/MAP_STORAGE_AUTHENTICATION_PASSWORD=/MAP_STORAGE_AUTHENTICATION_PASSWORD=password/g" .env
           sed -i "s/ADMIN_API_TOKEN=/ADMIN_API_TOKEN=123/g" .env
@@ -534,14 +548,14 @@ jobs:
           sed -i "s/ROOM_API_SECRET_KEY=/ROOM_API_SECRET_KEY=MYAWESOMEKEY/g" .env
           sed -i "s/OPENID_PROMPT=/OPENID_PROMPT=login/g" .env
           sed -i "s/MAX_USERS_FOR_WEBRTC=4/MAX_USERS_FOR_WEBRTC=3/g" .env
-          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=https:\/\/livekit.workadventure.localhost/g" .env
+          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=https:\/\/livekit.arqueum.localhost/g" .env
           sed -i "s/LIVEKIT_API_KEY=/LIVEKIT_API_KEY=devkey/g" .env
           sed -i "s/LIVEKIT_API_SECRET=/LIVEKIT_API_SECRET=12345678901234567890123456789012/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_ACCESS_KEY=/LIVEKIT_RECORDING_S3_ACCESS_KEY=rustfs-access-key/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_SECRET_KEY=/LIVEKIT_RECORDING_S3_SECRET_KEY=rustfs-secret-access-key/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_REGION=/LIVEKIT_RECORDING_S3_REGION=eu-west-1/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_BUCKET=/LIVEKIT_RECORDING_S3_BUCKET=livekit-recording/g" .env
-          sed -i "s/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=https:\/\/cdn-livekit.workadventure.localhost/g" .env
+          sed -i "s/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=https:\/\/cdn-livekit.arqueum.localhost/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_ENDPOINT=/LIVEKIT_RECORDING_S3_ENDPOINT=https:\/\/rustfs-livekit:9000/g" .env
           sed -i "s/MAX_PER_GROUP=4/MAX_PER_GROUP=100/g" .env
           echo "MAX_DISPLAYED_VIDEOS=6" >> .env
@@ -550,7 +564,7 @@ jobs:
           DOCKER_TAG: ${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG || env.GITHUB_REF_SLUG }}
           KLAXOON_CLIENT_ID: ${{ secrets.KLAXOON_CLIENT_ID }}
         working-directory: contrib/docker
-      - name: Start WorkAdventure
+      - name: Start ArqueumSpace
         run: docker compose -f docker-compose.prod.yaml -f tests/docker-compose.test.yaml up -d --scale egress=2
         env:
           DOCKER_TAG: ${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG || env.GITHUB_REF_SLUG }}
@@ -603,6 +617,7 @@ jobs:
           retention-days: 30
 
   helm-deploy:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Deploy in Kubernetes"
     needs:
       - build-play
@@ -611,7 +626,7 @@ jobs:
       - build-uploader
       - build-map-storage
     runs-on: ubuntu-24.04
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas')) }}
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && (github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas'))) }}
 
     steps:
       - name: Checkout
@@ -840,7 +855,7 @@ jobs:
           NAMESPACE: workadventure-${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG_URL || env.GITHUB_REF_SLUG_URL }}
 
       - name: "Fix path to assets in WAM test files"
-        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.workadventure.localhost|${PLAY_URL}|g" {} \;
+        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.arqueum.localhost|${PLAY_URL}|g" {} \;
         working-directory: map-storage/tests
         env:
           PLAY_URL: "https://play-${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG_URL || env.GITHUB_REF_SLUG_URL }}.test.workadventu.re"
@@ -863,6 +878,8 @@ jobs:
           fail: false
           recreate: true
   helm-test:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     name: "End to end tests in Kubernetes (${{ matrix.shard }}/${{ matrix.nbShards }})"
     needs:
       - helm-deploy
@@ -900,7 +917,7 @@ jobs:
         working-directory: "libs/room-api-clients/room-api-client-js"
 
       - name: "Fix path to assets in WAM test files"
-        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.workadventure.localhost|${PLAY_URL}|g" {} \;
+        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.arqueum.localhost|${PLAY_URL}|g" {} \;
         working-directory: map-storage/tests
         env:
           PLAY_URL: "https://play-${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG_URL || env.GITHUB_REF_SLUG_URL }}.test.workadventu.re"
@@ -939,6 +956,7 @@ jobs:
           retention-days: 30
 
   cleanup:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Cleanup images"
     runs-on: ubuntu-latest
     needs:
@@ -946,7 +964,7 @@ jobs:
       - prod-single-domain-deploy-tests
       - helm-test
     # This will fail if the token does not belong to an admin, hence the always
-    if: always() && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure'))
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && (always() && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure'))) }}
     continue-on-error: true
     steps:
       - name: Prune play

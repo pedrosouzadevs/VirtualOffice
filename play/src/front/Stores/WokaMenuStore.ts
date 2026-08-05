@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { v4 } from "uuid";
-import type { WorkAdventureComponent } from "../../types/component";
+import type { ArqueumSpaceComponent } from "../../types/component";
 
 export type WokaMenuAction = {
     uuid?: string;
@@ -9,7 +9,7 @@ export type WokaMenuAction = {
     protected?: boolean;
     priority?: number;
     style?: "is-success" | "is-error" | "is-primary" | string;
-    actionIcon?: string | WorkAdventureComponent;
+    actionIcon?: string | ArqueumSpaceComponent;
     testId?: string;
 };
 

@@ -1,6 +1,6 @@
 # Environment Variables
 
-This document lists all environment variables used by WorkAdventure services. These variables are defined in the `.env` file.
+This document lists all environment variables used by ArqueumSpace services. These variables are defined in the `.env` file.
 
 > ⚠️ **Auto-generated file** - Do not edit manually. Run `npm run generate-env-docs` to update.
 
@@ -170,10 +170,10 @@ Environment variables for the Back service (backend API).
 | `PLAYER_VARIABLES_MAX_TTL` | No | The maximum time to live of player variables for logged players, expressed in seconds (no limit by default). Use "-1" for infinity. Note that anonymous players don't have any TTL limit because their data is stored in local storage, not in Redis database.  |
 | `ENABLE_CHAT` | No | Enable/disable the chat feature. Defaults to true |
 | `ENABLE_CHAT_UPLOAD` | No | Enable/disable file upload in chat. Defaults to true |
-| `ENABLE_TELEMETRY` | No | By default, WorkAdventure will send telemetry usage once a day. This data contains the version of WorkAdventure used and very rough usage (max number of users...). The statistics collected through telemetry can provide developers valuable insights into WorkAdventure versions that are actually used. No personal user data is sent. Please keep this setting to true unless your WorkAdventure installation is 'secret'. |
-| `SECURITY_EMAIL` | No | This email address will be notified if your WorkAdventure version contains a known security flaw. ENABLE_TELEMETRY must be set to "true" for this. |
+| `ENABLE_TELEMETRY` | No | By default, ArqueumSpace will send telemetry usage once a day. This data contains the version of ArqueumSpace used and very rough usage (max number of users...). The statistics collected through telemetry can provide developers valuable insights into ArqueumSpace versions that are actually used. No personal user data is sent. Please keep this setting to true unless your ArqueumSpace installation is 'secret'. |
+| `SECURITY_EMAIL` | No | This email address will be notified if your ArqueumSpace version contains a known security flaw. ENABLE_TELEMETRY must be set to "true" for this. |
 | `TELEMETRY_URL` | No | URL where telemetry data is sent. |
-| `SENTRY_DSN` | No | If set, WorkAdventure will send errors to Sentry |
+| `SENTRY_DSN` | No | If set, ArqueumSpace will send errors to Sentry |
 | `SENTRY_RELEASE` | No | The Sentry release we target. Only used if SENTRY_DSN is configured. |
 | `SENTRY_TRACES_SAMPLE_RATE` | No | The Sentry traces sample rate. Only used if SENTRY_DSN is configured. Defaults to 0.1 |
 | `SENTRY_ENVIRONMENT` | No | The Sentry environnement we target. Only used if SENTRY_DSN is configured. |
@@ -213,7 +213,7 @@ Environment variables for the Map Storage service.
 | `WEB_HOOK_URL` | No | The URL of the webhook to call when a WAM file is created / updated / deleted. The URL will be called using POST. |
 | `WEB_HOOK_API_TOKEN` | No | The (optional) API token to use when calling the webhook. The token will be sent in the Authorization header of the POST request. |
 | `MAX_SIMULTANEOUS_FS_READS` | No | The maximum number of simultaneous file system (local or S3) reads when regenerating the cache file. Defaults to 100. |
-| `SENTRY_DSN` | No | If set, WorkAdventure will send errors to Sentry |
+| `SENTRY_DSN` | No | If set, ArqueumSpace will send errors to Sentry |
 | `SENTRY_RELEASE` | No | The Sentry release we target. Only used if SENTRY_DSN is configured. |
 | `SENTRY_ENVIRONMENT` | No | The Sentry environment we target. Only used if SENTRY_DSN is configured. |
 | `SENTRY_TRACES_SAMPLE_RATE` | No | The sampling rate for Sentry traces. Only used if SENTRY_DSN is configured. Defaults to 0.1 |

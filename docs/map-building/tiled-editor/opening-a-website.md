@@ -9,7 +9,7 @@ sidebar_position: 40
 :::caution Important
 While the information below is still valid, we recommend you to use the new [inline map editor](../inline-editor/) to define areas
 that trigger opening a website.
-The inline map editor is easier to use and can be accessed directly from WorkAdventure.
+The inline map editor is easier to use and can be accessed directly from ArqueumSpace.
 :::
 
 
@@ -97,7 +97,7 @@ For instance, if you want an iFrame to be able to go in fullscreen, you will use
 
 ### Allowing Scripting API access in the iFrame
 
-If you want the website opened in the iFrame to be able to communicate with WorkAdventure through the [scripting API](/developer/map-scripting/), you need to add a boolean `openWebsiteAllowApi` and set it to `true`.
+If you want the website opened in the iFrame to be able to communicate with ArqueumSpace through the [scripting API](/developer/map-scripting/), you need to add a boolean `openWebsiteAllowApi` and set it to `true`.
 
 ### Opening several co-websites
 

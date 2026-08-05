@@ -44,9 +44,9 @@ const isMapThirdPartyData = z.object({
 
 const MetaTagsData = z.object({
   // Meta tags values
-  title: extendApi(z.string().optional().default("WorkAdventure"), {
+  title: extendApi(z.string().optional().default("ArqueumSpace"), {
     description: "Title shown on browser tab",
-    example: "WorkAdventure - My Awesome World",
+    example: "ArqueumSpace - My Awesome World",
   }),
   description: extendApi(
     z
@@ -57,16 +57,16 @@ const MetaTagsData = z.object({
       ),
     {
       description: "Description of the webpage",
-      example: "My awesome world in WorkAdventure",
+      example: "My awesome world in ArqueumSpace",
     },
   ),
-  author: extendApi(z.string().optional().default("WorkAdventure team"), {
+  author: extendApi(z.string().optional().default("ArqueumSpace team"), {
     description: "Author of the webpage",
     example: "My Awesome team",
   }),
-  provider: extendApi(z.string().optional().default("WorkAdventure"), {
+  provider: extendApi(z.string().optional().default("ArqueumSpace"), {
     description: "Provider of the webpage",
-    example: "WorkAdventure SAAS platform",
+    example: "ArqueumSpace SAAS platform",
   }),
   favIcons: extendApi(isMetaTagFavicon.array().optional(), {
     description: "Icon to load inside the index.html and on the manifest",
@@ -74,7 +74,7 @@ const MetaTagsData = z.object({
   manifestIcons: isMetaTagManifestIcon.array().optional(),
   appName: extendApi(z.string().optional(), {
     description: "Name display on the web app",
-    example: "WorkAdventure",
+    example: "ArqueumSpace",
   }),
   shortAppName: extendApi(z.string().optional(), {
     description: "Name display on the web app when there is not enough space",
@@ -162,7 +162,7 @@ export const isMapDetailsData = z.object({
   }),
   group: extendApi(z.string().nullable(), {
     description:
-      'The group this room is part of (maps the notion of "world" in WorkAdventure SAAS)',
+      'The group this room is part of (maps the notion of "world" in ArqueumSpace SAAS)',
     example: "myorg/myworld",
   }),
   contactPage: extendApi(z.string().nullable().optional(), {

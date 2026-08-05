@@ -53,7 +53,7 @@ test.describe("Map editor @oidc @nomobile @nowebkit", () => {
             .getByRole("button", { name: "Send chat message" })
             .click();
 
-        await assertLogMessage(page, "It seems an iFrame is trying to communicate with WorkAdventure");
+        await assertLogMessage(page, "It seems an iFrame is trying to communicate with ArqueumSpace");
 
         await Map.teleportToPosition(page, 0, 0);
 

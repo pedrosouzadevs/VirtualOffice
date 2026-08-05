@@ -460,7 +460,7 @@ test.describe("Scripting space-related functions @nowebkit", () => {
         // Delete space connection in the backend
         // This simulates a backend restart, as the space connection will be closed
         await apiContext.post(
-            "http://api.workadventure.localhost/debug/close-space-connection?spaceName=localWorld.some-test-space&token=123",
+            "http://api.arqueum.localhost/debug/close-space-connection?spaceName=localWorld.some-test-space&token=123",
         );
 
         //eslint-disable-next-line playwright/no-wait-for-timeout

@@ -141,7 +141,7 @@ export function checkMapStorageService(): boolean {
 export function checkMapPlayService(): boolean {
     console.log("Checking play services", dockerCompose("logs --tail=1000 play").toString());
     const isUp =
-        dockerCompose("logs --tail=1000 play").indexOf("WorkAdventure Pusher started on port") !== -1 &&
+        dockerCompose("logs --tail=1000 play").indexOf("ArqueumSpace Pusher started on port") !== -1 &&
         dockerCompose("logs --tail=1000 play").indexOf("RoomAPI starting on port") !== -1;
     if (!isUp) upPlay();
     return isUp;

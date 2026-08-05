@@ -47,7 +47,7 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
         signIn: "Z Outlook so přizjewić",
         popupScopeToSync: "Moje Outlook-konto zwjazać",
         popupScopeToSyncExplainText:
-            "Dyrbimy so z wašim Outlook-kontom zwjazać, zo by waš kalender a/abo nadawki synchronizował. To wam zmóžnja, waše zećělenja a nadawki w WorkAdventure widźeć a direktnje z kartow k nim wobdźělić.",
+            "Dyrbimy so z wašim Outlook-kontom zwjazać, zo by waš kalender a/abo nadawki synchronizował. To wam zmóžnja, waše zećělenja a nadawki w ArqueumSpace widźeć a direktnje z kartow k nim wobdźělić.",
         popupScopeToSyncCalendar: "Mój kalender synchronizować",
         popupScopeToSyncTask: "Moje nadawki synchronizować",
         popupCancel: "Přetorhnyć",
@@ -69,7 +69,7 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
         signIn: "Z Google so přizjewić",
         popupScopeToSync: "Moje Google-konto zwjazać",
         popupScopeToSyncExplainText:
-            "Dyrbimy so z wašim Google-kontom zwjazać, zo by waš kalender a/abo nadawki synchronizował. To wam zmóžnja, waše zećělenja a nadawki w WorkAdventure widźeć a direktnje z kartow k nim wobdźělić.",
+            "Dyrbimy so z wašim Google-kontom zwjazać, zo by waš kalender a/abo nadawki synchronizował. To wam zmóžnja, waše zećělenja a nadawki w ArqueumSpace widźeć a direktnje z kartow k nim wobdźělić.",
         popupScopeToSyncCalendar: "Mój kalender synchronizować",
         popupScopeToSyncTask: "Moje nadawki synchronizować",
         popupCancel: "Přetorhnyć",

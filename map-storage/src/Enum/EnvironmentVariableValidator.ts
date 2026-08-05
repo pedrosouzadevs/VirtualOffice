@@ -104,7 +104,7 @@ export const EnvironmentVariables = z.object({
         .string()
         .optional()
         .transform(emptyStringToUndefined)
-        .describe("If set, WorkAdventure will send errors to Sentry"),
+        .describe("If set, ArqueumSpace will send errors to Sentry"),
     SENTRY_RELEASE: z
         .string()
         .optional()

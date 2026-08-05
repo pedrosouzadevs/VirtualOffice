@@ -108,7 +108,7 @@ export class VariablesManager {
                 if (object.class === "variable" || object.type === "variable") {
                     if (object.template) {
                         console.warn(
-                            'Warning, a variable object is using a Tiled "template". WorkAdventure does not support objects generated from Tiled templates.',
+                            'Warning, a variable object is using a Tiled "template". ArqueumSpace does not support objects generated from Tiled templates.',
                         );
                         continue;
                     }

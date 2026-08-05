@@ -1,11 +1,11 @@
 # Setup — `admin-api`
 
-**TL;DR.** O `admin-api` é o serviço do VirtualOffice que decide quem entra no mundo, com quais tags, e quem pode
+**TL;DR.** O `admin-api` é o serviço do ArqueumSpace que decide quem entra no mundo, com quais tags, e quem pode
 editar o mapa. Com o `ADMIN_API_URL` definido, o `play` deixa de usar o stub `LocalAdmin` embutido e passa a perguntar
 para nós. Um `docker compose up -d` já sobe tudo ligado; este documento cobre como verificar, como conceder permissões
 e como voltar atrás.
 
-**Público.** Quem roda o VirtualOffice localmente, e quem for operá-lo depois.
+**Público.** Quem roda o ArqueumSpace localmente, e quem for operá-lo depois.
 
 **Idiomas.** Este arquivo (pt-BR) + [SETUP-ADMIN-API.md](SETUP-ADMIN-API.md) (en-US), em lockstep.
 
@@ -21,7 +21,7 @@ e como voltar atrás.
   entradas que os outros serviços já têm:
 
   ```
-  127.0.0.1 admin-api.workadventure.localhost
+  127.0.0.1 admin-api.arqueum.localhost
   ```
 
   Navegadores e o `curl` resolvem `*.localhost` por conta própria, então a aplicação funciona sem ela. O Node não
@@ -32,7 +32,7 @@ e como voltar atrás.
 
 | Serviço | Papel |
 |---|---|
-| `admin-api` | API HTTP que o pusher chama. Porta 3000 dentro da rede, `http://admin-api.workadventure.localhost` pelo navegador. |
+| `admin-api` | API HTTP que o pusher chama. Porta 3000 dentro da rede, `http://admin-api.arqueum.localhost` pelo navegador. |
 | `admin-api-db` | PostgreSQL 17 próprio. Não compartilhado com nenhum outro serviço: este detém identidade e autorização. |
 
 Os dados ficam no volume nomeado `admin-api-db-data`, então `docker compose down` preserva membros e tags. Só o
@@ -56,19 +56,19 @@ pode rodar em todo boot em vez de ser um script que alguém precisa lembrar de e
 Vivacidade, e prontidão (que consulta o Postgres de verdade):
 
 ```bash
-curl -s http://admin-api.workadventure.localhost/readyz
+curl -s http://admin-api.arqueum.localhost/readyz
 ```
 
 Negociação de capabilities. Este endpoint é público de propósito — o pusher o chama sem header `Authorization`:
 
 ```bash
-curl -s http://admin-api.workadventure.localhost/api/capabilities
+curl -s http://admin-api.arqueum.localhost/api/capabilities
 ```
 
 Todo o resto exige o token, então isto **tem** que responder `403`:
 
 ```bash
-curl -i -s http://admin-api.workadventure.localhost/api/room/access | head -1
+curl -i -s http://admin-api.arqueum.localhost/api/room/access | head -1
 ```
 
 Confirme que o pusher conectou. Você procura por `Remote admin api connection successful`:
@@ -77,7 +77,7 @@ Confirme que o pusher conectou. Você procura por `Remote admin api connection s
 docker compose logs play | grep -a "admin api"
 ```
 
-Depois abra `http://play.workadventure.localhost`, entre com `User1` / `pwd` e verifique se **Map editor** aparece no
+Depois abra `http://play.arqueum.localhost`, entre com `User1` / `pwd` e verifique se **Map editor** aparece no
 menu do mapa.
 
 > Não existe página em `/`. O `admin-api` serve apenas `/api/*`, `/healthz` e `/readyz`, então um `404` com
@@ -156,7 +156,7 @@ com administrador funcionando, sem ninguém editar arquivo.
 
 ## Dashboard de administração (ADR-0004)
 
-Abra `http://admin-api.workadventure.localhost/admin/`, entre pelo provedor de identidade, e gerencie membros pela
+Abra `http://admin-api.arqueum.localhost/admin/`, entre pelo provedor de identidade, e gerencie membros pela
 tela. O que segue documenta como está ligado.
 
 | Rota | Método | Quem |
@@ -173,7 +173,7 @@ Quatro variáveis, todas com padrão funcional de desenvolvimento no `docker-com
 
 | Variável | Padrão | Observação |
 |---|---|---|
-| `ADMIN_API_PUBLIC_URL` | `http://admin-api.workadventure.localhost` | O endereço que o **navegador** usa. Vazio desliga o dashboard. |
+| `ADMIN_API_PUBLIC_URL` | `http://admin-api.arqueum.localhost` | O endereço que o **navegador** usa. Vazio desliga o dashboard. |
 | `ADMIN_API_SESSION_SECRET` | um valor só de desenvolvimento | No mínimo 32 caracteres. **Troque fora do ambiente local.** |
 | `ADMIN_API_TRUST_PROXY` | `1` | Use `false` se o `admin-api` for exposto sem proxy na frente. |
 | `OPENID_CLIENT_ID` / `_SECRET` / `_ISSUER` | o client do mock | O mesmo provedor que o `play` usa. |
@@ -214,11 +214,11 @@ adicionada em um idioma quebra o build até o outro tê-la.
 ### Verificação
 
 ```bash
-curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.workadventure.localhost/admin/me
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.arqueum.localhost/admin/me
 ```
 
 Espere `302` para `/admin/login?returnTo=%2Fadmin%2Fme`. Depois abra
-`http://admin-api.workadventure.localhost/admin/` no navegador e entre como `User1` / `pwd`. Você deve cair na lista
+`http://admin-api.arqueum.localhost/admin/` no navegador e entre como `User1` / `pwd`. Você deve cair na lista
 de membros, com a sua própria linha mostrando a tag `admin`.
 
 Duas propriedades que valem conferir na mão, porque são o objetivo desta fatia:
@@ -226,7 +226,7 @@ Duas propriedades que valem conferir na mão, porque são o objetivo desta fatia
 ```bash
 # O token do pusher não abre o dashboard: continua redirecionando para o login.
 curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: $ADMIN_API_TOKEN" \
-  http://admin-api.workadventure.localhost/admin/me
+  http://admin-api.arqueum.localhost/admin/me
 
 # Um administrador revogado é recusado na requisição seguinte, com o mesmo cookie.
 docker compose exec admin-api npm run member:revoke -- john.doe@example.com admin
@@ -468,9 +468,9 @@ Esta é a parte que costuma surpreender.
 ## Solução de problemas
 
 **`invalid_request / Invalid redirect_uri` na página de erro do provedor ao entrar no dashboard.** Parece configuração
-errada nossa e não é. O wildcard do mock de desenvolvimento, `http://*.workadventure.localhost`, **não casa com hífen
+errada nossa e não é. O wildcard do mock de desenvolvimento, `http://*.arqueum.localhost`, **não casa com hífen
 no hostname** — `adminapi` é aceito, `admin-api` e `map-storage` não, qualquer que seja o caminho. É por isso que
-`http://admin-api.workadventure.localhost/admin/callback` está registrado explicitamente em
+`http://admin-api.arqueum.localhost/admin/callback` está registrado explicitamente em
 [`contrib/oidc-server-mock/clients-config.json`](../contrib/oidc-server-mock/clients-config.json). Se você mudar o
 `ADMIN_API_PUBLIC_URL`, acrescente o novo callback lá e recrie o mock:
 
@@ -487,7 +487,7 @@ docker compose logs admin-api | grep "dashboard is disabled"
 
 **502 Bad Gateway logo após subir.** Quase sempre ainda é boot: o `play` leva minutos (só o Vite pode gastar 150 s) e
 o Traefik fica sem upstream até o pusher escutar. Acompanhe `docker compose logs -f play` esperando por
-`WorkAdventure Pusher web-server started`.
+`ArqueumSpace Pusher web-server started`.
 
 **502 que não passa.** Verifique se o pusher chegou a terminar de subir:
 
@@ -510,7 +510,7 @@ docker compose exec play node -e "fetch('http://admin-api:3000/api/capabilities'
 que o front manda:
 
 ```bash
-docker compose exec play node -e "const a=require('/usr/src/app/node_modules/axios'); a.get('http://admin-api:3000/api/room/access',{params:{userIdentifier:'john.doe@example.com',playUri:'http://play.workadventure.localhost/~/maps/areas.wam',characterTextureIds:['male1','body1']},headers:{Authorization:process.env.ADMIN_API_TOKEN}}).then(r=>console.log(JSON.stringify(r.data.characterTextures)))"
+docker compose exec play node -e "const a=require('/usr/src/app/node_modules/axios'); a.get('http://admin-api:3000/api/room/access',{params:{userIdentifier:'john.doe@example.com',playUri:'http://play.arqueum.localhost/~/maps/areas.wam',characterTextureIds:['male1','body1']},headers:{Authorization:process.env.ADMIN_API_TOKEN}}).then(r=>console.log(JSON.stringify(r.data.characterTextures)))"
 ```
 
 **Migrations falharam no boot.** O `admin-api` se recusa a servir em vez de responder sobre um schema não migrado,

@@ -1,6 +1,6 @@
-# Contributing to WorkAdventure
+# Contributing to ArqueumSpace
 
-Are you looking to help on WorkAdventure? Awesome, feel welcome and read the following sections in order to know how to
+Are you looking to help on ArqueumSpace? Awesome, feel welcome and read the following sections in order to know how to
 ask questions and how to work on something.
 
 ## Contributions we are seeking
@@ -8,11 +8,11 @@ ask questions and how to work on something.
 We love to receive contributions from our community — you!
 
 There are many ways to contribute, from writing tutorials or blog posts, improving the documentation,
-submitting bug reports and feature requests or writing code which can be incorporated into WorkAdventure itself.
+submitting bug reports and feature requests or writing code which can be incorporated into ArqueumSpace itself.
 
 ## Contributing external resources
 
-You can share your work on maps / articles / videos related to WorkAdventure on our [awesome-workadventure](https://github.com/workadventure/awesome-workadventure) list.
+You can share your work on maps / articles / videos related to ArqueumSpace on our [awesome-workadventure](https://github.com/workadventure/awesome-workadventure) list.
 
 ## Developer documentation
 
@@ -21,7 +21,7 @@ Documentation targeted at developers can be found in the [`/docs/others`](docs/o
 ## Using the issue tracker
 
 First things first: **Do NOT report security vulnerabilities in public issues!**.
-Please read the [security guide](SECURITY.md) to learn who to do a security disclosure to the WorkAdventure core team.
+Please read the [security guide](SECURITY.md) to learn who to do a security disclosure to the ArqueumSpace core team.
 
 You can use [GitHub issue tracker](https://github.com/thecodingmachine/workadventure/issues) to:
 
@@ -30,7 +30,7 @@ You can use [GitHub issue tracker](https://github.com/thecodingmachine/workadven
 
 If you have more general questions, a good place to ask is [our Discord server](https://discord.gg/G6Xh9ZM9aR).
 
-Finally, you can come and talk to the WorkAdventure core team... on WorkAdventure, of course! [Our offices are here](https://play.staging.workadventu.re/@/tcm/workadventure/wa-village).
+Finally, you can come and talk to the ArqueumSpace core team... on ArqueumSpace, of course! [Our offices are here](https://play.staging.workadventu.re/@/tcm/workadventure/wa-village).
 
 ## Pull requests
 
@@ -82,7 +82,7 @@ All services and libraries in the project use standardized npm scripts:
 
 ### Providing tests
 
-WorkAdventure is based on a video game engine (Phaser), and video games are not the easiest programs to unit test.
+ArqueumSpace is based on a video game engine (Phaser), and video games are not the easiest programs to unit test.
 
 Nevertheless, if your code can be unit tested, please provide a unit test (we use Jasmine), or an end-to-end test (we use Playwright).
 

@@ -1,5 +1,5 @@
 import {connectionManager} from "../play/src/front/Connection/ConnectionManager";
-import { WorkAdventureWebSocket } from "../play/src/front/Connection/WebSocket";
+import { ArqueumSpaceWebSocket } from "../play/src/front/Connection/WebSocket";
 import * as WebSocket from "ws"
 import { AvailabilityStatus, PositionMessage_Direction } from '../libs/messages/src/ts-proto-generated/messages';
 
@@ -9,12 +9,12 @@ function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-WorkAdventureWebSocket.setWebsocketFactory((url: string) => {
+ArqueumSpaceWebSocket.setWebsocketFactory((url: string) => {
     return new WebSocket(url);
 });
 
 async function startOneUser(): Promise<void> {
-    const onConnect = await connectionManager.connectToRoomSocket(process.env.ROOM_ID ? process.env.ROOM_ID : '_/global/maps.workadventure.localhost/Floor0/floor0.json', 'TEST', ['male3'],
+    const onConnect = await connectionManager.connectToRoomSocket(process.env.ROOM_ID ? process.env.ROOM_ID : '_/global/maps.arqueum.localhost/Floor0/floor0.json', 'TEST', ['male3'],
         {
             x: 783,
             y: 170

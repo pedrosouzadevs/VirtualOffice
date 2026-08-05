@@ -6,7 +6,7 @@ title: Host your Map with GitHub Pages
 # Getting started with GitHub Pages
 
 :::caution Legacy
-While this was the default recommended way to host your map in the past, we now recommend [hosting your maps on the WorkAdventure server](./wa-hosted) directly.
+While this was the default recommended way to host your map in the past, we now recommend [hosting your maps on the ArqueumSpace server](./wa-hosted) directly.
 It is easier to set up and maintain. However, hosting your maps on GitHub Pages is still a valid option and will keep being supported.
 :::
 
@@ -36,7 +36,7 @@ Wait a few minutes... GitHub will deploy a new website with the content of the r
 
 ![Your website is ready!](../../images/website_address.png)
 
-Click on the link. You should be redirected directly to WorkAdventure, on your map!
+Click on the link. You should be redirected directly to ArqueumSpace, on your map!
 
 ### Update your map on GH Pages
 
@@ -49,7 +49,7 @@ After making this change, just push to GitHub and your map will be deployed to G
 
 ## Testing your map
 
-To test your map, you need to find its URL. There are 2 kinds of URLs in WorkAdventure:
+To test your map, you need to find its URL. There are 2 kinds of URLs in ArqueumSpace:
 
 - Test URLs are in the form `https://play.workadventu.re/_/[instance]/[server]/[path to map]`
 - Registered URLs are in the form `https://play.workadventu.re/@/[organization]/[world]/[map]`
@@ -60,5 +60,5 @@ This will connect you to a "public" instance. Anyone can come and connect to a p
 
 ## Need some help?
 
-WorkAdventure is a constantly evolving project and there is plenty of room for improvement regarding map editing.
-If you are facing any troubles, do not hesitate to seek help in [our Discord server](https://discord.gg/G6Xh9ZM9aR) or open an "issue" in the [GitHub WorkAdventure account](https://github.com/thecodingmachine/workadventure/issues).
+ArqueumSpace is a constantly evolving project and there is plenty of room for improvement regarding map editing.
+If you are facing any troubles, do not hesitate to seek help in [our Discord server](https://discord.gg/G6Xh9ZM9aR) or open an "issue" in the [GitHub ArqueumSpace account](https://github.com/thecodingmachine/workadventure/issues).

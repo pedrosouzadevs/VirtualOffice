@@ -8,7 +8,7 @@ describe("Shared utils", () => {
         const properties = new Map<string, string | number | boolean | Json>();
         const jitsiRoom = slugifyJitsiRoomName(
             "Foo",
-            "https://play.workadventure.localhost/_/foo/bar.com/map.tmj",
+            "https://play.arqueum.localhost/_/foo/bar.com/map.tmj",
             properties.has(GameMapProperties.JITSI_NO_PREFIX),
         );
 
@@ -17,7 +17,7 @@ describe("Shared utils", () => {
         properties.set("jitsiNoPrefix", true);
         const jitsiRoom2 = slugifyJitsiRoomName(
             "Foo",
-            "https://play.workadventure.localhost/_/foo/bar.com/map.tmj",
+            "https://play.arqueum.localhost/_/foo/bar.com/map.tmj",
             properties.has(GameMapProperties.JITSI_NO_PREFIX),
         );
 

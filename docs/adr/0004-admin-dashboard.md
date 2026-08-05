@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-31 — open questions answered the same day (decisions #6 to #8)
-- **Deciders:** VirtualOffice team
+- **Deciders:** ArqueumSpace team
 - **Languages:** [0004-admin-dashboard.pt-BR.md](0004-admin-dashboard.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
 - **Origin:** [ADR-0002](0002-admin-api.md), phase P2. Revises its decision #3. Follows [ADR-0003](0003-member-and-tag-management.md).
 
@@ -67,13 +67,13 @@ Authentication answers *who*; **our database** answers *what they may do* — th
 between F2 and F3.
 
 `openid-client@5.7.1` is already a dependency of `play`, so there is nothing new to evaluate. Azure Entra ID will need
-`http://admin-api.workadventure.localhost/admin/callback` — or its production equivalent — added as a redirect URI
+`http://admin-api.arqueum.localhost/admin/callback` — or its production equivalent — added as a redirect URI
 when F2 lands.
 
 > **Correction (2026-07-31, during G0).** This ADR originally claimed the development mock's
-> `RedirectUris: ["http://*.workadventure.localhost", ...]` already covered our callback, so that **no new client
+> `RedirectUris: ["http://*.arqueum.localhost", ...]` already covered our callback, so that **no new client
 > registration was needed**. That is false, and the reason is worth writing down: the mock's wildcard does not match a
-> **hyphen** in the hostname. `http://adminapi.workadventure.localhost/...` is accepted; `admin-api` and
+> **hyphen** in the hostname. `http://adminapi.arqueum.localhost/...` is accepted; `admin-api` and
 > `map-storage` are rejected, whatever the path. The failure surfaces as `invalid_request / Invalid redirect_uri` on
 > the provider's own error page, which reads like our misconfiguration and is not.
 >
