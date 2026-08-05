@@ -1,15 +1,14 @@
-import { z } from "zod";
 import type { Capabilities } from "@workadventure/messages";
-import { isCapabilities } from "@workadventure/messages";
+import { AdminBannedData, isCapabilities } from "@workadventure/messages";
 import axios, { type AxiosResponse } from "axios";
 import { Deferred } from "./Deferred";
 
-export const AdminBannedData = z.object({
-    is_banned: z.boolean(),
-    message: z.string(),
-});
-
-export type AdminBannedData = z.infer<typeof AdminBannedData>;
+/**
+ * Re-exported, not defined here: the schema moved to `@workadventure/messages` so that an Admin API implementation can
+ * assert its own answers against the very schema the pusher parses them with, without depending on this package
+ * (ADR-0005). Every existing import keeps working.
+ */
+export { AdminBannedData };
 
 export class SharedAdminApi {
     private capabilities: Capabilities = {};

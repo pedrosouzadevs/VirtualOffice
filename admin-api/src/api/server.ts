@@ -1,0 +1,335 @@
+import { existsSync } from "node:fs";
+import type { Capabilities } from "@workadventure/messages";
+import cookieParser from "cookie-parser";
+import express, { type Express, type NextFunction, type Request, type RequestHandler, type Response } from "express";
+import type { AdminDashboardConfiguration } from "../Application/AdminDashboardConfiguration";
+import type { AdminAlerter } from "../Application/Ports/AdminAlerter";
+import type { AuditLogRepository } from "../Application/Ports/AuditLogRepository";
+import type { BanRepository } from "../Application/Ports/BanRepository";
+import type { OidcAuthenticator } from "../Application/Ports/OidcAuthenticator";
+import type { ReportRepository } from "../Application/Ports/ReportRepository";
+import type { RoomCatalogue } from "../Application/Ports/RoomCatalogue";
+import type { WorldKicker } from "../Application/Ports/WorldKicker";
+import { CompanionCatalogue } from "../Application/CompanionCatalogue";
+import type { MapDetailsConfiguration } from "../Application/MapDetailsService";
+import type { MemberRepository } from "../Application/Ports/MemberRepository";
+import type { TagRepository } from "../Application/Ports/TagRepository";
+import type { RoomAccessConfiguration } from "../Application/RoomAccessService";
+import { WokaCatalogue } from "../Application/WokaCatalogue";
+import { SUPPORTED_CAPABILITIES } from "../Capabilities";
+import { BanController } from "./controllers/BanController";
+import { CapabilitiesController } from "./controllers/CapabilitiesController";
+import { CompanionListController } from "./controllers/CompanionListController";
+import { HealthController, type ReadinessCheck } from "./controllers/HealthController";
+import { MapController } from "./controllers/MapController";
+import { MembersController } from "./controllers/MembersController";
+import { ReportController } from "./controllers/ReportController";
+import { RoomAccessController } from "./controllers/RoomAccessController";
+import { SameWorldController } from "./controllers/SameWorldController";
+import { TagsController } from "./controllers/TagsController";
+import { WokaListController } from "./controllers/WokaListController";
+import { AdminAuditController } from "./controllers/AdminAuditController";
+import { AdminAuthController } from "./controllers/AdminAuthController";
+import { AdminMembersController } from "./controllers/AdminMembersController";
+import { AdminModerationController } from "./controllers/AdminModerationController";
+import { AdminRoomsController } from "./controllers/AdminRoomsController";
+import { AdminTagsController } from "./controllers/AdminTagsController";
+import { adminApiTokenAuthentication } from "./middlewares/adminApiTokenAuthentication";
+import { adminSessionAuthentication } from "./middlewares/adminSessionAuthentication";
+import { loginRateLimit } from "./middlewares/loginRateLimit";
+
+export interface ServerDependencies {
+    /**
+     * Shared secret the pusher must present. Required with no default on purpose: a security boundary that can be
+     * silently skipped is not a boundary.
+     */
+    adminApiToken: string;
+
+    /** Everything `/api/map` needs. Injected rather than read from the environment so tests can vary it. */
+    mapDetailsConfiguration: MapDetailsConfiguration;
+
+    /** Everything `/api/room/access` needs. */
+    roomAccessConfiguration: RoomAccessConfiguration;
+
+    /** Where tags come from once `ADMIN_API_URL` is set. */
+    memberRepository: MemberRepository;
+
+    /** The tag catalogue behind the map editor's pickers. */
+    tagRepository: TagRepository;
+
+    /** Who was thrown out of the world (ADR-0005). Read and written by `/api/ban`. */
+    banRepository: BanRepository;
+
+    /** What users complained about (ADR-0005). Written by `/api/report`. */
+    reportRepository: ReportRepository;
+
+    /**
+     * The world's rooms, read from `map-storage` (ADR-0004, G3).
+     *
+     * A top-level dependency rather than a dashboard one, for the same reason the audit log became one: the dashboard
+     * is no longer its only reader — `/api/room/sameWorld` serves it to the pusher (ADR-0005, H2).
+     *
+     * Absent when `INTERNAL_MAP_STORAGE_URL` is unset. Both readers then say so distinctly instead of guessing.
+     */
+    roomCatalogue?: RoomCatalogue;
+
+    /**
+     * Removes somebody from the running world when the dashboard bans them (ADR-0006, decision #3).
+     *
+     * Absent when the kick channel is not configured (`ADMIN_SOCKETS_TOKEN` and friends): a dashboard ban is then
+     * still recorded and the door still closes — only the immediate removal is skipped, and the endpoint says so.
+     */
+    worldKicker?: WorldKicker;
+
+    /**
+     * Where every mutation is recorded (ADR-0004, decision #5).
+     *
+     * A top-level dependency rather than a dashboard one, because the dashboard is no longer its only writer:
+     * `POST /api/ban` is called by the pusher and must record who banned whom whether or not `/admin/*` is configured.
+     * The CLI has always written here without a dashboard either.
+     */
+    auditLog: AuditLogRepository;
+
+    /** Subsystem probes consulted by `/readyz`. Empty until Postgres lands (ADR-0002, P0/E4). */
+    readinessChecks?: readonly ReadinessCheck[];
+
+    /** Overridable so tests can assert the negotiation without depending on how much of P0 is built. */
+    capabilities?: Capabilities;
+
+    /** Overridable so tests can point at a fixture catalogue. */
+    wokaCatalogue?: WokaCatalogue;
+
+    /** Overridable so tests can point at a fixture catalogue. */
+    companionCatalogue?: CompanionCatalogue;
+
+    /**
+     * The administration dashboard (ADR-0004).
+     *
+     * Absent means it is not configured: `/admin/*` answers a uniform 503 and **nothing about `/api/*` changes**.
+     * Optional rather than required precisely so a dashboard misconfiguration can never stop the pusher-facing API,
+     * whose failure hangs `play` (ADR-0002, Trap #2).
+     */
+    adminDashboard?: AdminDashboardDependencies;
+
+    /**
+     * Express's `trust proxy`. Only the login rate limiter reads it today, through `req.ip`.
+     */
+    trustProxy?: boolean | number | string;
+
+    /**
+     * Where the built dashboard lives. Overridable so a test can point at a fixture — or at nothing, to prove the
+     * service still works with no UI built.
+     */
+    dashboardUiDirectory?: string;
+}
+
+/** Matches `build.outDir` in `vite.config.ts`, relative to the package root the process starts from. */
+const DEFAULT_UI_DIRECTORY = "dist-ui";
+
+export interface AdminDashboardDependencies {
+    readonly configuration: AdminDashboardConfiguration;
+
+    /** Injected rather than constructed here so the barrier's tests never need a live identity provider. */
+    readonly authenticator: OidcAuthenticator;
+
+    /** Where a refused `admin` grant, or a revoked one, is shouted about (threat model, F1). */
+    readonly alerter: AdminAlerter;
+
+    /** Overridable so the sliding-window and absolute-cap tests can drive the clock. */
+    readonly now?: () => Date;
+
+    /** Overridable so a test can assert the limit without issuing the production number of requests. */
+    readonly rateLimit?: RequestHandler;
+}
+
+/**
+ * Mounts `/admin`, or a uniform 503 in its place.
+ *
+ * Registered as one step so there is exactly one answer to "is the dashboard on?", and so the guard is mounted
+ * before any route that sits behind it — Express matches in registration order, and a barrier registered after the
+ * route it protects protects nothing.
+ */
+function mountAdminDashboard(app: Express, dependencies: ServerDependencies): void {
+    const dashboard = dependencies.adminDashboard;
+
+    if (dashboard === undefined) {
+        app.use("/admin", (req: Request, res: Response) => {
+            // Deliberately vague. Which variable is missing is in the startup log, where an operator can see it;
+            // repeating it to an anonymous caller on a publicly reachable host would not be.
+            res.status(503).json({
+                status: "error",
+                type: "error",
+                code: "ADMIN_DASHBOARD_DISABLED",
+                title: "Dashboard unavailable",
+                subtitle: "",
+                details: "The administration dashboard is not configured on this deployment.",
+            });
+        });
+        return;
+    }
+
+    const cookieOptions = { secure: dashboard.configuration.publicUrl.startsWith("https://") };
+
+    // Scoped to /admin: /api/* has no cookies to read, and keeping the parser off that path is one less thing
+    // running in front of the endpoints the pusher depends on.
+    app.use("/admin", cookieParser());
+
+    app.use(
+        "/admin",
+        adminSessionAuthentication({
+            sessionSecret: dashboard.configuration.sessionSecret,
+            members: dependencies.memberRepository,
+            cookieOptions,
+            now: dashboard.now,
+        }),
+    );
+
+    new AdminAuthController(app, {
+        authenticator: dashboard.authenticator,
+        members: dependencies.memberRepository,
+        sessionSecret: dashboard.configuration.sessionSecret,
+        cookieOptions,
+        publicUrl: dashboard.configuration.publicUrl,
+        rateLimit: dashboard.rateLimit ?? loginRateLimit(),
+        now: dashboard.now,
+    });
+
+    // Everything under /admin/api is behind the barrier registered above, which has already proven the session,
+    // re-read the admin tag and checked CSRF on every mutation (ADR-0004, G1).
+    const administration = {
+        members: dependencies.memberRepository,
+        tags: dependencies.tagRepository,
+        audit: dependencies.auditLog,
+        alerter: dashboard.alerter,
+    };
+    new AdminMembersController(app, administration);
+    new AdminTagsController(app, dependencies.tagRepository);
+    new AdminAuditController(app, dependencies.auditLog);
+    new AdminRoomsController(app, dependencies.roomCatalogue, dependencies.memberRepository);
+    new AdminModerationController(app, {
+        bans: dependencies.banRepository,
+        reports: dependencies.reportRepository,
+        audit: dependencies.auditLog,
+        members: dependencies.memberRepository,
+        kicker: dependencies.worldKicker,
+    });
+
+    mountDashboardUi(app, dependencies.dashboardUiDirectory ?? DEFAULT_UI_DIRECTORY);
+}
+
+/**
+ * Serves the built Svelte application (ADR-0004, G2).
+ *
+ * Registered **after** every route above, so a screen can never shadow an endpoint. It is also behind the session
+ * barrier, which is deliberate: an anonymous visitor is sent to the login rather than handed an application shell
+ * that will only fail its first request.
+ *
+ * A missing directory is normal, not an error — the API is useful without a UI, and refusing to start over an
+ * unbuilt front end would hang `play`. `map-storage` serves its own `dist-ui` the same way.
+ */
+function mountDashboardUi(app: Express, directory: string): void {
+    if (!existsSync(directory)) {
+        return;
+    }
+
+    app.use("/admin", express.static(directory));
+
+    // The SPA fallback. `/admin/api` is excluded explicitly: those callers parse JSON, and answering them with the
+    // application's HTML would turn a plain 404 into a parse error somewhere far away.
+    app.get("/admin/{*splat}", (req: Request, res: Response, next: NextFunction) => {
+        if (req.path === "/admin/api" || req.path.startsWith("/admin/api/")) {
+            next();
+            return;
+        }
+
+        res.sendFile("index.html", { root: directory }, (error: unknown) => {
+            if (error !== undefined && error !== null) {
+                next(error);
+            }
+        });
+    });
+}
+
+/**
+ * Builds the Express application without listening on a port.
+ *
+ * Keeping construction separate from binding is what lets the contract tests drive the real app over an ephemeral
+ * port instead of booting the production server and racing on a fixed one.
+ */
+export function createServer(dependencies: ServerDependencies): Express {
+    const app = express();
+
+    // Express 5 defaults to the "simple" query parser, which leaves `a[]=1&a[]=2` as the literal key `a[]`. axios —
+    // which is what the pusher uses — serialises array parameters exactly that way, so `characterTextureIds` would
+    // silently arrive as undefined and every user would render with a blank avatar. "extended" (qs) folds the
+    // bracketed form back into a real array.
+    app.set("query parser", "extended");
+
+    // Decides whether `X-Forwarded-For` is believed, and so which address the login rate limiter counts against.
+    app.set("trust proxy", dependencies.trustProxy ?? 1);
+
+    // The pusher only ever issues GETs and small JSON POSTs against this API; there is no reason to accept a large body.
+    app.use(express.json({ limit: "100kb" }));
+
+    // Registered before any /api route so new endpoints are guarded by default.
+    app.use("/api", adminApiTokenAuthentication(dependencies.adminApiToken));
+
+    const wokaCatalogue = dependencies.wokaCatalogue ?? new WokaCatalogue();
+    const companionCatalogue = dependencies.companionCatalogue ?? new CompanionCatalogue();
+
+    new HealthController(app, dependencies.readinessChecks ?? []);
+    new CapabilitiesController(app, dependencies.capabilities ?? SUPPORTED_CAPABILITIES);
+    new MapController(app, dependencies.mapDetailsConfiguration);
+    new WokaListController(app, wokaCatalogue);
+    new CompanionListController(app, companionCatalogue);
+    new MembersController(app, dependencies.memberRepository);
+    new TagsController(app, dependencies.tagRepository);
+    new BanController(app, { bans: dependencies.banRepository, audit: dependencies.auditLog });
+    new ReportController(app, dependencies.reportRepository);
+    new SameWorldController(app, dependencies.roomCatalogue);
+    new RoomAccessController(
+        app,
+        dependencies.memberRepository,
+        dependencies.banRepository,
+        wokaCatalogue,
+        companionCatalogue,
+        dependencies.roomAccessConfiguration,
+    );
+
+    mountAdminDashboard(app, dependencies);
+
+    // Express's default 404 answers HTML. Every caller of this API parses responses as JSON with zod, so an
+    // unimplemented path would surface as a confusing parse error instead of a plain "not found".
+    app.use((req: Request, res: Response) => {
+        res.status(404).json({
+            status: "error",
+            type: "error",
+            code: "ADMIN_API_NOT_FOUND",
+            title: "Not found",
+            subtitle: "",
+            details: `No handler for ${req.method} ${req.originalUrl}.`,
+        });
+    });
+
+    // Must be registered last: Express only treats a 4-arity handler as an error handler, and only routes to it what
+    // was raised after it was mounted. Without it, a thrown handler answers HTML, which every caller here parses as JSON.
+    app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
+        console.error(`[${new Date().toISOString()}] Unhandled error on ${req.method} ${req.originalUrl}`, error);
+
+        if (res.headersSent) {
+            next(error);
+            return;
+        }
+
+        res.status(500).json({
+            status: "error",
+            type: "error",
+            code: "ADMIN_API_INTERNAL_ERROR",
+            title: "Internal server error",
+            subtitle: "",
+            details: "The Admin API failed to handle this request. The administrator has been notified.",
+        });
+    });
+
+    return app;
+}

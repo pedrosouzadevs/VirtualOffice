@@ -5,7 +5,11 @@
     "Description": "Client for authorization code flow",
     "AllowedGrantTypes": ["authorization_code"],
     "AllowAccessTokensViaBrowser": true,
-    "RedirectUris": ["http://*.workadventure.localhost", "https://*.test.workadventu.re"],
+    "RedirectUris": [
+      "http://*.workadventure.localhost",
+      "https://*.test.workadventu.re",
+      "http://admin-api.workadventure.localhost/admin/callback"
+    ],
     "RequirePkce": false,
     "AllowedScopes": ["openid", "profile", "email", "tags-scope", "some-app-scope-1"],
     "IdentityTokenLifetime": 3600,
@@ -18,7 +22,11 @@
     "Description": "Client for authorization code flow",
     "AllowedGrantTypes": ["authorization_code"],
     "AllowAccessTokensViaBrowser": true,
-    "RedirectUris": ["http://*.workadventure.localhost", "https://*.test.workadventu.re"],
+    "RedirectUris": [
+      "http://*.workadventure.localhost",
+      "https://*.test.workadventu.re",
+      "http://admin-api.workadventure.localhost/admin/callback"
+    ],
     "AllowedScopes": ["openid", "profile", "email", "tags-scope", "some-app-scope-1"],
     "IdentityTokenLifetime": 3600,
     "AccessTokenLifetime": 3600,

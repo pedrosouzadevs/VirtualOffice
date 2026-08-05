@@ -17,6 +17,7 @@
     "play",
     "back",
     "map-storage",
+    "admin-api",
     "libs/*",
     "benchmark",
     "uploader",

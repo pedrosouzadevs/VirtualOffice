@@ -290,9 +290,11 @@ Razão: o F4 foi confirmado **standalone** (propriedade na área, sem `admin-api
 1. **F2/P2** — o ambiente de desenvolvimento fica com o mock permanentemente, ou haverá um tenant Azure de dev? (decidir antes de aposentar o mock)
 2. **F3** — modelo de dados do `admin-api`: confirmar entidades e relacionamentos (membros, tags, mundos, salas, bans) no ADR.
 3. ~~**F4** — origem da propriedade, posição de saída, valor de N, estender vs. nova propriedade, arte da porta~~ → **todas resolvidas** no [ADR-0001](../adr/0001-area-owner-lock.pt-BR.md). Sem dependência de arte: paredes procedurais com abertura padronizada ao sul. **Nenhum ponto pendente bloqueia o início.**
-4. **Melhoria (sugerida 2026-07-29)** — no editor, o campo "Usuário permitido" da área pessoal (modo estático) é inútil sem Admin API: o `searchMembers` do `LocalAdmin` rejeita. Proposta: **listar os usuários online** como fallback, permitindo atribuir dono diretamente pelo editor. Encaixe natural: junto do F3 (que traz busca real de membros) ou como item pequeno standalone no pusher.
+4. ~~**Melhoria (sugerida 2026-07-29)** — no editor, o campo "Usuário permitido" da área pessoal (modo estático) é inútil sem Admin API~~ → **endereçada** no [ADR-0003](../adr/0003-member-and-tag-management.pt-BR.md): a P1 implementa o `/api/members`, e o seletor passa a fazer busca real em vez do fallback de usuários online que se propunha aqui.
 
 ## Próximos artefatos
 
-- **ADR do F3** ✅ escrito: [ADR-0002](../adr/0002-admin-api.pt-BR.md) — contrato verificado, faseamento P0–P4, testes de contrato obrigatórios.
+- **ADR do F3** ✅ escrito: [ADR-0002](../adr/0002-admin-api.pt-BR.md) — contrato verificado, faseamento P0–P4, testes de contrato obrigatórios. **P0 entregue** (4 endpoints, Postgres, bootstrap idempotente, `play` ligado ponta a ponta).
+- **ADR da P1 do F3** ✅ escrito: [ADR-0003](../adr/0003-member-and-tag-management.pt-BR.md) — membros e tags, gestão por CLI, e por que o `api/save-name` não é declarado. **P1 entregue.**
+- **ADR da P2 do F3** 📋 proposto: [ADR-0004](../adr/0004-admin-dashboard.pt-BR.md) — o dashboard. Revisa a decisão #3 do ADR-0002 (Svelte embutido, não front Next.js separado) e antecipa a autorização e o log de auditoria. Tem questões em aberto aguardando a equipe.
 - ADR do F1 quando a fila chegar nele.

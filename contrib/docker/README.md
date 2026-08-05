@@ -1,5 +1,13 @@
 # Self-hosting WorkAdventure using Docker Compose
 
+> [!IMPORTANT]
+> **VirtualOffice fork:** the deployment guide for THIS repository is
+> [docs/SETUP-DEPLOY.md](../../docs/SETUP-DEPLOY.md) ([pt-BR](../../docs/SETUP-DEPLOY.pt-BR.md)). The compose file
+> here differs from upstream's in two load-bearing ways: the five Node services are **built from this repository**
+> (`VERSION` is a local tag, not an upstream release — the upstream images lack this fork's changes), and the
+> **Admin API** (`admin-api` + its Postgres) is part of the stack, serving the dashboard at `/admin`.
+> The upstream instructions below remain as background.
+
 > [!WARNING]
 > If you haven't already, please check the [Setting up a self-hosted production environment](../../docs/others/self-hosting/install.md) guide
 > before getting started.

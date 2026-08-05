@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["ES2022", "ES2022.Error"],
+        "module": "esnext",
+        "moduleResolution": "bundler",
+
+        "sourceMap": true,
+        "inlineSources": true,
+        "outDir": "./dist",
+
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitThis": false,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+
+        "skipLibCheck": true,
+
+        "sourceRoot": "/"
+    },
+    // `src-ui` is the browser half and is typechecked by `tsconfig-ui.json` through `svelte-check`: it targets the
+    // DOM and imports `.svelte` files, neither of which this configuration knows about.
+    "exclude": ["./dist", "./dist-ui", "./src-ui", "./eslint.config.js", "./vitest.config.ts", "./vite.config.ts"]
+}

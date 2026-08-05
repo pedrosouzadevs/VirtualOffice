@@ -1,0 +1,4 @@
+# Built dashboard (ADR-0004, G2). Produced by `npm run ui:build`, and by the Dockerfile for production images.
+# Never committed: it is generated from src-ui, and a stale copy in the repository would be served in preference to
+# the code that actually exists.
+dist-ui

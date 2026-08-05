@@ -26,6 +26,7 @@ services:
           - "room-api.workadventure.localhost"
           - "maps.workadventure.localhost"
           - "oidc.workadventure.localhost"
+          - "admin-api.workadventure.localhost"
           - "map-storage.workadventure.localhost"
           - "xmpp.workadventure.localhost"
           - "matrix.workadventure.localhost"
@@ -36,6 +37,12 @@ services:
     # Uncomment to run the production build in dev (along STARTUP_COMMAND_4 and NODE_OPTIONS)
     #command: npm run start
     working_dir: /usr/src/app/play
+    depends_on:
+      # With ADMIN_API_URL set, the pusher queries /api/capabilities before it opens its own port and retries with no
+      # cap on failure. Starting before admin-api is ready means play hangs and Traefik answers 502 (ADR-0002,
+      # Trap #2). Waiting for the healthcheck removes the race.
+      admin-api:
+        condition: service_healthy
     volumes:
       - .:/usr/src/app
     tmpfs: /tmp
@@ -77,11 +84,16 @@ services:
       TURN_STATIC_AUTH_SECRET: "$TURN_STATIC_AUTH_SECRET"
       MAX_PER_GROUP: "$MAX_PER_GROUP"
       MAX_USERNAME_LENGTH: "$MAX_USERNAME_LENGTH"
-      OPENID_CLIENT_ID: authorization-code-client-id
-      OPENID_CLIENT_SECRET: authorization-code-client-secret
-      OPENID_CLIENT_ISSUER: http://oidc.workadventure.localhost
+      # The identity provider (F2, config swap). Defaults are the development OIDC mock; set the OPENID_* variables
+      # in the repository-root .env to point at Azure Entra ID instead — docs/SETUP-CLOUD-AZURE.md walks through it.
+      # The same values feed admin-api below, deliberately: one provider for the world and the dashboard.
+      OPENID_CLIENT_ID: "${OPENID_CLIENT_ID:-authorization-code-client-id}"
+      OPENID_CLIENT_SECRET: "${OPENID_CLIENT_SECRET:-authorization-code-client-secret}"
+      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-http://oidc.workadventure.localhost}"
       OPENID_PROFILE_SCREEN_PROVIDER: ${OPENID_PROFILE_SCREEN_PROVIDER:-}
-      OPENID_SCOPE: profile openid email tags-scope
+      # "tags-scope" exists only on the mock. Entra ID rejects unknown scopes (AADSTS70011), so the Azure value drops
+      # it — harmless since the pusher stops reading the tags claim the moment ADMIN_API_URL is set (F3).
+      OPENID_SCOPE: "${OPENID_SCOPE:-profile openid email tags-scope}"
       OPENID_PROMPT: ${OPENID_PROMPT:-}
       OPENID_USERNAME_CLAIM: ${OPENID_USERNAME_CLAIM:-}
       OPENID_LOCALE_CLAIM: ${OPENID_LOCALE_CLAIM:-}
@@ -90,6 +102,9 @@ services:
       SECRET_KEY: "$SECRET_KEY"
       ADMIN_API_URL: "${ADMIN_API_URL:-}"
       ADMIN_API_TOKEN: "$ADMIN_API_TOKEN"
+      # Mounts /ws/admin/rooms, the channel a dashboard ban kicks through (ADR-0006). Shared with admin-api below,
+      # interpolated from the same .env so the two sides cannot drift. Development default; override for anything real.
+      ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:-dev-only-admin-sockets-token-change-me}"
       MAP_STORAGE_API_TOKEN: "FFVSGBSGBSGFB23SFGBSFG4BS"
       API_URL: back:50051
       DISABLE_ANONYMOUS: $DISABLE_ANONYMOUS
@@ -320,6 +335,142 @@ services:
       - "traefik.http.routers.map-storage-ui.entryPoints=web"
       - "traefik.http.routers.map-storage-ui.service=map-storage-ui"
       - "traefik.http.services.map-storage-ui.loadbalancer.server.port=8080"
+
+  # Dedicated Postgres for the Admin API (ADR-0002, spec decision #3). Not shared with any other service:
+  # admin-api owns identity and authorisation, and nothing else should be able to write to them.
+  admin-api-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "${ADMIN_API_DB_USER:-admin_api}"
+      POSTGRES_PASSWORD: "${ADMIN_API_DB_PASSWORD:-admin_api}"
+      POSTGRES_DB: "${ADMIN_API_DB_NAME:-admin_api}"
+    volumes:
+      - admin-api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Without this, admin-api races the database on a cold start and dies applying migrations.
+      test: ["CMD-SHELL", "pg_isready -U ${ADMIN_API_DB_USER:-admin_api} -d ${ADMIN_API_DB_NAME:-admin_api}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # VirtualOffice Admin API (ADR-0002). Members, tags and permissions.
+  # NOTE: ADMIN_API_URL is deliberately NOT set on the "play" service yet. Pointing the pusher here before
+  # /api/map and /api/room/access exist would break login and map loading. It gets wired up in P0/E6.
+  admin-api:
+    image: ghcr.io/thecodingmachine/nodejs:v2-24-trixie
+    command: npm run start:dev
+    working_dir: /usr/src/app/admin-api
+    environment:
+      # @workadventure/messages re-exports generated protobuf code, so we must wait for it like the other services.
+      STARTUP_COMMAND_1: ../wait-proto.sh
+      STARTUP_COMMAND_2: ../npm-install.sh
+      NODE_ENV: development
+      ADMIN_API_PORT: "3000"
+      # Same value the pusher sends. Interpolated from the repository-root .env so both sides cannot drift apart.
+      ADMIN_API_TOKEN: "$ADMIN_API_TOKEN"
+      ADMIN_API_DATABASE_URL: "postgres://${ADMIN_API_DB_USER:-admin_api}:${ADMIN_API_DB_PASSWORD:-admin_api}@admin-api-db:5432/${ADMIN_API_DB_NAME:-admin_api}"
+      # Granted the "admin" tag by the idempotent bootstrap on every startup. Defaults to the OIDC mock's admin
+      # identity so a fresh clone has a working administrator, and so the e2e suite can rely on it. Override in .env
+      # for anything but local development.
+      ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL:-john.doe@example.com}"
+      # Administration dashboard (ADR-0004). Empty ADMIN_API_PUBLIC_URL in .env to switch /admin off; the dashboard
+      # then answers 503 and /api — the surface "play" depends on — is untouched.
+      ADMIN_API_PUBLIC_URL: "${ADMIN_API_PUBLIC_URL:-http://admin-api.workadventure.localhost}"
+      # Development-only default so a fresh clone has a working dashboard. Override it in .env for anything else.
+      ADMIN_API_SESSION_SECRET: "${ADMIN_API_SESSION_SECRET:-dev-only-admin-dashboard-session-secret-change-me}"
+      ADMIN_API_TRUST_PROXY: "${ADMIN_API_TRUST_PROXY:-1}"
+      # The same OIDC client the pusher uses, interpolated from the same .env values (F2, config swap): pointing the
+      # world at Azure Entra ID points the dashboard there in the same motion. In development the mock allows
+      # http://*.workadventure.localhost as a redirect URI, which already covers /admin/callback; on Entra ID the
+      # /admin/callback URL must be registered explicitly (docs/SETUP-CLOUD-AZURE.md).
+      # "tags-scope" is deliberately absent from the default — authorisation comes from our database, never from an
+      # OIDC claim — and the dashboard ignores OPENID_SCOPE from .env for the same reason: a scope list tuned for the
+      # world (which may carry tags-scope for the mock) must not leak claims into the dashboard's session.
+      OPENID_CLIENT_ID: "${OPENID_CLIENT_ID:-authorization-code-client-id}"
+      OPENID_CLIENT_SECRET: "${OPENID_CLIENT_SECRET:-authorization-code-client-secret}"
+      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-http://oidc.workadventure.localhost}"
+      OPENID_SCOPE: openid email profile
+      # Read only by the dashboard's room list (ADR-0004, G3). GET /maps on map-storage is unauthenticated, so
+      # there is no token here — the same call "play" makes from LocalAdmin. Empty it to switch that screen off.
+      INTERNAL_MAP_STORAGE_URL: "${INTERNAL_MAP_STORAGE_URL:-http://map-storage:3000}"
+      # The kick channel (ADR-0006): the pusher's /ws/admin/rooms websocket, reached in-network, naming rooms by the
+      # public URL browsers connect with. Empty ADMIN_SOCKETS_TOKEN degrades a dashboard ban to record-plus-door.
+      ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:-dev-only-admin-sockets-token-change-me}"
+      PLAY_URL: "${PLAY_URL:-http://play.workadventure.localhost}"
+      # 3001, not 3000: the pusher serves HTTP on 3000 and every /ws/ endpoint on a second uWS app on 3001 —
+      # the same split the play-ws Traefik router encodes.
+      INTERNAL_PLAY_URL: "${INTERNAL_PLAY_URL:-http://play:3001}"
+      # Optional. Alerts always reach the log with an [ADMIN-ALERT] marker; this also POSTs them as JSON.
+      ADMIN_API_ALERT_WEBHOOK_URL: "${ADMIN_API_ALERT_WEBHOOK_URL:-}"
+      # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
+      # copies stop applying to those fields, so both services must read the same .env (ADR-0002).
+      START_ROOM_URL: "$START_ROOM_URL"
+      PUBLIC_MAP_STORAGE_URL: "http://map-storage.workadventure.localhost"
+      DISABLE_ANONYMOUS: "$DISABLE_ANONYMOUS"
+      ENABLE_CHAT: "$ENABLE_CHAT"
+      ENABLE_CHAT_UPLOAD: "$ENABLE_CHAT_UPLOAD"
+      ENABLE_CHAT_ONLINE_LIST: "$ENABLE_CHAT_ONLINE_LIST"
+      ENABLE_CHAT_DISCONNECTED_LIST: "$ENABLE_CHAT_DISCONNECTED_LIST"
+      ENABLE_SAY: "${ENABLE_SAY:-}"
+      ENABLE_ISSUE_REPORT: "${ENABLE_ISSUE_REPORT:-}"
+      ENABLE_TUTORIAL: "$ENABLE_TUTORIAL"
+      SKIP_CAMERA_PAGE: "$SKIP_CAMERA_PAGE"
+      BYPASS_PWA: "$BYPASS_PWA"
+      DEFAULT_WOKA_NAME: "$DEFAULT_WOKA_NAME"
+      DEFAULT_WOKA_TEXTURE: "$DEFAULT_WOKA_TEXTURE"
+      PROVIDE_DEFAULT_WOKA_NAME: "$PROVIDE_DEFAULT_WOKA_NAME"
+      PROVIDE_DEFAULT_WOKA_TEXTURE: "$PROVIDE_DEFAULT_WOKA_TEXTURE"
+      OPENID_WOKA_NAME_POLICY: "${OPENID_WOKA_NAME_POLICY:-}"
+      OPID_WOKA_NAME_POLICY: "$OPID_WOKA_NAME_POLICY"
+      # Global kill switch for the map editor. MAP_EDITOR_ALLOW_ALL_USERS is deliberately NOT passed: once
+      # ADMIN_API_URL is set the pusher stops forwarding OIDC tags, so canEdit must come from our database.
+      ENABLE_MAP_EDITOR: "$ENABLE_MAP_EDITOR"
+      ADMIN_API_WORLD_NAME: "${ADMIN_API_WORLD_NAME:-localWorld}"
+      # Integrations, one entry each in the "applications" array of /api/room/access.
+      KLAXOON_ENABLED: "$KLAXOON_ENABLED"
+      YOUTUBE_ENABLED: "$YOUTUBE_ENABLED"
+      GOOGLE_DRIVE_ENABLED: "$GOOGLE_DRIVE_ENABLED"
+      GOOGLE_DOCS_ENABLED: "$GOOGLE_DOCS_ENABLED"
+      GOOGLE_SHEETS_ENABLED: "$GOOGLE_SHEETS_ENABLED"
+      GOOGLE_SLIDES_ENABLED: "$GOOGLE_SLIDES_ENABLED"
+      ERASER_ENABLED: "$ERASER_ENABLED"
+      EXCALIDRAW_ENABLED: "$EXCALIDRAW_ENABLED"
+      CARDS_ENABLED: "$CARDS_ENABLED"
+      TLDRAW_ENABLED: "$TLDRAW_ENABLED"
+      # Hardcoded to the very values the "play" service above uses. These are NOT in .env, so interpolating them
+      # would yield empty strings here and enableMatrixChat would be false for us and true for play.
+      MATRIX_API_URI: http://synapse:8008/
+      MATRIX_PUBLIC_URI: http://matrix.workadventure.localhost
+      MATRIX_ADMIN_USER: admin
+      MATRIX_ADMIN_PASSWORD: MySecretPassword
+      MATRIX_DOMAIN: matrix.workadventure.localhost
+      LIVEKIT_RECORDING_S3_ENDPOINT: "${LIVEKIT_RECORDING_S3_ENDPOINT:-}"
+      LIVEKIT_RECORDING_S3_BUCKET: "${LIVEKIT_RECORDING_S3_BUCKET:-}"
+      LIVEKIT_RECORDING_S3_ACCESS_KEY: "${LIVEKIT_RECORDING_S3_ACCESS_KEY:-}"
+      LIVEKIT_RECORDING_S3_SECRET_KEY: "${LIVEKIT_RECORDING_S3_SECRET_KEY:-}"
+      LIVEKIT_RECORDING_S3_REGION: "${LIVEKIT_RECORDING_S3_REGION:-}"
+    depends_on:
+      admin-api-db:
+        condition: service_healthy
+    healthcheck:
+      # "play" waits on this. Without it the pusher can reach /api/capabilities before we are listening, and its
+      # uncapped retry loop means it would never open its own port (ADR-0002, Trap #2).
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    volumes:
+      - .:/usr/src/app
+    tmpfs: /tmp
+    ports:
+      - "9236:9229"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin-api.rule=Host(`admin-api.workadventure.localhost`)"
+      - "traefik.http.routers.admin-api.entryPoints=web"
+      - "traefik.http.services.admin-api.loadbalancer.server.port=3000"
 
   uploader:
     image: ghcr.io/thecodingmachine/nodejs:v2-24-trixie
@@ -560,3 +711,8 @@ services:
 #    network_mode: host
 #volumes:
 #  synapsedata:
+
+volumes:
+  # Postgres data for the Admin API. Named so "docker compose down" keeps members and tags;
+  # only "down -v" discards them.
+  admin-api-db-data:

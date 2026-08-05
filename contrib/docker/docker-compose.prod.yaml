@@ -1,4 +1,3 @@
-version: "3.6"
 services:
   reverse-proxy:
     image: traefik:v3.6.1
@@ -28,8 +27,19 @@ services:
       - ${DATA_DIR}/letsencrypt/:/letsencrypt/
     restart: ${RESTART_POLICY}
 
+  # Built from THIS repository, not pulled from Docker Hub, and that is load-bearing: the upstream images do not
+  # contain this fork's changes — F4's area-owner lock in play, and the schemas admin-api validates against. The
+  # VERSION variable is the local tag the build produces, not an upstream release.
   play:
-    image: thecodingmachine/workadventure-play:${VERSION}
+    image: virtualoffice/play:${VERSION}
+    build:
+      context: ../..
+      dockerfile: play/Dockerfile
+    depends_on:
+      # The pusher retries /api/capabilities without a cap BEFORE opening its port, so play must not start until
+      # admin-api answers — otherwise a slow admin-api boot looks like a hung play (ADR-0002, Trap #2).
+      admin-api:
+        condition: service_healthy
     environment:
       - DEBUG_MODE
       - JITSI_URL
@@ -81,6 +91,8 @@ services:
       - ADMIN_API_TOKEN
       - ADMIN_API_URL
       - ADMIN_URL
+      # Mounts /ws/admin/rooms, the channel a dashboard ban kicks through (ADR-0006). Same value admin-api signs with.
+      - ADMIN_SOCKETS_TOKEN
       - ROOM_API_PORT=50051
       - ROOM_API_SECRET_KEY=${ROOM_API_SECRET_KEY}
       - GRPC_VERBOSITY=ERROR
@@ -167,7 +179,10 @@ services:
     restart: ${RESTART_POLICY}
 
   back:
-    image: thecodingmachine/workadventure-back:${VERSION}
+    image: virtualoffice/back:${VERSION}
+    build:
+      context: ../..
+      dockerfile: back/Dockerfile
     environment:
       - PLAY_URL=https://${DOMAIN}
       - MINIMUM_DISTANCE=${MINIMUM_DISTANCE}
@@ -224,7 +239,10 @@ services:
     restart: ${RESTART_POLICY}
 
   uploader:
-    image: thecodingmachine/workadventure-uploader:${VERSION}
+    image: virtualoffice/uploader:${VERSION}
+    build:
+      context: ../..
+      dockerfile: uploader/Dockerfile
     environment:
       - UPLOADER_URL=https://${DOMAIN}/uploader
       #AWS
@@ -288,8 +306,128 @@ services:
       - redisdata:/data
     restart: ${RESTART_POLICY}
 
+  admin-api-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "${ADMIN_API_DB_USER:-admin_api}"
+      POSTGRES_PASSWORD: "${ADMIN_API_DB_PASSWORD:?set ADMIN_API_DB_PASSWORD in .env}"
+      POSTGRES_DB: "${ADMIN_API_DB_NAME:-admin_api}"
+    volumes:
+      - admin-api-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Without this, admin-api races the database on a cold start and dies applying migrations.
+      test: ["CMD-SHELL", "pg_isready -U ${ADMIN_API_DB_USER:-admin_api} -d ${ADMIN_API_DB_NAME:-admin_api}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: ${RESTART_POLICY}
+
+  # VirtualOffice Admin API (ADR-0002..0006): identity, tags, permissions, moderation, and the dashboard.
+  # /api/* is deliberately NOT routed by Traefik — only the pusher calls it, in-network at http://admin-api:3000.
+  # The dashboard at /admin/* is the one public surface, on the same domain and certificate as everything else.
+  admin-api:
+    image: virtualoffice/admin-api:${VERSION}
+    build:
+      context: ../..
+      dockerfile: admin-api/Dockerfile
+    depends_on:
+      admin-api-db:
+        condition: service_healthy
+    environment:
+      ADMIN_API_PORT: "3000"
+      ADMIN_API_TOKEN: "${ADMIN_API_TOKEN:?set ADMIN_API_TOKEN in .env}"
+      ADMIN_API_DATABASE_URL: "postgres://${ADMIN_API_DB_USER:-admin_api}:${ADMIN_API_DB_PASSWORD}@admin-api-db:5432/${ADMIN_API_DB_NAME:-admin_api}"
+      # Granted the admin tag by the idempotent bootstrap on every startup. Set it to a real address — with Entra ID
+      # this is the email of whoever administers the world, and it is also the lockout recovery (restart re-grants).
+      ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL}"
+      # The dashboard lives on the main domain under /admin — one DNS record, one certificate.
+      ADMIN_API_PUBLIC_URL: "https://${DOMAIN}"
+      ADMIN_API_SESSION_SECRET: "${ADMIN_API_SESSION_SECRET:?set ADMIN_API_SESSION_SECRET in .env}"
+      # Traefik terminates TLS in front of us, one hop away.
+      ADMIN_API_TRUST_PROXY: "1"
+      ADMIN_API_WORLD_NAME: "${ADMIN_API_WORLD_NAME:-VirtualOffice}"
+      ADMIN_API_ALERT_WEBHOOK_URL: "${ADMIN_API_ALERT_WEBHOOK_URL:-}"
+      # The same OIDC client play uses, from the same values: pointing the world at Entra ID points the dashboard
+      # there in the same motion (F2). The scope is fixed — the dashboard needs the email and nothing else.
+      OPENID_CLIENT_ID: "${OPENID_CLIENT_ID}"
+      OPENID_CLIENT_SECRET: "${OPENID_CLIENT_SECRET}"
+      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER}"
+      OPENID_SCOPE: "openid email profile"
+      # The kick channel (ADR-0006): the pusher's /ws/admin/rooms websocket. 3001 is the pusher's websocket app —
+      # the same split the play-ws Traefik router encodes; 3000 is its HTTP app and has no /ws routes.
+      ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:?set ADMIN_SOCKETS_TOKEN in .env}"
+      PLAY_URL: "https://${DOMAIN}"
+      INTERNAL_PLAY_URL: "http://play:3001"
+      # The room catalogue (dashboard G3, /api/room/sameWorld, and the kick's room list).
+      INTERNAL_MAP_STORAGE_URL: "http://map-storage:3000"
+      PUBLIC_MAP_STORAGE_URL: "https://${DOMAIN}/map-storage"
+      # Everything below also feeds play. Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
+      # copies stop applying to those fields — both services read the same .env so they cannot drift (ADR-0002).
+      START_ROOM_URL: "${START_ROOM_URL}"
+      DISABLE_ANONYMOUS: "${DISABLE_ANONYMOUS:-true}"
+      ENABLE_MAP_EDITOR: "${ENABLE_MAP_EDITOR:-true}"
+      ENABLE_CHAT: "${ENABLE_CHAT:-true}"
+      ENABLE_CHAT_UPLOAD: "${ENABLE_CHAT_UPLOAD:-true}"
+      ENABLE_CHAT_ONLINE_LIST: "${ENABLE_CHAT_ONLINE_LIST:-true}"
+      ENABLE_CHAT_DISCONNECTED_LIST: "${ENABLE_CHAT_DISCONNECTED_LIST:-true}"
+      ENABLE_SAY: "${ENABLE_SAY:-true}"
+      ENABLE_ISSUE_REPORT: "${ENABLE_ISSUE_REPORT:-false}"
+      ENABLE_TUTORIAL: "${ENABLE_TUTORIAL:-true}"
+      SKIP_CAMERA_PAGE: "${SKIP_CAMERA_PAGE:-false}"
+      BYPASS_PWA: "${BYPASS_PWA:-false}"
+      DEFAULT_WOKA_NAME: "${DEFAULT_WOKA_NAME:-}"
+      DEFAULT_WOKA_TEXTURE: "${DEFAULT_WOKA_TEXTURE:-}"
+      PROVIDE_DEFAULT_WOKA_NAME: "${PROVIDE_DEFAULT_WOKA_NAME:-no}"
+      PROVIDE_DEFAULT_WOKA_TEXTURE: "${PROVIDE_DEFAULT_WOKA_TEXTURE:-no}"
+      OPID_WOKA_NAME_POLICY: "${OPID_WOKA_NAME_POLICY:-allow_override_opid}"
+      MATRIX_PUBLIC_URI: "${MATRIX_PUBLIC_URI:-}"
+      MATRIX_API_URI: "${MATRIX_API_URI:-}"
+      MATRIX_ADMIN_USER: "${MATRIX_ADMIN_USER:-}"
+      MATRIX_ADMIN_PASSWORD: "${MATRIX_ADMIN_PASSWORD:-}"
+      MATRIX_DOMAIN: "${MATRIX_DOMAIN:-}"
+      KLAXOON_ENABLED: "${KLAXOON_ENABLED:-false}"
+      YOUTUBE_ENABLED: "${YOUTUBE_ENABLED:-true}"
+      GOOGLE_DRIVE_ENABLED: "${GOOGLE_DRIVE_ENABLED:-false}"
+      GOOGLE_DOCS_ENABLED: "${GOOGLE_DOCS_ENABLED:-false}"
+      GOOGLE_SHEETS_ENABLED: "${GOOGLE_SHEETS_ENABLED:-false}"
+      GOOGLE_SLIDES_ENABLED: "${GOOGLE_SLIDES_ENABLED:-false}"
+      ERASER_ENABLED: "${ERASER_ENABLED:-false}"
+      EXCALIDRAW_ENABLED: "${EXCALIDRAW_ENABLED:-false}"
+      CARDS_ENABLED: "${CARDS_ENABLED:-false}"
+      TLDRAW_ENABLED: "${TLDRAW_ENABLED:-false}"
+      LIVEKIT_RECORDING_S3_ENDPOINT: "${LIVEKIT_RECORDING_S3_ENDPOINT:-}"
+      LIVEKIT_RECORDING_S3_ACCESS_KEY: "${LIVEKIT_RECORDING_S3_ACCESS_KEY:-}"
+      LIVEKIT_RECORDING_S3_SECRET_KEY: "${LIVEKIT_RECORDING_S3_SECRET_KEY:-}"
+      LIVEKIT_RECORDING_S3_REGION: "${LIVEKIT_RECORDING_S3_REGION:-}"
+      LIVEKIT_RECORDING_S3_BUCKET: "${LIVEKIT_RECORDING_S3_BUCKET:-}"
+    healthcheck:
+      # /healthz, not /readyz: liveness gates play's startup ordering; a Postgres blip mid-flight must not make
+      # compose restart-cascade the world.
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
+    labels:
+      traefik.enable: "true"
+      # No strip-prefix: the application's own routes start at /admin. /api stays unrouted on purpose — on this
+      # domain /api belongs to back, and admin-api's /api is for the pusher, in-network only.
+      traefik.http.routers.admin-api.rule: "Host(`${DOMAIN}`) && PathPrefix(`/admin`)"
+      traefik.http.routers.admin-api.entryPoints: "web"
+      traefik.http.routers.admin-api.service: "admin-api"
+      traefik.http.services.admin-api.loadbalancer.server.port: "3000"
+      traefik.http.routers.admin-api-ssl.rule: "Host(`${DOMAIN}`) && PathPrefix(`/admin`)"
+      traefik.http.routers.admin-api-ssl.entryPoints: "websecure"
+      traefik.http.routers.admin-api-ssl.service: "admin-api"
+      traefik.http.routers.admin-api-ssl.tls: "true"
+      traefik.http.routers.admin-api-ssl.tls.certresolver: "myresolver"
+    restart: ${RESTART_POLICY}
+
   map-storage:
-    image: thecodingmachine/workadventure-map-storage:${VERSION}
+    image: virtualoffice/map-storage:${VERSION}
+    build:
+      context: ../..
+      dockerfile: map-storage/Dockerfile
     environment:
       API_URL: back:50051
       PROMETHEUS_AUTHORIZATION_TOKEN: "$PROMETHEUS_AUTHORIZATION_TOKEN"
@@ -330,3 +468,4 @@ services:
 volumes:
   redisdata:
   map-storage-data:
+  admin-api-db-data:
