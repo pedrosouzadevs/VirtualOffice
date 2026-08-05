@@ -1,0 +1,26 @@
+# Tunnel mode (ngrok / Cloudflare Tunnel): TLS terminates at the tunnel's edge, so the origin serves plain HTTP.
+#
+# Use it ON TOP of the production file:
+#
+#   docker compose -f docker-compose.prod.yaml -f docker-compose.tunnel.yaml up -d
+#
+# It overrides ONLY the reverse-proxy command (compose replaces the whole list, so the full set is restated):
+#
+# - The web -> websecure redirect goes away. The tunnel agent speaks plain HTTP to us on port 80; redirecting it to
+#   a port the tunnel never connects to would be an infinite loop from the visitor's point of view.
+# - The ACME resolver goes away. A Let's Encrypt challenge cannot pass for a hostname that resolves to the tunnel's
+#   edge, and with the resolver absent Traefik makes no ACME calls at all. The `-ssl` router variants reference the
+#   now-missing resolver and are dropped with a warning in the log — expected and harmless; the `web` routers serve
+#   every route. HTTPS is the tunnel's job here, not the origin's.
+#
+# The walkthrough lives in docs/SETUP-TUNNEL.md (en-US) / docs/SETUP-TUNNEL.pt-BR.md (pt-BR).
+services:
+  reverse-proxy:
+    command:
+      - --log.level=${LOG_LEVEL}
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      # Entry points — same three as production, minus the redirect between them.
+      - --entryPoints.web.address=:80
+      - --entryPoints.websecure.address=:443
+      - --entryPoints.grpc.address=:50051
