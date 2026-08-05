@@ -1,8 +1,8 @@
 import { writable } from "svelte/store";
 import type { ExternalSvelteComponentServiceInterface } from "../../ExternalModule/ExtensionModule";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../../types/component";
 
-type ExternalComponentEntry = { componentType: WorkAdventureComponent; props?: WorkAdventureComponentProps };
+type ExternalComponentEntry = { componentType: ArqueumSpaceComponent; props?: ArqueumSpaceComponentProps };
 
 const externalComponentsByZone = {
     actionBarAppsMenu: writable(new Map<string, ExternalComponentEntry>()),
@@ -28,8 +28,8 @@ class ExternalSvelteComponentService implements ExternalSvelteComponentServiceIn
     public addComponentToZone(
         zone: ExternalComponentZones,
         key: string,
-        componentType: WorkAdventureComponent,
-        props?: WorkAdventureComponentProps,
+        componentType: ArqueumSpaceComponent,
+        props?: ArqueumSpaceComponentProps,
     ) {
         externalComponentsByZone[zone].update((map) => {
             map.set(key, { componentType, props });

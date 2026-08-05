@@ -17,7 +17,7 @@ export function proxyFiles(fileSystem: FileSystemInterface) {
             const regex = /[.-]([a-f0-9]{8})\.([a-z]{2,4})$/i;
             const match = fileName.match(regex);
 
-            // Regular expression to match a UUID (used by WorkAdventure uploaded assets)
+            // Regular expression to match a UUID (used by ArqueumSpace uploaded assets)
             const regexUuid = /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}).*\.([a-z]{2,4})/i;
             const matchUuid = fileName.match(regexUuid);
 

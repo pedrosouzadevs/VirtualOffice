@@ -8,14 +8,14 @@ import type { OpenCoWebsiteObject } from "../Chat/Utils";
 import type { SpaceRegistryInterface } from "../Space/SpaceRegistry/SpaceRegistryInterface";
 import type { ExternalComponentZones } from "../Stores/Utils/externalSvelteComponentService";
 import type { HasPlayerMovedInterface } from "../Api/Events/HasPlayerMovedInterface";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../types/component";
 
 export interface ExternalSvelteComponentServiceInterface {
     addComponentToZone(
         zone: ExternalComponentZones,
         key: string,
-        componentType: WorkAdventureComponent,
-        props?: WorkAdventureComponentProps,
+        componentType: ArqueumSpaceComponent,
+        props?: ArqueumSpaceComponentProps,
     ): void;
     removeComponentFromZone(zone: ExternalComponentZones, key: string): void;
 }
@@ -41,13 +41,13 @@ export interface ExtensionModuleOptions {
     todoListStoreUpdate?: (this: void, updater: Updater<Map<string, TodoListInterface>>) => void;
     openErrorScreen?(error: Error): void;
     logoutCallback?(): void;
-    showComponentInChat(component: WorkAdventureComponent, props?: WorkAdventureComponentProps): void;
+    showComponentInChat(component: ArqueumSpaceComponent, props?: ArqueumSpaceComponentProps): void;
     onPlayerMovementEnded?: (callback: (event: HasPlayerMovedInterface) => void) => void;
 }
 
 export interface ExtensionModuleAreaProperty {
-    AreaPropertyEditor: WorkAdventureComponent;
-    AddAreaPropertyButton: WorkAdventureComponent;
+    AreaPropertyEditor: ArqueumSpaceComponent;
+    AddAreaPropertyButton: ArqueumSpaceComponent;
     handleAreaPropertyOnEnter: (area: AreaData, signal: AbortSignal) => void;
     handleAreaPropertyOnLeave: (area?: AreaData) => void;
     shouldDisplayButton: (areaProperties: AreaDataProperties) => boolean;
@@ -58,7 +58,7 @@ export interface ExtensionModule {
     init: (roomMetadata: unknown, options: ExtensionModuleOptions) => void;
     destroy: () => void;
     areaMapEditor?: () => { [key: string]: ExtensionModuleAreaProperty } | undefined;
-    components?: () => WorkAdventureComponent[];
+    components?: () => ArqueumSpaceComponent[];
     openPopupMeeting?: (
         subject: string,
         joinWebUrl: string,

@@ -25,7 +25,7 @@ jobs:
       dockerfile: play/Dockerfile
       short_name: play
       # sentry_project: play
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
@@ -41,7 +41,7 @@ jobs:
       dockerfile: back/Dockerfile
       short_name: back
       sentry_project: back
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
@@ -56,7 +56,7 @@ jobs:
       dockerfile: uploader/Dockerfile
       short_name: uploader
       sentry_project: uploader
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
@@ -71,7 +71,7 @@ jobs:
       dockerfile: maps/Dockerfile
       short_name: maps
       sentry_project: maps
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./maps
 
@@ -86,7 +86,7 @@ jobs:
       dockerfile: map-storage/Dockerfile
       short_name: map-storage
       sentry_project: map-storage
-      # We only push to the registry if we are in the WorkAdventure organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
+      # We only push to the registry if we are in the ArqueumSpace organization. Otherwise, we will use artifacts because GITHUB_TOKEN from a public fork have no write access, even to the local user repository.
       push-to-registry: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure') }}
       context: ./
 
@@ -293,7 +293,7 @@ jobs:
           docker image load --input /tmp/map-storage.tar.gz
           docker image load --input /tmp/uploader.tar.gz
           docker image ls -a
-      - name: Start WorkAdventure
+      - name: Start ArqueumSpace
         run: docker compose -f docker-compose.yaml -f docker-compose.e2e.yml -f docker-compose.livekit.yaml up -d --scale egress=2
 
         
@@ -550,7 +550,7 @@ jobs:
           DOCKER_TAG: ${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG || env.GITHUB_REF_SLUG }}
           KLAXOON_CLIENT_ID: ${{ secrets.KLAXOON_CLIENT_ID }}
         working-directory: contrib/docker
-      - name: Start WorkAdventure
+      - name: Start ArqueumSpace
         run: docker compose -f docker-compose.prod.yaml -f tests/docker-compose.test.yaml up -d --scale egress=2
         env:
           DOCKER_TAG: ${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG || env.GITHUB_REF_SLUG }}

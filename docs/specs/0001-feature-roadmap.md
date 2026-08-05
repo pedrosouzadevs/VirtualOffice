@@ -1,13 +1,13 @@
-# Spec 0001 — Feature Roadmap (VirtualOffice / WorkAdventure)
+# Spec 0001 — Feature Roadmap (ArqueumSpace / ArqueumSpace)
 
 - **Status:** Draft (proposed)
 - **Date:** 2026-07-23
-- **Author:** VirtualOffice team
+- **Author:** ArqueumSpace team
 - **Languages:** [0001-feature-roadmap.pt-BR.md](0001-feature-roadmap.pt-BR.md) (pt-BR) + this file (en-US), kept in lockstep.
 
 ## TL;DR
 
-This document specifies four features for the VirtualOffice fork of WorkAdventure:
+This document specifies four features for the ArqueumSpace fork of ArqueumSpace:
 
 1. **Animated entity** — a user uploads an animated GIF; the system converts it into a spritesheet and exposes it as a **new type** of animated object, freely placeable via the inline editor.
 2. **Azure authentication** — add Azure Entra ID (Microsoft) as a login provider while **keeping** the current provider (dev/mock OIDC) available in parallel.
@@ -25,7 +25,7 @@ Each non-trivial feature gets its own **ADR** in `docs/adr/` before implementati
 
 ## Architecture context (shared)
 
-WorkAdventure is a monorepo of services: `play` (Svelte/Phaser front + pusher WebSocket + room-api), `back` (room state), `map-storage` (maps/assets and editor edits), `messages` (protobuf, the inter-service contract), `libs/*`.
+ArqueumSpace is a monorepo of services: `play` (Svelte/Phaser front + pusher WebSocket + room-api), `back` (room state), `map-storage` (maps/assets and editor edits), `messages` (protobuf, the inter-service contract), `libs/*`.
 
 Facts anchoring this spec:
 

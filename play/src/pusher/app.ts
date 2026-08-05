@@ -218,7 +218,7 @@ class App {
                 if (token) {
                     resolve();
                 } else {
-                    reject(new Error(`Error starting WorkAdventure Pusher on port ${port}!`));
+                    reject(new Error(`Error starting ArqueumSpace Pusher on port ${port}!`));
                 }
             });
         });
@@ -234,7 +234,7 @@ class App {
                         reject(err);
                         return;
                     }
-                    console.info(`WorkAdventure Prometheus web-server started on port ${PROMETHEUS_PORT}!`);
+                    console.info(`ArqueumSpace Prometheus web-server started on port ${PROMETHEUS_PORT}!`);
                     resolve();
                 });
             }

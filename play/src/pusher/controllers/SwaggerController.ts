@@ -17,7 +17,7 @@ export class SwaggerController extends BaseHttpController {
                 swaggerDefinition: {
                     openapi: "3.0.0",
                     info: {
-                        title: "WorkAdventure Pusher",
+                        title: "ArqueumSpace Pusher",
                         version: "1.0.0",
                     },
                 },
@@ -34,10 +34,10 @@ export class SwaggerController extends BaseHttpController {
                     swagger: "2.0",
                     //openapi: "3.0.0",
                     info: {
-                        title: "WorkAdventure Pusher",
+                        title: "ArqueumSpace Pusher",
                         version: "1.0.0",
                         description:
-                            "This is a documentation about the endpoints called by the pusher. \n You can find out more about WorkAdventure on [github](https://github.com/thecodingmachine/workadventure).",
+                            "This is a documentation about the endpoints called by the pusher. \n You can find out more about ArqueumSpace on [github](https://github.com/thecodingmachine/workadventure).",
                         contact: {
                             email: "hello@workadventu.re",
                         },

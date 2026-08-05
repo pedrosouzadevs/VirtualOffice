@@ -2,7 +2,7 @@
 
 - **Status:** Aceito
 - **Data:** 2026-08-04
-- **Decisores:** Equipe VirtualOffice
+- **Decisores:** Equipe ArqueumSpace
 - **Idiomas:** este arquivo (pt-BR) + [0006-dashboard-issued-bans.md](0006-dashboard-issued-bans.md) (en-US), em lockstep
 - **Origem:** o H3 do [ADR-0005](0005-moderation.pt-BR.md) entregou a moderação como telas de leitura e descobriu que
   o `play` não tem botão de banir. Este ADR responde a pergunta que essa descoberta abriu. Ele **revisa** a decisão

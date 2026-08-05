@@ -1,12 +1,12 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import type { WorkAdventureComponent } from "../../../../types/component";
+    import type { ArqueumSpaceComponent } from "../../../../types/component";
     import { createFloatingUiActions } from "../../../Utils/svelte-floatingui";
 
     interface Props {
         headerText?: string;
         descriptionText?: string;
-        img?: string | WorkAdventureComponent;
+        img?: string | ArqueumSpaceComponent;
         style?: string;
         disabled?: boolean;
         onclick?: (event: MouseEvent) => void;

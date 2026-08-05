@@ -1,6 +1,6 @@
 # Setup — production deploy (Hostinger VPS)
 
-> **Purpose.** Take VirtualOffice from this repository to a single VPS serving up to ~30 concurrent users, on one
+> **Purpose.** Take ArqueumSpace from this repository to a single VPS serving up to ~30 concurrent users, on one
 > domain, with Azure Entra ID login and the Admin API in charge of permissions and moderation.
 > **Audience.** Whoever operates the server. Written against a Hostinger KVM plan (4 vCPU, 16 GB RAM, 200 GB NVMe,
 > 16 TB traffic) — any Ubuntu VPS with those numbers works the same.

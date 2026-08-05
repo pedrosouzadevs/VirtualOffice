@@ -209,8 +209,8 @@ export class FrontController extends BaseHttpController {
             debug(`FrontController => [${req.method}] ${req.originalUrl} — IP: ${req.ip} — Time: ${Date.now()}`);
             res.json({
                 domain: process.env.PUSHER_URL,
-                name: process.env.SERVER_NAME || "WorkAdventure Server",
-                motd: process.env.SERVER_MOTD || "A WorkAdventure Server",
+                name: process.env.SERVER_NAME || "ArqueumSpace Server",
+                motd: process.env.SERVER_MOTD || "A ArqueumSpace Server",
                 icon: process.env.SERVER_ICON || process.env.PUSHER_URL + "/static/images/favicons/icon-512x512.png",
                 version: version + (process.env.NODE_ENV !== "production" ? "-dev" : ""),
             });

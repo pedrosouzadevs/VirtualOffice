@@ -2,13 +2,13 @@
 
 - **Status:** Aceito (implementado e validado em campo em 2026-07-29)
 - **Data:** 2026-07-23
-- **Decisores:** Equipe VirtualOffice
+- **Decisores:** Equipe ArqueumSpace
 - **Idiomas:** este arquivo (pt-BR) + [0001-area-owner-lock.md](0001-area-owner-lock.md) (en-US), em lockstep.
 - **Spec de origem:** [Spec 0001 — Roadmap de Features](../specs/0001-feature-roadmap.pt-BR.md), Feature 4.
 
 ## Contexto
 
-No VirtualOffice, cada usuário é dono de uma **área** dentro de um **mapa único compartilhado** — seu escritório virtual. O objetivo é permitir que o dono **feche e reabra** sua área quando quiser, com uma trava **persistente**, e que a trava tenha **representação visual** — uma tinta vermelha semi-transparente sobre a área enquanto trancada.
+No ArqueumSpace, cada usuário é dono de uma **área** dentro de um **mapa único compartilhado** — seu escritório virtual. O objetivo é permitir que o dono **feche e reabra** sua área quando quiser, com uma trava **persistente**, e que a trava tenha **representação visual** — uma tinta vermelha semi-transparente sobre a área enquanto trancada.
 
 > ⚠️ Premissa corrigida durante o desenho: "sala" aqui é **área dentro de um mapa**, não um mapa/URL próprio. Isso descartou o uso de `RoomRedirect` (que troca de mapa) e o gate em `/api/room/access` (que é nível de mapa).
 

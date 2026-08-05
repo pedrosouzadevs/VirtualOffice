@@ -82,7 +82,7 @@
 </script>
 
 <main>
-    <h1>WorkAdventure MapStorage</h1>
+    <h1>ArqueumSpace MapStorage</h1>
 
     <div style="background-color: #ff7700; color: black; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
         Warning! This UI is deprecated. Use it for tests only. To upload a map to the map-storage, use the

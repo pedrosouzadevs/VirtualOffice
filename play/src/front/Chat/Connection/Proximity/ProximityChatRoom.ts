@@ -339,11 +339,11 @@ export class ProximityChatRoom implements ChatRoom {
         }
 
         if (action === "proximity") {
-            // Send local message to WorkAdventure scripting API
+            // Send local message to ArqueumSpace scripting API
             try {
                 iframeListener.sendUserInputChat(message, undefined);
             } catch (e) {
-                console.error("Error while sending message to WorkAdventure scripting API", e);
+                console.error("Error while sending message to ArqueumSpace scripting API", e);
             }
         }
     }
@@ -439,11 +439,11 @@ export class ProximityChatRoom implements ChatRoom {
             this.hasUnreadMessages.set(true);
             this.unreadNotificationCount.set(get(this.unreadNotificationCount) + 1);
         }
-        // Send bubble message to WorkAdventure scripting API
+        // Send bubble message to ArqueumSpace scripting API
         try {
             iframeListener.sendUserInputChat(message, senderUserId);
         } catch (e) {
-            console.error("Error while sending message to WorkAdventure scripting API", e);
+            console.error("Error while sending message to ArqueumSpace scripting API", e);
         }
     }
 

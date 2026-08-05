@@ -89,7 +89,7 @@
 //
 //     await stopPusher();
 //     await t
-//         .expect(errorDiv.innerText).contains('Unable to connect to WorkAdventure');
+//         .expect(errorDiv.innerText).contains('Unable to connect to ArqueumSpace');
 //
 //     await rebootPusher();
 //     await t

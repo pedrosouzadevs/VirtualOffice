@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-04
-- **Deciders:** VirtualOffice team
+- **Deciders:** ArqueumSpace team
 - **Languages:** this file (en-US) + [0005-moderation.pt-BR.md](0005-moderation.pt-BR.md), in lockstep
 - **Origin:** [ADR-0002](0002-admin-api.md), phase P3. Last phase of F3 before F2.
 

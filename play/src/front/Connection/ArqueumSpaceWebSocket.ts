@@ -11,19 +11,19 @@ import { analyticsClient } from "../Administration/AnalyticsClient";
 
 type WebSocketFactory = (url: string, protocols?: string[]) => WebSocket;
 
-export class WorkAdventureWebSocket {
+export class ArqueumSpaceWebSocket {
     private static readonly RECONNECT_BASE_DELAY_MS = 500;
     private static readonly RECONNECT_MAX_DELAY_MS = 5_000;
     private static websocketFactory: WebSocketFactory | null = null;
 
     public static setWebsocketFactory(websocketFactory: WebSocketFactory | null): void {
-        WorkAdventureWebSocket.websocketFactory = websocketFactory;
+        ArqueumSpaceWebSocket.websocketFactory = websocketFactory;
     }
 
-    public onopen: ((this: WorkAdventureWebSocket, ev: Event) => void) | null = null;
-    public onclose: ((this: WorkAdventureWebSocket, ev: CloseEvent) => void) | null = null;
-    public onerror: ((this: WorkAdventureWebSocket, ev: Event) => void) | null = null;
-    public onmessage: ((this: WorkAdventureWebSocket, ev: MessageEvent<ServerToClientMessage>) => void) | null = null;
+    public onopen: ((this: ArqueumSpaceWebSocket, ev: Event) => void) | null = null;
+    public onclose: ((this: ArqueumSpaceWebSocket, ev: CloseEvent) => void) | null = null;
+    public onerror: ((this: ArqueumSpaceWebSocket, ev: Event) => void) | null = null;
+    public onmessage: ((this: ArqueumSpaceWebSocket, ev: MessageEvent<ServerToClientMessage>) => void) | null = null;
 
     private readonly _reconnectingStream = new BehaviorSubject<boolean>(false);
     public readonly reconnectingStream = this._reconnectingStream.asObservable();
@@ -171,8 +171,8 @@ export class WorkAdventureWebSocket {
             socketUrl.searchParams.set("lastReceivedNonce", this.lastReceivedNonce.toString());
         }
 
-        const socket = WorkAdventureWebSocket.websocketFactory
-            ? WorkAdventureWebSocket.websocketFactory(socketUrl.toString(), this.protocols)
+        const socket = ArqueumSpaceWebSocket.websocketFactory
+            ? ArqueumSpaceWebSocket.websocketFactory(socketUrl.toString(), this.protocols)
             : new WebSocket(socketUrl, this.protocols);
         socket.binaryType = "arraybuffer";
 
@@ -228,8 +228,8 @@ export class WorkAdventureWebSocket {
 
     private getReconnectDelayMs(): number {
         return Math.min(
-            WorkAdventureWebSocket.RECONNECT_MAX_DELAY_MS,
-            WorkAdventureWebSocket.RECONNECT_BASE_DELAY_MS * 2 ** Math.max(0, this.reconnectAttempt - 1),
+            ArqueumSpaceWebSocket.RECONNECT_MAX_DELAY_MS,
+            ArqueumSpaceWebSocket.RECONNECT_BASE_DELAY_MS * 2 ** Math.max(0, this.reconnectAttempt - 1),
         );
     }
 

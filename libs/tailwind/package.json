@@ -1,7 +1,7 @@
 {
   "name": "@workadventure/tailwind",
   "version": "1.0.0",
-  "description": "Tailwind Theme for WorkAdventure",
+  "description": "Tailwind Theme for ArqueumSpace",
   "type": "module",
   "style": "./style/index.css",
   "exports": {
@@ -9,7 +9,7 @@
     "./style.css": "./style/index.css",
     "./style/index.css": "./style/index.css"
   },
-  "author": "WorkAdventure",
+  "author": "ArqueumSpace",
   "license": "ISC",
   "sideEffects": [
     "*.css",

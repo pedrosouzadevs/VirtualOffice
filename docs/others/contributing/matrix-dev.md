@@ -1,16 +1,16 @@
 # Matrix developer notes
 
 > [!NOTE]
-> If you are looking to set up the Matrix integration with WorkAdventure, you can follow the [Matrix documentation](../self-hosting/matrix.md).
+> If you are looking to set up the Matrix integration with ArqueumSpace, you can follow the [Matrix documentation](../self-hosting/matrix.md).
 
-In this section, we will deep-dive into the Matrix / WorkAdventure integration implementation.
+In this section, we will deep-dive into the Matrix / ArqueumSpace integration implementation.
 
-## Mapping between Matrix rooms and WorkAdventure
+## Mapping between Matrix rooms and ArqueumSpace
 
 > [!WARNING]
 > This section is work-in-progress. Matrix spaces attached to the world are not yet implemented.
 
-A WorkAdventure world maps to a Matrix space.
+A ArqueumSpace world maps to a Matrix space.
 
 > [!NOTE]
 > In self-hosted versions without an admin panel, all rooms are considered to be part of the same world.
@@ -27,38 +27,38 @@ Inside this Matrix space, there are 2 kinds of Matrix rooms:
 classDiagram
   class MatrixSpace["Matrix Space"]
   class MatrixRoom["Matrix Room"]
-  class WorkAdventureWorld["WorkAdventure World"]
-  class WorkAdventureRoom["WorkAdventure Room"]
-  class WorkAdventureArea["WorkAdventure Area"]
+  class ArqueumSpaceWorld["ArqueumSpace World"]
+  class ArqueumSpaceRoom["ArqueumSpace Room"]
+  class ArqueumSpaceArea["ArqueumSpace Area"]
   MatrixSpace "1" *-- "*" MatrixSpace
   MatrixSpace "1" *-- "*" MatrixRoom
-  MatrixSpace "1" -- "1" WorkAdventureWorld
-  WorkAdventureWorld "1" *-- "*" WorkAdventureRoom
-  WorkAdventureRoom "1" *-- "*" WorkAdventureArea
-  WorkAdventureArea "0..1" -- "1" MatrixRoom
+  MatrixSpace "1" -- "1" ArqueumSpaceWorld
+  ArqueumSpaceWorld "1" *-- "*" ArqueumSpaceRoom
+  ArqueumSpaceRoom "1" *-- "*" ArqueumSpaceArea
+  ArqueumSpaceArea "0..1" -- "1" MatrixRoom
 ```
 
 ```mermaid
 classDiagram
   class MatrixSpace["Matrix Space"]
-  class WorkAdventureWorld["WorkAdventure World"]
+  class ArqueumSpaceWorld["ArqueumSpace World"]
   class OIDCProvider["OIDC Provider"]
   class OIDCUser["OpenID Connect User"]
-  class WAMember["WorkAdventure Member"]
+  class WAMember["ArqueumSpace Member"]
   class SynapseUser["Synapse User"]
   OIDCProvider "1" -- "*" OIDCUser
   OIDCUser "1" -- "0..1" WAMember
   OIDCUser "1" -- "0..1" SynapseUser
   SynapseUser "*" --> "*" MatrixRoom
   SynapseUser "*" --> "*" MatrixSpace
-  WAMember "*" --> "*" WorkAdventureWorld
+  WAMember "*" --> "*" ArqueumSpaceWorld
 ```
 
 ## Libraries used
 
 The Matrix integration is used through the [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk).
 
-WorkAdventure relies on the new "Rust crypto" implementation of the matrix-js-sdk, so encoding does not
+ArqueumSpace relies on the new "Rust crypto" implementation of the matrix-js-sdk, so encoding does not
 need the legacy Olm library.
 
 ## `ChatConnectionInterface` and Matrix-specific APIs
@@ -69,7 +69,7 @@ At runtime, use **`hasMatrixChatCapabilities(connection)`** to narrow the connec
 
 ## Login flow
 
-The login flow to Matrix happens just  after the login to WorkAdventure.
+The login flow to Matrix happens just  after the login to ArqueumSpace.
 
 ```mermaid
 sequenceDiagram
@@ -168,7 +168,7 @@ to grant access to).
 
 > [!NOTE]
 > A single Matrix ID can be associated to multiple users. Indeed, the mapping between Matrix ID
-> and OIDC user is done by the Matrix server and WorkAdventure has no way to prevent the Matrix
+> and OIDC user is done by the Matrix server and ArqueumSpace has no way to prevent the Matrix
 > server to return the same Matrix ID for 2 different OIDC users. Therefore, the admin server
 > should not assume that a Matrix ID can identify a single user.
 
@@ -185,10 +185,10 @@ sending a Matrix invite.
 
 Matrix has a notion of "space rooms". These special rooms are used to group other rooms together.
 
-If you are using an admin server, the admin server can group WorkAdventure rooms into "worlds". If you are using
-a self-hosted version of WorkAdventure without an admin, all rooms are considered to be part of the same world.
+If you are using an admin server, the admin server can group ArqueumSpace rooms into "worlds". If you are using
+a self-hosted version of ArqueumSpace without an admin, all rooms are considered to be part of the same world.
 
-WorkAdventure will maintain one "space room" per world. The space room is used to group all the Matrix rooms of the world
+ArqueumSpace will maintain one "space room" per world. The space room is used to group all the Matrix rooms of the world
 together.
 
 The space room SHOULD BE created by the admin server (if you are using one). The admin server will invite all the members
@@ -216,13 +216,13 @@ Custom state events are added to the room:
 - `re.workadventu.tags`: the tags to enter this room (pipe separated list).
 
 
-## List of rooms displayed in WorkAdventure
+## List of rooms displayed in ArqueumSpace
 
 > [!WARNING]
 > This section is work-in-progress and subject to change.
 
-In the Matrix rooms list, WorkAdventure will make a distinction between the rooms it owns and the regular Matrix rooms.
-WorkAdventure "owns" a room if the room has been created by WorkAdventure (because it was declared in the map editor).
+In the Matrix rooms list, ArqueumSpace will make a distinction between the rooms it owns and the regular Matrix rooms.
+ArqueumSpace "owns" a room if the room has been created by ArqueumSpace (because it was declared in the map editor).
 All these rooms are children of the "space room" (see above).
 
 In the rooms list:
@@ -239,11 +239,11 @@ In the rooms list:
 
 ## Creating a room
 
-When a room is created in WorkAdventure, the front component sends a request to the pusher component to create the room.
+When a room is created in ArqueumSpace, the front component sends a request to the pusher component to create the room.
 The Pusher is in charge of creating the room in Matrix. It will connect to Matrix using admin credentials (user + password)
 stored in the configuration.
 
-Because of this, all rooms created by WorkAdventure will be owned by the same admin user.
+Because of this, all rooms created by ArqueumSpace will be owned by the same admin user.
 
 The same admin credentials are used by the Admin component to invite users to the room.
 
@@ -255,7 +255,7 @@ graph TD
 
 # Architecture decision records
 
-## Mapping between Matrix rooms and WorkAdventure areas
+## Mapping between Matrix rooms and ArqueumSpace areas
 
 ### Problem
 
@@ -266,7 +266,7 @@ How do we achieve that?
 
 ### Solution 1: Create a new Matrix room each time a new "meeting" happens
 
-Create a new Matrix room each time a new "meeting" happens. When the last user of a WorkAdventure area leaves,
+Create a new Matrix room each time a new "meeting" happens. When the last user of a ArqueumSpace area leaves,
 the Matrix room is "deleted" (i.e. everyone is kicked out of the room). When someone enters the area again, a new
 Matrix room is created (with a new ID).
 This is not ideal because in other Matrix clients (like Element), the user will see the list of rooms
@@ -274,12 +274,12 @@ he was kicked of in the "History" section of the chat.
 
 ![Element history](./images/element-history.png)
 
-Now, try to imagine a user entering and leaving a WorkAdventure area 10 times in a row. The user will have 10 rooms
+Now, try to imagine a user entering and leaving a ArqueumSpace area 10 times in a row. The user will have 10 rooms
 in his history, and it will be tedious to remove them one by one.
 
-### Solution 2: Create a single Matrix room for each WorkAdventure area
+### Solution 2: Create a single Matrix room for each ArqueumSpace area
 
-Create a single Matrix room for each WorkAdventure area. When someone enters the area, the user is invited to the
+Create a single Matrix room for each ArqueumSpace area. When someone enters the area, the user is invited to the
 room and joins automatically. When the user leaves the area, the user is kicked out of the room.
 The history settings of the area are configured to *"only members" since they joined*.
 

@@ -27,7 +27,7 @@ concurrency:
 jobs:
   cleanup-stale-environments:
     runs-on: ubuntu-latest
-    # Only run in the WorkAdventure org (needs cluster credentials)
+    # Only run in the ArqueumSpace org (needs cluster credentials)
     if: ${{ github.repository_owner == 'workadventure' }}
     steps:
       - name: 'Install kubeconfig file'

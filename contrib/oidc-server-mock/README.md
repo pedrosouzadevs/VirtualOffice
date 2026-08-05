@@ -1,6 +1,6 @@
 This directory contains configuration files for our OpenID connect MOCK server.
 
-The mock server is used in tests to verify WorkAdventure can indeed connect to an OpenID connect
+The mock server is used in tests to verify ArqueumSpace can indeed connect to an OpenID connect
 server.
 
 The mock server is provided by https://github.com/Soluto/oidc-server-mock

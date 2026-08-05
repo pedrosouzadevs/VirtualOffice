@@ -17,7 +17,7 @@ import website from "./Ui/UIWebsite";
 import { RemotePlayer } from "./Players/RemotePlayer";
 import modal from "./Ui/Modal";
 import type { WorkadventureModalCommands } from "./Ui/Modal";
-import type { WorkAdventureButtonActionBarCommands } from "./Ui/ButtonActionBar";
+import type { ArqueumSpaceButtonActionBarCommands } from "./Ui/ButtonActionBar";
 import buttonActionBar from "./Ui/ButtonActionBar";
 import type { WorkadventureBannerCommands } from "./Ui/Banner";
 import banner from "./Ui/Banner";
@@ -83,7 +83,7 @@ export class ActionsMenuAction {
     }
 }
 
-export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventureUiCommands> {
+export class ArqueumSpaceUiCommands extends IframeApiContribution<ArqueumSpaceUiCommands> {
     public readonly _onRemotePlayerClicked: Subject<RemotePlayer>;
     public readonly onRemotePlayerClicked: Observable<RemotePlayer>;
 
@@ -336,7 +336,7 @@ export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventure
         return modal;
     }
 
-    get actionBar(): WorkAdventureButtonActionBarCommands {
+    get actionBar(): ArqueumSpaceButtonActionBarCommands {
         return buttonActionBar;
     }
 
@@ -363,4 +363,4 @@ export class WorkAdventureUiCommands extends IframeApiContribution<WorkAdventure
     }
 }
 
-export default new WorkAdventureUiCommands();
+export default new ArqueumSpaceUiCommands();

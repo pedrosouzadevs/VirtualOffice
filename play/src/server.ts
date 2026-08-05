@@ -54,10 +54,10 @@ if (SENTRY_DSN != undefined) {
     await Promise.race([
         app
             .listenWebServer(PUSHER_HTTP_PORT)
-            .then(() => console.info(`WorkAdventure Pusher web-server started on port ${PUSHER_HTTP_PORT}!`)),
+            .then(() => console.info(`ArqueumSpace Pusher web-server started on port ${PUSHER_HTTP_PORT}!`)),
         app
             .listenWebSocket(PUSHER_WS_PORT)
-            .then(() => console.info(`WorkAdventure Pusher web-socket server started on port ${PUSHER_WS_PORT}!`)),
+            .then(() => console.info(`ArqueumSpace Pusher web-socket server started on port ${PUSHER_WS_PORT}!`)),
         app.listenPrometheusPort(),
     ]);
 })().catch((e) => {

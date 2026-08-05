@@ -47,7 +47,7 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
         signIn: "Inloggen met Outlook",
         popupScopeToSync: "Mijn Outlook-account verbinden",
         popupScopeToSyncExplainText:
-            "We moeten verbinding maken met uw Outlook-account om uw agenda en/of taken te synchroniseren. Dit stelt u in staat om uw vergaderingen en taken in WorkAdventure te bekijken en er direct vanuit de kaart aan deel te nemen.",
+            "We moeten verbinding maken met uw Outlook-account om uw agenda en/of taken te synchroniseren. Dit stelt u in staat om uw vergaderingen en taken in ArqueumSpace te bekijken en er direct vanuit de kaart aan deel te nemen.",
         popupScopeToSyncCalendar: "Mijn agenda synchroniseren",
         popupScopeToSyncTask: "Mijn taken synchroniseren",
         popupCancel: "Annuleren",
@@ -69,7 +69,7 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
         signIn: "Inloggen met Google",
         popupScopeToSync: "Mijn Google-account verbinden",
         popupScopeToSyncExplainText:
-            "We moeten verbinding maken met uw Google-account om uw agenda en/of taken te synchroniseren. Dit stelt u in staat om uw vergaderingen en taken in WorkAdventure te bekijken en er direct vanuit de kaart aan deel te nemen.",
+            "We moeten verbinding maken met uw Google-account om uw agenda en/of taken te synchroniseren. Dit stelt u in staat om uw vergaderingen en taken in ArqueumSpace te bekijken en er direct vanuit de kaart aan deel te nemen.",
         popupScopeToSyncCalendar: "Mijn agenda synchroniseren",
         popupScopeToSyncTask: "Mijn taken synchroniseren",
         popupCancel: "Annuleren",

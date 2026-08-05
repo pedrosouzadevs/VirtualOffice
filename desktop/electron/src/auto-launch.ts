@@ -15,7 +15,7 @@ export async function updateAutoLaunch() {
     // `setLoginItemSettings` doesn't support linux
     if (process.platform === "linux") {
         const autoLauncher = new AutoLaunch({
-            name: "WorkAdventure",
+            name: "ArqueumSpace",
             isHidden: true,
         });
 

@@ -1,7 +1,7 @@
 {
   "name": "@workadventure/iframe-api-typings",
   "version": "0.0.0-version-placeholder",
-  "description": "Typescript typings for WorkAdventure iFrame API",
+  "description": "Typescript typings for ArqueumSpace iFrame API",
   "main": "iframe_api.js",
   "types": "iframe_api.d.ts",
   "repository": {

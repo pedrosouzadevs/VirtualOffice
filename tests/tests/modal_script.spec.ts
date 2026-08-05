@@ -36,7 +36,7 @@ test.describe("Modal @nomobile", () => {
         });
 
         // Check the modal is loaded
-        await expect(page.frameLocator("#modalIframe").locator("body")).toContainText("WorkAdventure test cases");
+        await expect(page.frameLocator("#modalIframe").locator("body")).toContainText("ArqueumSpace test cases");
 
         //TODO fix me
         //await timeout(3000);

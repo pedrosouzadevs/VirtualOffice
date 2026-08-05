@@ -322,7 +322,7 @@ services:
       retries: 10
     restart: ${RESTART_POLICY}
 
-  # VirtualOffice Admin API (ADR-0002..0006): identity, tags, permissions, moderation, and the dashboard.
+  # ArqueumSpace Admin API (ADR-0002..0006): identity, tags, permissions, moderation, and the dashboard.
   # /api/* is deliberately NOT routed by Traefik — only the pusher calls it, in-network at http://admin-api:3000.
   # The dashboard at /admin/* is the one public surface, on the same domain and certificate as everything else.
   admin-api:
@@ -345,7 +345,7 @@ services:
       ADMIN_API_SESSION_SECRET: "${ADMIN_API_SESSION_SECRET:?set ADMIN_API_SESSION_SECRET in .env}"
       # Traefik terminates TLS in front of us, one hop away.
       ADMIN_API_TRUST_PROXY: "1"
-      ADMIN_API_WORLD_NAME: "${ADMIN_API_WORLD_NAME:-VirtualOffice}"
+      ADMIN_API_WORLD_NAME: "${ADMIN_API_WORLD_NAME:-ArqueumSpace}"
       ADMIN_API_ALERT_WEBHOOK_URL: "${ADMIN_API_ALERT_WEBHOOK_URL:-}"
       # The same OIDC client play uses, from the same values: pointing the world at Entra ID points the dashboard
       # there in the same motion (F2). The scope is fixed — the dashboard needs the email and nothing else.

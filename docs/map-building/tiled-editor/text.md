@@ -16,18 +16,18 @@ to control the fonts you use, and you will be able to disable the antialiasing o
 On "object" layers, Tiled has support for "Text" objects. You can use these objects to add some
 text on your map.
 
-WorkAdventure will do its best to display the text properly. However, you need to know that:
+ArqueumSpace will do its best to display the text properly. However, you need to know that:
 
 - Tiled displays your system fonts.
 - Computers have different sets of fonts. Therefore, browsers never rely on system fonts
-- Which means if you select a font in Tiled, it is quite unlikely it will render properly in WorkAdventure
+- Which means if you select a font in Tiled, it is quite unlikely it will render properly in ArqueumSpace
 
 To circumvent this problem, in your text object in Tiled, you can add an additional property: `font-family`.
 
 The `font-family` property can contain any "web-font" that can be loaded by your browser.
 
 :::info Pro-tip
-By default, WorkAdventure uses the **'"Press Start 2P"'** font, which is a great pixelated
+By default, ArqueumSpace uses the **'"Press Start 2P"'** font, which is a great pixelated
 font that has support for a variety of accents. It renders great when used at *8px* size.
 :::
 

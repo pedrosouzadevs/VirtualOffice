@@ -10,12 +10,12 @@
     import { mapEditorActivated, mapEditorActivatedForThematics } from "../../Stores/MenuStore";
     import { isMediaBreakpointUp } from "../../Utils/BreakpointsUtils";
     import ArrowBarRight from "../Icons/ArrowBarRight.svelte";
-    import type { WorkAdventureComponent } from "../../../types/component";
+    import type { ArqueumSpaceComponent } from "../../../types/component";
     import { IconX, IconTexture, IconLamp, IconMapSearch, IconSettings, IconTrash } from "@wa-icons";
 
     type SideBarTool = {
         toolName: EditorToolName;
-        iconComponent: WorkAdventureComponent;
+        iconComponent: ArqueumSpaceComponent;
         tooltiptext: LocalizedString;
     };
 

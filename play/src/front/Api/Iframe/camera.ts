@@ -6,7 +6,7 @@ import { apiCallback } from "./registeredCallbacks";
 
 const moveStream = new Subject<WasCameraUpdatedEvent>();
 
-export class WorkAdventureCameraCommands extends IframeApiContribution<WorkAdventureCameraCommands> {
+export class ArqueumSpaceCameraCommands extends IframeApiContribution<ArqueumSpaceCameraCommands> {
     callbacks = [
         apiCallback({
             type: "wasCameraUpdated",
@@ -65,4 +65,4 @@ export class WorkAdventureCameraCommands extends IframeApiContribution<WorkAdven
     }
 }
 
-export default new WorkAdventureCameraCommands();
+export default new ArqueumSpaceCameraCommands();

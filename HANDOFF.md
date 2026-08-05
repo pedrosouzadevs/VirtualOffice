@@ -96,7 +96,7 @@ Dependências novas no `admin-api`: `jose`, `openid-client`, `cookie-parser` —
 
 ### Correções de contrato encontradas lendo o código
 
-Seis afirmações da documentação do WorkAdventure não correspondem ao código. Estão detalhadas no ADR-0002; as duas
+Seis afirmações da documentação do ArqueumSpace não correspondem ao código. Estão detalhadas no ADR-0002; as duas
 que mais custam:
 
 - **404 no `/api/capabilities` pendura o pusher.** O `initialise()` faz retry sem limite, o `app.init()` o aguarda, e

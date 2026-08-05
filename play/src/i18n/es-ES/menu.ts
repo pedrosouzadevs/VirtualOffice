@@ -57,9 +57,9 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "Cancelación de eco",
             enableAdvancedNoiseReduction: "Activar reducción de ruido avanzada",
             noiseSuppressionMode: "Modo de supresión de ruido:",
-            workAdventureNoiseSuppression: "Supresión de ruido de WorkAdventure",
+            workAdventureNoiseSuppression: "Supresión de ruido de ArqueumSpace",
             workAdventureNoiseSuppressionDescription:
-                "Procesa tu micrófono con la supresión de ruido de WorkAdventure.",
+                "Procesa tu micrófono con la supresión de ruido de ArqueumSpace.",
             recommended: "Recomendado",
             browserNoiseSuppression: "Supresión de ruido del navegador",
             browserNoiseSuppressionDescription: "Usa la supresión de ruido integrada en tu navegador.",
@@ -73,7 +73,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "Modo no presente",
             explanation:
-                'Cuando la pestaña de WorkAdventure en su navegador no es visible, WorkAdventure cambia a "modo no presente"',
+                'Cuando la pestaña de ArqueumSpace en su navegador no es visible, ArqueumSpace cambia a "modo no presente"',
             cameraToggle: 'Mantener la cámara activa en "modo no presente"',
             microphoneToggle: 'Mantener el micrófono activa en "modo no presente"',
         },
@@ -122,7 +122,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "Empezar",
             description:
-                "WorkAdventure le permite crear un espacio en línea para comunicarse espontáneamente con otros. Y todo empieza creando su propio espacio. Escoja de una gran selección de mapas prefabricados por nuestro equipo.",
+                "ArqueumSpace le permite crear un espacio en línea para comunicarse espontáneamente con otros. Y todo empieza creando su propio espacio. Escoja de una gran selección de mapas prefabricados por nuestro equipo.",
         },
         createMap: {
             title: "Crear su mapa",

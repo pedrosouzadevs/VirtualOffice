@@ -14,7 +14,7 @@ export function generateMarkdown(
     lines.push("# Environment Variables");
     lines.push("");
     lines.push(
-        "This document lists all environment variables used by WorkAdventure services. These variables are defined in the `.env` file."
+        "This document lists all environment variables used by ArqueumSpace services. These variables are defined in the `.env` file."
     );
     lines.push("");
     lines.push(

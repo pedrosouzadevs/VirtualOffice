@@ -57,9 +57,9 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "Echo-onderdrukking",
             enableAdvancedNoiseReduction: "Geavanceerde ruisreductie inschakelen",
             noiseSuppressionMode: "Ruisonderdrukkingsmodus:",
-            workAdventureNoiseSuppression: "WorkAdventure-ruisonderdrukking",
+            workAdventureNoiseSuppression: "ArqueumSpace-ruisonderdrukking",
             workAdventureNoiseSuppressionDescription:
-                "Verwerk je microfoon met de ruisonderdrukking van WorkAdventure.",
+                "Verwerk je microfoon met de ruisonderdrukking van ArqueumSpace.",
             recommended: "Aanbevolen",
             browserNoiseSuppression: "Browserruisonderdrukking",
             browserNoiseSuppressionDescription: "Gebruik de ingebouwde ruisonderdrukking van je browser.",
@@ -72,7 +72,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "Afwezigheidsmodus",
             explanation:
-                'Wanneer het WorkAdventure-tabblad in je browser niet zichtbaar is, schakelt WorkAdventure over naar de "afwezigheidsmodus"',
+                'Wanneer het ArqueumSpace-tabblad in je browser niet zichtbaar is, schakelt ArqueumSpace over naar de "afwezigheidsmodus"',
             cameraToggle: 'Houd camera actief in "afwezigheidsmodus"',
             microphoneToggle: 'Houd microfoon actief in "afwezigheidsmodus"',
         },
@@ -121,7 +121,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "Aan de slag",
             description:
-                "WorkAdventure stelt je in staat om een online ruimte te creëren om spontaan met anderen te communiceren. En het begint allemaal met het creëren van je eigen ruimte. Kies uit een grote selectie van prefab-kaarten door ons team.",
+                "ArqueumSpace stelt je in staat om een online ruimte te creëren om spontaan met anderen te communiceren. En het begint allemaal met het creëren van je eigen ruimte. Kies uit een grote selectie van prefab-kaarten door ons team.",
         },
         createMap: {
             title: "Maak je kaart",

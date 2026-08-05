@@ -55,8 +55,8 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "回声消除",
             enableAdvancedNoiseReduction: "启用高级降噪",
             noiseSuppressionMode: "噪声抑制模式：",
-            workAdventureNoiseSuppression: "WorkAdventure 噪声抑制",
-            workAdventureNoiseSuppressionDescription: "使用 WorkAdventure 的噪声抑制处理你的麦克风。",
+            workAdventureNoiseSuppression: "ArqueumSpace 噪声抑制",
+            workAdventureNoiseSuppressionDescription: "使用 ArqueumSpace 的噪声抑制处理你的麦克风。",
             recommended: "推荐",
             browserNoiseSuppression: "浏览器噪声抑制",
             browserNoiseSuppressionDescription: "使用浏览器内置的噪声抑制。",
@@ -69,7 +69,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "离开模式设置",
             explanation:
-                '当WorkAdventure标签页在后台时, 会切换到"离开模式"。在该模式中，你可以选择自动禁用摄像头 和/或 麦克风 直到标签页显示。',
+                '当ArqueumSpace标签页在后台时, 会切换到"离开模式"。在该模式中，你可以选择自动禁用摄像头 和/或 麦克风 直到标签页显示。',
             cameraToggle: '在"离开模式"中保持摄像头活动',
             microphoneToggle: '在"离开模式"中保持麦克风活动',
         },
@@ -117,7 +117,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "开始",
             description:
-                "WorkAdventure使你能够创建一个在线空间，与他们自然地交流。这都从创建你自己的空间开始。从我们的团队预制的大量选项中选择一个地图。",
+                "ArqueumSpace使你能够创建一个在线空间，与他们自然地交流。这都从创建你自己的空间开始。从我们的团队预制的大量选项中选择一个地图。",
         },
         createMap: {
             title: "创建地图",

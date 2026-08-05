@@ -4,7 +4,7 @@ sidebar_position: 10
 
 # Build your Map with Tiled
 
-This document will guide you through the process of creating your own map for WorkAdventure using the **Tiled** editor.
+This document will guide you through the process of creating your own map for ArqueumSpace using the **Tiled** editor.
 
 :::info
 If you are looking to do a simple customization of an existing map, like placing furniture or editing entries and
@@ -13,22 +13,22 @@ exits, you should read the [Customize your map](../inline-editor/index.md) guide
 
 ## Tools you will need
 
-In order to build your own map for WorkAdventure, you need:
+In order to build your own map for ArqueumSpace, you need:
 
-- the [WorkAdventure Map Starter Kit](https://github.com/workadventure/map-starter-kit)
+- the [ArqueumSpace Map Starter Kit](https://github.com/workadventure/map-starter-kit)
 - the [Tiled editor](https://www.mapeditor.org/) software
 - "tiles" (i.e. images) to create your map
-- [NodeJS](https://nodejs.org/en/download) to test your map locally and to upload it to the WorkAdventure server
+- [NodeJS](https://nodejs.org/en/download) to test your map locally and to upload it to the ArqueumSpace server
 
 ## About the Map Starter Kit
 
-WorkAdventure comes with a "map starter kit" that we highly recommend using to start designing your map quickly.
-It contains **a good default tileset** for building an office and it contains tools to upload your map on WorkAdventure
+ArqueumSpace comes with a "map starter kit" that we highly recommend using to start designing your map quickly.
+It contains **a good default tileset** for building an office and it contains tools to upload your map on ArqueumSpace
 or on GitHub Pages. It also comes with a local web server for testing purpose and with
 TypeScript support (if you are looking to use the [Map Scripting API](/developer/map-scripting/)).
 
 When designing your map with Tiled, there are a number of settings that [must absolutely be respected in order to be 
-compatible with WorkAdventure](wa-maps.md). The "map starter kit" is already configured with these settings.
+compatible with ArqueumSpace](wa-maps.md). The "map starter kit" is already configured with these settings.
 
 :::caution
 Do not try to start a map from scratch. It is much easier to start from the "map starter kit" and customize it.
@@ -102,7 +102,7 @@ This command will start the web server and open the welcome page. You should see
 
 ![The welcome page of the "map start kit"](../images/starter_kit_start_screen_gh_pages.png)
 
-From here, you simply need to click the "Test this map" button to test your map in WorkAdventure.
+From here, you simply need to click the "Test this map" button to test your map in ArqueumSpace.
 
 :::warning
 The local web server can only be used to test your map locally. In particular, the link will only work on your computer. You cannot share it with other people.
@@ -118,5 +118,5 @@ For example, if you have a map named `map2.tmj`, you can access it by visiting `
 
 ## Need some help?
 
-WorkAdventure is a constantly evolving project and there is plenty of room for improvement regarding map editing.
-If you are facing any troubles, do not hesitate to seek help in [our Discord server](https://discord.gg/G6Xh9ZM9aR) or open an "issue" in the [GitHub WorkAdventure account](https://github.com/thecodingmachine/workadventure/issues).
+ArqueumSpace is a constantly evolving project and there is plenty of room for improvement regarding map editing.
+If you are facing any troubles, do not hesitate to seek help in [our Discord server](https://discord.gg/G6Xh9ZM9aR) or open an "issue" in the [GitHub ArqueumSpace account](https://github.com/thecodingmachine/workadventure/issues).

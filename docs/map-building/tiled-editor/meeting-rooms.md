@@ -100,7 +100,7 @@ Please note that the Jitsi server you are using MUST be configured to [support J
 
 ### Self-hosted version
 
-WorkAdventure usually comes with a default Jitsi meet installation. If you are using the online version at `workadventu.re`, we are handling a Jitsi meet cluster for you. If you are running the self-hosted version of WorkAdventure, the administrator probably set up a Jitsi meet instance too.
+ArqueumSpace usually comes with a default Jitsi meet installation. If you are using the online version at `workadventu.re`, we are handling a Jitsi meet cluster for you. If you are running the self-hosted version of ArqueumSpace, the administrator probably set up a Jitsi meet instance too.
 
 You have the possibility, in your map, to override the Jitsi meet instance that will be used by default. This can be useful for regulatory reasons. Maybe your company wants to keep control on the video streams and therefore, wants to self-host a Jitsi instance? Or maybe you want to use a very special configuration or very special version of Jitsi?
 
@@ -119,7 +119,7 @@ tokens authentication with maps configured using the `jitsiUrl` property.
 By default, the name of the room will be "slugified" and prepended with a hash of the room URL.
 This is what you want most of the time. Indeed, different maps with the same Jitsi room name (the same `jitsiRoom` property) will not share the same Jitsi room instance.
 
-However, sometimes, you may actually want to have different WorkAdventure meeting rooms that are actually sharing
+However, sometimes, you may actually want to have different ArqueumSpace meeting rooms that are actually sharing
 the same Jitsi meet meeting room. Or if you are pointing to a custom Jitsi server (using the `jitsiUrl` property),
 you may want to point to a specific existing room.
 
@@ -173,7 +173,7 @@ You can read more about [managing member tags in the admin documentation](/admin
 
 ### SAAS version
 
-As of now, your WorkAdventure online subscription does not come with a Big Blue Button account. You will therefore have
+As of now, your ArqueumSpace online subscription does not come with a Big Blue Button account. You will therefore have
 to get this from a third-party vendor. You can configure the Big Blue Button credentials to your third-party vendor
 in world edit form.
 
@@ -183,7 +183,7 @@ in world edit form.
 
 ### Self-hosted version
 
-WorkAdventure will come configured with test BigBlueButton credentials, provided by [Blindside Networks](https://blindsidenetworks.com) as default server for testing integrations.
+ArqueumSpace will come configured with test BigBlueButton credentials, provided by [Blindside Networks](https://blindsidenetworks.com) as default server for testing integrations.
 
 You will configure your BigBlueButton credentials on the back component. In order to get your URL and secret, log in your BigBlueButton server and type `bbb-conf --secret`. The answer will look like this:
 

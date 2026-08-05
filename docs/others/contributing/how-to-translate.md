@@ -1,4 +1,4 @@
-# How to translate WorkAdventure
+# How to translate ArqueumSpace
 
 We use the [typesafe-i18n](https://github.com/ivanhofer/typesafe-i18n) package to handle the translation.
 

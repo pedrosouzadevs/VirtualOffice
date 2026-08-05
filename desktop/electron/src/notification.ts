@@ -3,7 +3,7 @@ import { Notification, NotificationConstructorOptions } from "electron";
 
 export function createNotification(options: Partial<NotificationConstructorOptions>) {
     const notification = new Notification({
-        title: "WorkAdventure",
+        title: "ArqueumSpace",
         icon: path.join(__dirname, "..", "assets", "icons", "logo.png"),
         ...(options || {}),
     });

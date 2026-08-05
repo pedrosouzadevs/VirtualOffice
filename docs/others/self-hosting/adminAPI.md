@@ -1,21 +1,21 @@
 # Implement your own admin API
 ## Why
-Create your own Admin API and connect it to WorkAdventure if:
+Create your own Admin API and connect it to ArqueumSpace if:
 
-- you want to connect WorkAdventure to your own database
+- you want to connect ArqueumSpace to your own database
 - you want some of your users to have special privileges (tags)
 - you want to create rooms dynamically
 - you want to have "pretty URLs" for your rooms
 
 :::caution
-Be aware that WorkAdventure is licensed under "AGPL-3 restricted by the commons clause". It means in particular you are not allowed to sell a version of WorkAdventure online as a service. If in doubt, please contact us at hello@workadventu.re. We can offer special licenses depending on your use-case.
+Be aware that ArqueumSpace is licensed under "AGPL-3 restricted by the commons clause". It means in particular you are not allowed to sell a version of ArqueumSpace online as a service. If in doubt, please contact us at hello@workadventu.re. We can offer special licenses depending on your use-case.
 :::
 
 ## Architecture
 ```mermaid
 graph LR
     style API stroke:#ff475a,stroke-width:2px,stroke: 5 5
-    subgraph WorkAdventure
+    subgraph ArqueumSpace
         F(Front) <--> P("Pusher") --> B(Back)
     end
     subgraph YW["Your website"]
@@ -25,7 +25,7 @@ graph LR
 ```
 
 First you need to understand how Work Adventure architecture is made.
-WorkAdventure is divided in 3 sections :
+ArqueumSpace is divided in 3 sections :
 - **Play**
     The play service served the game and is the one that centralizes the connections and makes exchanges through WebSocket tunnels with the clients of the Front.
     In addition, he speaks with the Back and the admin API if it's determinate.

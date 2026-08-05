@@ -44,7 +44,7 @@ export const isApplicationDefinitionInterface = z.object({
     example: true,
   }),
   allowAPI: extendApi(z.boolean().optional().default(false), {
-    description: "Allow the application to use the WorkAdventure Scripting API",
+    description: "Allow the application to use the ArqueumSpace Scripting API",
     example: true,
   }),
   policy: extendApi(z.string().optional(), {

@@ -1,6 +1,6 @@
 # Environment Variables Documentation Generator
 
-This tool automatically generates documentation for WorkAdventure environment variables from Zod schemas.
+This tool automatically generates documentation for ArqueumSpace environment variables from Zod schemas.
 
 ## Overview
 
@@ -15,7 +15,7 @@ It generates a comprehensive Markdown document at `docs/others/self-hosting/env-
 
 ### Generate documentation
 
-From the root of the WorkAdventure repository:
+From the root of the ArqueumSpace repository:
 
 ```bash
 npm run generate-env-docs

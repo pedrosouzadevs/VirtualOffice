@@ -23,7 +23,7 @@ export class MapController extends BaseHttpController {
          *     parameters:
          *      - name: "playUri"
          *        in: "query"
-         *        description: "The full URL of WorkAdventure to load this map"
+         *        description: "The full URL of ArqueumSpace to load this map"
          *        required: true
          *        type: "string"
          *      - name: "authToken"

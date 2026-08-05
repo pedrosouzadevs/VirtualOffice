@@ -30,7 +30,7 @@ export class WorkadventureNavigationCommands extends IframeApiContribution<Worka
     }
 
     /**
-     * Opens the webpage at "url" in your browser in place of WorkAdventure. WorkAdventure will be completely unloaded.
+     * Opens the webpage at "url" in your browser in place of ArqueumSpace. ArqueumSpace will be completely unloaded.
      * {@link https://docs.workadventu.re/map-building/api-nav.md#opening-a-web-page-in-the-current-tab | Website documentation}
      *
      * @param {string} url Url of the web page

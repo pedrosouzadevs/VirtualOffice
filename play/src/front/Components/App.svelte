@@ -147,7 +147,7 @@
 
         const config: Phaser.Types.Core.GameConfig = {
             type: mode,
-            title: "WorkAdventure",
+            title: "ArqueumSpace",
             scale: {
                 parent: gameDiv,
                 width: gameSize.width,

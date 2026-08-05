@@ -1,7 +1,7 @@
 # Meeting Recording
 
-WorkAdventure supports recording meetings using [Livekit Egress](https://docs.livekit.io/egress-ingress/egress/overview/). 
-Recordings are automatically uploaded to an S3-compatible storage bucket and can be viewed directly from within WorkAdventure.
+ArqueumSpace supports recording meetings using [Livekit Egress](https://docs.livekit.io/egress-ingress/egress/overview/). 
+Recordings are automatically uploaded to an S3-compatible storage bucket and can be viewed directly from within ArqueumSpace.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ Before enabling meeting recording, ensure you have:
 1. **OpenID Connect (OIDC) authentication** configured. Users must be authenticated to start and access recordings.
    See the [OpenID Connect documentation](./openid.md) for setup instructions.
 
-2. **A Livekit server** configured and connected to WorkAdventure. See the [Livekit documentation](https://docs.livekit.io/home/self-hosting/deployment/) for setup instructions.
+2. **A Livekit server** configured and connected to ArqueumSpace. See the [Livekit documentation](https://docs.livekit.io/home/self-hosting/deployment/) for setup instructions.
 
 3. **Livekit Egress** installed and configured on your Livekit server. Egress is a separate service that handles the actual recording.
    See the [Livekit Egress documentation](https://docs.livekit.io/transport/self-hosting/egress/) for installation instructions.
@@ -27,19 +27,19 @@ Before enabling meeting recording, ensure you have:
 ### Bucket Permissions
 
 Your S3 bucket must have:
-- **Read and write permissions** for the WorkAdventure back and play services (to save, list, serve and delete recordings)
+- **Read and write permissions** for the ArqueumSpace back and play services (to save, list, serve and delete recordings)
 - Does not need public access, as recordings are served via signed URLs
 
 ### Understanding the S3 Endpoints
 
-WorkAdventure uses two endpoint configurations:
+ArqueumSpace uses two endpoint configurations:
 
 - **`LIVEKIT_RECORDING_S3_ENDPOINT`**: The S3 API endpoint used to upload and manage recordings. 
   In Docker or Kubernetes environments, this can be a private/internal URL (e.g., `http://rustfs:9000`).
 
 - **`LIVEKIT_RECORDING_S3_CDN_ENDPOINT`** (optional): The public URL used to serve recordings to users' browsers.
   If your S3 endpoint is internal/private, set this to the publicly accessible URL of your S3 storage.
-  If not set, WorkAdventure will use `LIVEKIT_RECORDING_S3_ENDPOINT` as the public URL.
+  If not set, ArqueumSpace will use `LIVEKIT_RECORDING_S3_ENDPOINT` as the public URL.
 
 ## Environment Variables
 
@@ -132,8 +132,8 @@ LIVEKIT_RECORDING_S3_REGION=us-east-1
 
 Once configured:
 
-1. Start or restart your WorkAdventure services
-2. Log in to WorkAdventure with a user. Only logged in users with the `admin` or `recorder` tag can start recordings.
+1. Start or restart your ArqueumSpace services
+2. Log in to ArqueumSpace with a user. Only logged in users with the `admin` or `recorder` tag can start recordings.
 3. Join a bubble with another user
 4. Click on the recording button in the action bar (video camera icon with a red dot)
 5. The recording should start, and all participants will see a recording indicator

@@ -8,7 +8,7 @@ sidebar_position: 30
 
 :::caution Important
 While the information below is still valid, we recommend you to use the new [inline map editor](editor/) to define entries and exits.
-The inline map editor is easier to use and can be accessed directly from WorkAdventure.
+The inline map editor is easier to use and can be accessed directly from ArqueumSpace.
 :::
 
 <iframe width="100%" height="480" src="https://www.youtube.com/embed/MuhVgu8H7U0" title="Building your map - Defined entries and exits" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen></iframe>
@@ -36,12 +36,12 @@ In order to place an exit on your scene that leads to another scene:
 ![](../images/exit_layer_map.png)
 
 :::caution Note
-In older releases of WorkAdventure, you could link to a map file directly using properties `exitSceneUrl` and `exitInstance`. Those properties are now **deprecated**. Use "`exitUrl`" instead.
+In older releases of ArqueumSpace, you could link to a map file directly using properties `exitSceneUrl` and `exitInstance`. Those properties are now **deprecated**. Use "`exitUrl`" instead.
 :::
 
-## Understanding map URLs in WorkAdventure
+## Understanding map URLs in ArqueumSpace
 
-There are 2 kinds of URLs in WorkAdventure:
+There are 2 kinds of URLs in ArqueumSpace:
 
 *   Public URLs are in the form `https://play.workadventu.re/_/[instance]/[server]/[path to map]`
 *   Private URLs (used in paid accounts) are in the form `https://play.workadventu.re/@/[organization]/[world]/[map]`

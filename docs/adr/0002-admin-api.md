@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-29 — contract re-verified against the code on 2026-07-30 (see *Corrections*)
-- **Deciders:** VirtualOffice team
+- **Deciders:** ArqueumSpace team
 - **Languages:** [0002-admin-api.pt-BR.md](0002-admin-api.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
 - **Source spec:** [Spec 0001 — Feature Roadmap](../specs/0001-feature-roadmap.md), Feature 3.
 

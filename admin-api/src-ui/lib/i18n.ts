@@ -10,7 +10,7 @@
  * language has it too. That is what keeps "translate it later" from being possible.
  */
 const en = {
-    appTitle: "VirtualOffice Administration",
+    appTitle: "ArqueumSpace Administration",
     signedInAs: "Signed in as",
     signOut: "Sign out",
 
@@ -104,7 +104,7 @@ const en = {
 export type Messages = Record<keyof typeof en, string>;
 
 const ptBR: Messages = {
-    appTitle: "Administração do VirtualOffice",
+    appTitle: "Administração do ArqueumSpace",
     signedInAs: "Conectado como",
     signOut: "Sair",
 

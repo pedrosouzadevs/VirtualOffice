@@ -5,7 +5,7 @@ import { ChatPermissionLevel, type ChatRoomPermissionsState } from "../../ChatCo
 import { buildRoomPowerLevelsContent, getRoomPermissionsState } from "../MatrixRoomPowerLevels";
 
 describe("MatrixRoomPowerLevels", () => {
-    it("maps custom Matrix levels to the next WorkAdventure permission role", () => {
+    it("maps custom Matrix levels to the next ArqueumSpace permission role", () => {
         const powerLevels: RoomPowerLevelsEventContent = {
             events_default: 0,
             state_default: 30,

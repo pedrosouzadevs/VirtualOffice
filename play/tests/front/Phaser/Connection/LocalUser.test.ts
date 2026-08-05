@@ -77,7 +77,7 @@ describe("localUserStore microphone noise suppression settings", () => {
         expect(localUserStore.getMicrophoneBrowserNoiseSuppression()).toBe(true);
     });
 
-    it("does not migrate the legacy browser provider to active WorkAdventure noise suppression", () => {
+    it("does not migrate the legacy browser provider to active ArqueumSpace noise suppression", () => {
         localStorage.setItem("noiseSuppressionEnabled", "true");
         localStorage.setItem("noiseSuppressionProvider", "browser");
 

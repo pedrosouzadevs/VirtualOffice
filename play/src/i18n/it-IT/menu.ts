@@ -57,9 +57,9 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "Cancellazione dell'eco",
             enableAdvancedNoiseReduction: "Attiva riduzione avanzata del rumore",
             noiseSuppressionMode: "Modalità di soppressione del rumore:",
-            workAdventureNoiseSuppression: "Soppressione del rumore WorkAdventure",
+            workAdventureNoiseSuppression: "Soppressione del rumore ArqueumSpace",
             workAdventureNoiseSuppressionDescription:
-                "Elabora il microfono con la soppressione del rumore di WorkAdventure.",
+                "Elabora il microfono con la soppressione del rumore di ArqueumSpace.",
             recommended: "Consigliato",
             browserNoiseSuppression: "Soppressione del rumore del browser",
             browserNoiseSuppressionDescription: "Usa la soppressione del rumore integrata nel browser.",
@@ -73,7 +73,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "Modalità assente",
             explanation:
-                'Quando la scheda WorkAdventure nel tuo browser non è visibile, WorkAdventure passa alla modalità "assente"',
+                'Quando la scheda ArqueumSpace nel tuo browser non è visibile, ArqueumSpace passa alla modalità "assente"',
             cameraToggle: 'Mantieni la fotocamera attiva in modalità "assente"',
             microphoneToggle: 'Mantieni il microfono attivo in modalità "assente"',
         },
@@ -122,7 +122,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "Iniziare",
             description:
-                "WorkAdventure ti permette di creare uno spazio online per comunicare spontaneamente con gli altri. E tutto inizia con la creazione del tuo spazio. Scegli tra una vasta selezione di mappe prefabbricate dal nostro team.",
+                "ArqueumSpace ti permette di creare uno spazio online per comunicare spontaneamente con gli altri. E tutto inizia con la creazione del tuo spazio. Scegli tra una vasta selezione di mappe prefabbricate dal nostro team.",
         },
         createMap: {
             title: "Crea la tua mappa",

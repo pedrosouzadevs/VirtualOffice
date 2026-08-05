@@ -1,11 +1,11 @@
 # Setup — `admin-api`
 
-**TL;DR.** `admin-api` is the VirtualOffice service that decides who enters the world, with which tags, and who may
+**TL;DR.** `admin-api` is the ArqueumSpace service that decides who enters the world, with which tags, and who may
 edit the map. Once `ADMIN_API_URL` is set, `play` stops using its built-in `LocalAdmin` stub and asks us instead.
 `docker compose up -d` brings it up already wired; this document covers verifying it, granting permissions, and
 rolling back.
 
-**Audience.** Anyone running VirtualOffice locally, and whoever operates it later.
+**Audience.** Anyone running ArqueumSpace locally, and whoever operates it later.
 
 **Languages.** This file (en-US) + [SETUP-ADMIN-API.pt-BR.md](SETUP-ADMIN-API.pt-BR.md) (pt-BR), in lockstep.
 
@@ -482,7 +482,7 @@ docker compose logs admin-api | grep "dashboard is disabled"
 
 **502 Bad Gateway right after starting.** Almost always still booting: `play` takes minutes (Vite alone can spend
 150 s), and Traefik has no upstream until the pusher listens. Watch `docker compose logs -f play` for
-`WorkAdventure Pusher web-server started`.
+`ArqueumSpace Pusher web-server started`.
 
 **502 that never clears.** Check whether the pusher ever finished starting:
 

@@ -1,6 +1,6 @@
 # Setup — Azure Entra ID (F2)
 
-> **Purpose.** Point VirtualOffice's login at Azure Entra ID instead of the development OIDC mock — the *config swap*
+> **Purpose.** Point ArqueumSpace's login at Azure Entra ID instead of the development OIDC mock — the *config swap*
 > the roadmap chose for F2 (option A: no multi-provider; dev keeps the mock, production uses Entra).
 > **Audience.** Whoever administers the Azure tenant and operates the deployment.
 > **Languages.** This file (en-US) + [SETUP-CLOUD-AZURE.pt-BR.md](SETUP-CLOUD-AZURE.pt-BR.md), in lockstep.
@@ -58,7 +58,7 @@ Every step in plain CLI, for auditability. Values in `<>` are yours.
 
 ```bash
 # 1. The registration, with all three callbacks. Byte for byte: a URI that differs by one character fails AADSTS50011.
-az ad app create --display-name "VirtualOffice" \
+az ad app create --display-name "ArqueumSpace" \
   --sign-in-audience AzureADMyOrg \
   --web-redirect-uris \
     "https://<play-host>/openid-callback" \

@@ -2,7 +2,7 @@ import type { Subscription } from "rxjs";
 import { get } from "svelte/store";
 import * as Sentry from "@sentry/svelte";
 import type { SpaceInterface, SpaceUserExtended } from "../SpaceInterface";
-import type { CheckedWorkAdventureMessagePort } from "../../Api/Iframe/CheckedWorkAdventureMessagePort";
+import type { CheckedArqueumSpaceMessagePort } from "../../Api/Iframe/CheckedArqueumSpaceMessagePort";
 
 /**
  * Represents a bridge between one Space and the scripting API.
@@ -17,7 +17,7 @@ export class SpaceScriptingBridge {
 
     constructor(
         private space: SpaceInterface,
-        private port: CheckedWorkAdventureMessagePort<"joinSpace">,
+        private port: CheckedArqueumSpaceMessagePort<"joinSpace">,
         private onSpaceLeft: () => void,
     ) {
         this.messagesSubscription = this.port.messages.subscribe((event) => {

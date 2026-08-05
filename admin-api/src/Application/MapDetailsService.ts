@@ -41,11 +41,11 @@ export interface MapDetailsConfiguration {
  * tab titles and social cards change the day the Admin API is switched on.
  */
 const META_TAGS_DEFAULT_VALUE: RequiredMetaTagsData = {
-    title: "WorkAdventure",
+    title: "ArqueumSpace",
     description:
-        "Organize your online event in WorkAdventure to recreate spontaneous social interactions. Connect, collaborate and have fun with your teammates and attendees.",
-    author: "WorkAdventure team",
-    provider: "WorkAdventure",
+        "Organize your online event in ArqueumSpace to recreate spontaneous social interactions. Connect, collaborate and have fun with your teammates and attendees.",
+    author: "ArqueumSpace team",
+    provider: "ArqueumSpace",
     favIcons: [
         {
             rel: "icon",
@@ -60,7 +60,7 @@ const META_TAGS_DEFAULT_VALUE: RequiredMetaTagsData = {
             type: "image/png",
         },
     ],
-    appName: "WorkAdventure",
+    appName: "ArqueumSpace",
     shortAppName: "WA",
     themeColor: "#1B2A41",
     cardImage: "https://workadventu.re/images/general/logo-og.png",

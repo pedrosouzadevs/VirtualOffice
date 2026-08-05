@@ -21,7 +21,7 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
     discord: {
         integration: "INTÉGRATION",
         explainText:
-            "En connectant votre compte Discord ici, vous pourrez recevoir vos messages directement dans le chat WorkAdventure. Après avoir synchronisé un serveur, nous créerons les salles qu'il contient, vous n'aurez plus qu'à les rejoindre dans le chat WorkAdventure.",
+            "En connectant votre compte Discord ici, vous pourrez recevoir vos messages directement dans le chat ArqueumSpace. Après avoir synchronisé un serveur, nous créerons les salles qu'il contient, vous n'aurez plus qu'à les rejoindre dans le chat ArqueumSpace.",
         login: "Connexion à Discord",
         fetchingServer: "Récupération de vos serveurs... 👀",
         qrCodeTitle: "Connectez-vous à Discord",
@@ -42,13 +42,13 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
         tokenPlaceholder: "Votre jeton Discord",
         loginWithQrCode: "Se connecter avec le code QR",
         guilds: "Serveurs Discord",
-        guildExplain: "Sélectionnez les canaux que vous souhaitez ajouter à l'interface de chat WorkAdventure.\n",
+        guildExplain: "Sélectionnez les canaux que vous souhaitez ajouter à l'interface de chat ArqueumSpace.\n",
     },
     outlook: {
         signIn: "Se connecter avec Outlook",
         popupScopeToSync: "Connecter mon compte Outlook",
         popupScopeToSyncExplainText:
-            "Nous avons besoin de nous connecter à votre compte Outlook pour synchroniser votre calendrier et / ou vos tâches. Cela vous permettra de voir vos réunions et vos tâches dans WorkAdventure et de les rejoindre directement depuis la carte.",
+            "Nous avons besoin de nous connecter à votre compte Outlook pour synchroniser votre calendrier et / ou vos tâches. Cela vous permettra de voir vos réunions et vos tâches dans ArqueumSpace et de les rejoindre directement depuis la carte.",
         popupScopeToSyncCalendar: "Synchroniser mon calendrier",
         popupScopeToSyncTask: "Synchroniser mes tâches",
         popupCancel: "Annuler",
@@ -70,7 +70,7 @@ const externalModule: DeepPartial<Translation["externalModule"]> = {
         signIn: "Se connecter avec Google",
         popupScopeToSync: "Connecter mon compte Google",
         popupScopeToSyncExplainText:
-            "Nous avons besoin de nous connecter à votre compte Google pour synchroniser votre calendrier et / ou vos tâches. Cela vous permettra de voir vos réunions et vos tâches dans WorkAdventure et de les rejoindre directement depuis la carte.",
+            "Nous avons besoin de nous connecter à votre compte Google pour synchroniser votre calendrier et / ou vos tâches. Cela vous permettra de voir vos réunions et vos tâches dans ArqueumSpace et de les rejoindre directement depuis la carte.",
         popupScopeToSyncCalendar: "Synchroniser mon calendrier",
         popupScopeToSyncTask: "Synchroniser mes tâches",
         popupCancel: "Annuler",

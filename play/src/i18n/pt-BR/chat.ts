@@ -677,7 +677,7 @@ const chat: DeepPartial<Translation["chat"]> = {
     },
     remoteUserNotConnected: "Usuário não autenticado. Não é possível enviar mensagem.",
     matrixSettings: {
-        title: "Matrix & WorkAdventure",
+        title: "Matrix & ArqueumSpace",
         subtitle: "Sua identidade de chat e perfil Matrix",
         close: "Fechar",
         identitySection: "Identidade",
@@ -686,7 +686,7 @@ const chat: DeepPartial<Translation["chat"]> = {
         copy: "Copiar",
         copied: "Copiado",
         profileSection: "Perfil Matrix",
-        accountDataSection: "WorkAdventure (no jogo)",
+        accountDataSection: "ArqueumSpace (no jogo)",
         displayName: "Nome de exibição",
         avatar: "Avatar (MXC)",
         localName: "Nome local no jogo",
@@ -712,7 +712,7 @@ const chat: DeepPartial<Translation["chat"]> = {
         publishWokaToMatrixProfileButton: "Aplicar nome e imagem WOKA ao perfil Matrix",
         publishWokaToMatrixProfilePublishing: "Atualizando perfil…",
         publishWokaToMatrixProfileConfirmWarning:
-            "Isso substitui o nome de exibição e o avatar do seu perfil Matrix no servidor. Qualquer nome ou foto definidos em outro lugar (por exemplo, no Element) será substituído. Continue apenas se quiser que seu nome WorkAdventure e seu WOKA se tornem seu perfil Matrix público.",
+            "Isso substitui o nome de exibição e o avatar do seu perfil Matrix no servidor. Qualquer nome ou foto definidos em outro lugar (por exemplo, no Element) será substituído. Continue apenas se quiser que seu nome ArqueumSpace e seu WOKA se tornem seu perfil Matrix público.",
         publishWokaToMatrixProfileCancelButton: "Cancelar",
         publishWokaToMatrixProfileConfirmActionButton: "Substituir e aplicar",
         actionDone: "Concluído",

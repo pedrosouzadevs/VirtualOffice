@@ -17,7 +17,7 @@ const notification: DeepPartial<Translation["notification"]> = {
         title: "Pśistup k powěźeńkam wótpokazany",
         permissionDenied: "Pśistup wótpokazany",
         content:
-            "Njepśepušćejśo diskusiju. Aktiwěrujśo powěźeńki, aby informěrowany był, gaž něchten z wami powědaś co, samo gaž njejsćo na rejtariku WorkAdventure.",
+            "Njepśepušćejśo diskusiju. Aktiwěrujśo powěźeńki, aby informěrowany był, gaž něchten z wami powědaś co, samo gaž njejsćo na rejtariku ArqueumSpace.",
         firefoxContent:
             'Pšosym klikniśo na kašćik "Toś tu rozeznanje se spomniś", jolic njocośo, až Firefox dalej pšaša za awtorizaciju.',
         refresh: "Aktualizěrowaś",

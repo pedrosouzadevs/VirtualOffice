@@ -4,12 +4,12 @@ import { Subject } from "rxjs";
 import type {
     IframeMessagePortMap,
     MessagePortIframeEvent,
-    MessagePortWorkAdventureEvent,
+    MessagePortArqueumSpaceEvent,
 } from "../Events/MessagePortEvents";
 import { iframeMessagePortTypeGuards } from "../Events/MessagePortEvents";
 
 type MessagePortMessageEvent<K extends keyof IframeMessagePortMap> = MessageEvent<
-    z.infer<MessagePortWorkAdventureEvent<K>["data"]>
+    z.infer<MessagePortArqueumSpaceEvent<K>["data"]>
 >;
 
 /**

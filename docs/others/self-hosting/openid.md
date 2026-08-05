@@ -1,17 +1,17 @@
 # OpenID connect
 
-WorkAdventure can be connected to any OpenID Connect compliant provider.
+ArqueumSpace can be connected to any OpenID Connect compliant provider.
 
 It uses the Authorization Code flow and supports PKCE.
 
-To configure WorkAdventure with your OpenID Connect provider, you first need to declare
-WorkAdventure as an application in your OpenID Connect provider.
+To configure ArqueumSpace with your OpenID Connect provider, you first need to declare
+ArqueumSpace as an application in your OpenID Connect provider.
 
 The way you do this depends on the provider.
 
 As part of this configuration, you will need to configure the "redirect URL".
 
-For WorkAdventure, the redirect URL is: `https://play.[your-domain]/openid-callback`.
+For ArqueumSpace, the redirect URL is: `https://play.[your-domain]/openid-callback`.
 
 Then, you need to configure these environment variables:
 

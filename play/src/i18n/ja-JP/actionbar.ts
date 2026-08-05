@@ -163,7 +163,7 @@ const actionbar: DeepPartial<Translation["actionbar"]> = {
         },
         calendar: {
             title: "カレンダー",
-            desc: "今後の会議を確認し、WorkAdventureから直接参加できます。",
+            desc: "今後の会議を確認し、ArqueumSpaceから直接参加できます。",
         },
         todolist: {
             title: "タスクリスト",

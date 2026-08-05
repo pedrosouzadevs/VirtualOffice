@@ -4,7 +4,7 @@ import { MapStore } from "@workadventure/store-utils";
 import type { Readable, Writable } from "svelte/store";
 import { get, writable } from "svelte/store";
 import type { ChatMessageReaction, ChatUser } from "../ChatConnection";
-import type { WorkAdventureComponent, WorkAdventureComponentProps } from "../../../../types/component";
+import type { ArqueumSpaceComponent, ArqueumSpaceComponentProps } from "../../../../types/component";
 import ReactionIcon from "../../Components/Room/ReactionIcon.svelte";
 import { chatUserFactoryFromRoom } from "./MatrixChatUser";
 
@@ -107,8 +107,8 @@ export class MatrixChatMessageReaction implements ChatMessageReaction {
     }
 
     public get component(): {
-        component: WorkAdventureComponent;
-        props: WorkAdventureComponentProps;
+        component: ArqueumSpaceComponent;
+        props: ArqueumSpaceComponentProps;
     } {
         return {
             component: ReactionIcon,

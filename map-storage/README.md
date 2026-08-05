@@ -7,9 +7,9 @@ The map-storage component is in charge of:
 - editing the uploaded maps. The map-storage will receive edit messages from the back container directly.
 
 > **Note**
-> Maps do not have to be stored in the map-storage. They can be stored on any web server on the web and WorkAdventure
+> Maps do not have to be stored in the map-storage. They can be stored on any web server on the web and ArqueumSpace
 > can fetch them from this webserver. However, if you want to edit a map, you need to store the map in the map-storage.
-> It is the only place where WorkAdventure has right accesses to edit a map.
+> It is the only place where ArqueumSpace has right accesses to edit a map.
 
 ```mermaid
 graph LR

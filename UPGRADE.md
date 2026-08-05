@@ -1,7 +1,7 @@
 ```suggestion
 # Upgrade Guide
 
-This document provides instructions for upgrading WorkAdventure between versions.
+This document provides instructions for upgrading ArqueumSpace between versions.
 
 ## Upgrading from v1.27.2 to v1.27.3
 
@@ -98,7 +98,7 @@ If you are using Kubernetes, Helm, or another deployment method:
 
 After upgrading, verify that TURN credentials are working correctly:
 
-1. Open your WorkAdventure instance in a browser
+1. Open your ArqueumSpace instance in a browser
 2. Join a room with another user
 3. Enable video/audio communication
 4. Check the browser console for any WebRTC-related errors

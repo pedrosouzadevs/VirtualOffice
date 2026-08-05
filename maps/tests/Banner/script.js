@@ -9,7 +9,7 @@ function launchBanner(){
         textColor: "#ffffff",
         closable: true,
         link: {
-            label: "WorkAdventure ",
+            label: "ArqueumSpace ",
             url: "https://workadventu.re"
         }
     });

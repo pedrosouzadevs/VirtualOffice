@@ -49,7 +49,7 @@ If the area contains objects, a warning message will prompt you to decide how to
 ## Visit card and message
 
 :::info
-This feature is not available in the self-hosted version of WorkAdventure.
+This feature is not available in the self-hosted version of ArqueumSpace.
 :::
 When a user walks through a personal area and the owner is away, the owner's visit card will be displayed. From there, visitors can leave a message in the chat.
 

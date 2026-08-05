@@ -49,7 +49,7 @@ async function init() {
                     type: "question",
                     buttons: ["Install and Restart", "Install Later"],
                     defaultId: 0,
-                    title: "WorkAdventure - Update",
+                    title: "ArqueumSpace - Update",
                     message: process.platform === "win32" ? releaseNotes : releaseName,
                     detail: "A new version has been downloaded. Restart the application to apply the updates.",
                 };
@@ -74,7 +74,7 @@ async function init() {
 
         autoUpdater.on("update-available", () => {
             createAndShowNotification({
-                title: "WorkAdventure - Update available",
+                title: "ArqueumSpace - Update available",
                 body: "Please go to our website and install the newest version",
             });
         });

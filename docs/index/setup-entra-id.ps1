@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Provisions the Azure Entra ID app registration VirtualOffice signs in with (F2).
+Provisions the Azure Entra ID app registration ArqueumSpace signs in with (F2).
 
 .DESCRIPTION
 Creates or updates a single app registration that serves both login surfaces:
@@ -25,7 +25,7 @@ Public URL of the admin-api service (the dashboard), scheme included.
 Example: https://admin.example.com
 
 .PARAMETER DisplayName
-Display name of the app registration. Default: VirtualOffice.
+Display name of the app registration. Default: ArqueumSpace.
 
 .PARAMETER SecretMonths
 Client secret lifetime in months. Default 3, matching the 90-day rotation
@@ -42,7 +42,7 @@ The client secret is printed ONCE and never written to disk.
 param(
     [Parameter(Mandatory = $true)][string]$PlayUrl,
     [Parameter(Mandatory = $true)][string]$AdminApiUrl,
-    [string]$DisplayName = "VirtualOffice",
+    [string]$DisplayName = "ArqueumSpace",
     [ValidateRange(1, 24)][int]$SecretMonths = 3
 )
 

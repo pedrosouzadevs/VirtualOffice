@@ -24,7 +24,7 @@ describe("toRooms", () => {
                         metadata: {
                             name: "Areas",
                             description: "A test map",
-                            copyright: "© VirtualOffice",
+                            copyright: "© ArqueumSpace",
                             areasSearchable: 2,
                             entitiesSearchable: 5,
                         },
@@ -45,7 +45,7 @@ describe("toRooms", () => {
                 thumbnail: undefined,
                 // Read though no dashboard screen shows them: `/api/room/sameWorld` answers the whole of
                 // `WAMMetadata`, exactly as the `LocalAdmin` it replaces did (ADR-0005, H2).
-                copyright: "© VirtualOffice",
+                copyright: "© ArqueumSpace",
                 areasSearchable: 2,
                 entitiesSearchable: 5,
             },

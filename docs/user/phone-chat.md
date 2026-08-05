@@ -5,16 +5,16 @@ sidebar_position: 20
 # Getting messages on your phone
 
 
-WorkAdventure's chat system runs on the Matrix protocol. Matrix is a decentralized protocol that allows users to communicate
+ArqueumSpace's chat system runs on the Matrix protocol. Matrix is a decentralized protocol that allows users to communicate
 in real-time. It is similar to other chat systems like Slack or Discord, but it is decentralized and open-source.
 
-This means you can use any Matrix client to connect to WorkAdventure's chat system. There are many Matrix clients available
+This means you can use any Matrix client to connect to ArqueumSpace's chat system. There are many Matrix clients available
 for different platforms, including web, desktop, and mobile.
 
 In this section, we will see how you can install "Element", a popular Matrix client, on your phone and connect it to
-your WorkAdventure account.
+your ArqueumSpace account.
 
-When this is done, you will be able to get notifications when someone sends you a message in WorkAdventure, even if you
+When this is done, you will be able to get notifications when someone sends you a message in ArqueumSpace, even if you
 are not currently connected to your world.
 
 ## Installing Element on your phone
@@ -27,9 +27,9 @@ To install Element on your phone, follow these steps:
 2. Search for "Element" in the search bar.
 3. Click on the "Install" button to install the app on your phone.
 
-## Connecting Element to your WorkAdventure account
+## Connecting Element to your ArqueumSpace account
 
-Once you have installed Element on your phone, follow these steps to connect it to your WorkAdventure account:
+Once you have installed Element on your phone, follow these steps to connect it to your ArqueumSpace account:
 
 import image1 from './images/element/1-welcome.jpg';
 import image2 from './images/element/2-login.jpg';
@@ -62,8 +62,8 @@ import image8 from './images/element/8-sync.jpg';
     </tr>
 </table>
 
-5. Now, once more, **do not try to enter your email and password**. Instead, click on the "Continue with WorkAdventure" button.
-6. You will be redirected to the WorkAdventure login page. Enter your email.
+5. Now, once more, **do not try to enter your email and password**. Instead, click on the "Continue with ArqueumSpace" button.
+6. You will be redirected to the ArqueumSpace login page. Enter your email.
 7. In the rare case where your email might be associated with multiple worlds, you will be prompted to select the world you want to connect to.
 8. Then, you can enter your password. If a Single Sign-On (SSO) is enabled for your world, you will be redirected to your SSO provider to authenticate.
 
@@ -74,15 +74,15 @@ import image8 from './images/element/8-sync.jpg';
     </tr>
 </table>
 
-9. Finally, you will be redirected to the WorkAdventure chat system that will ask for confirmation. Simply click "Continue".
-10. Hooray! You are now connected to your WorkAdventure chat system on your phone.
+9. Finally, you will be redirected to the ArqueumSpace chat system that will ask for confirmation. Simply click "Continue".
+10. Hooray! You are now connected to your ArqueumSpace chat system on your phone.
 
-## Using another Matrix client to connect to WorkAdventure
+## Using another Matrix client to connect to ArqueumSpace
 
 Element is not the only Matrix client available. There are many other clients available for different platforms.
-If you are looking to connect to WorkAdventure's chat system using another Matrix client, here are the 2 things you
+If you are looking to connect to ArqueumSpace's chat system using another Matrix client, here are the 2 things you
 need to know:
 
 1. **Server**: The server you need to connect to is `chat.workadventu.re`.
-2. **Login method**: You need to use the "Single Sign-On" (SSO) method to connect to WorkAdventure. Your client must
+2. **Login method**: You need to use the "Single Sign-On" (SSO) method to connect to ArqueumSpace. Your client must
    be compatible with the OIDC-Aware login method.

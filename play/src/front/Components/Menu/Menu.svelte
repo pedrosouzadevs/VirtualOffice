@@ -3,7 +3,7 @@
     import { fly } from "svelte/transition";
     import { onDestroy, onMount } from "svelte";
     import type { Unsubscriber } from "svelte/store";
-    import type { WorkAdventureComponent } from "../../../types/component";
+    import type { ArqueumSpaceComponent } from "../../../types/component";
     import chevronImg from "../images/chevron.svg";
     import type { MenuItem } from "../../Stores/MenuStore";
     import {
@@ -29,7 +29,7 @@
     import HelpSubMenu from "./HelpSubMenu.svelte";
 
     let activeSubMenu: MenuItem = $state($subMenusStore[$activeSubMenuStore]);
-    let activeComponent: WorkAdventureComponent = $state(ProfileSubMenu);
+    let activeComponent: ArqueumSpaceComponent = $state(ProfileSubMenu);
     let props: { url: string; allowApi: boolean; allow?: string } = $state({
         url: "",
         allowApi: false,

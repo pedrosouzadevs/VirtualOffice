@@ -26,7 +26,7 @@ When a user clicks on the object, a pop-up is displayed with the list of possibl
 
 Possible actions are:
 
-- **[Opening a link](open-link.md)**: Opens a webpage, either inside WorkAdventure or in a new tab of the browser.
+- **[Opening a link](open-link.md)**: Opens a webpage, either inside ArqueumSpace or in a new tab of the browser.
 - **[Play an audio file](play-sound.md)**: Plays an audio file. Useful for Jukeboxes!
 
 ## Snapping objects to the grid
@@ -34,9 +34,9 @@ Possible actions are:
 When placing objects on the map, you can place most objects in a "pixel perfect" way.
 If you hold the SHIFT key, objects will be "snapped" to the grid.
 
-WorkAdventure will force any "colliding" objects to be snapped to the grid. This means that if an object cannot be
-traversed (like a table), WorkAdventure will make it snap to the grid. This is a limitation of the physics engine
-used internally by WorkAdventure.
+ArqueumSpace will force any "colliding" objects to be snapped to the grid. This means that if an object cannot be
+traversed (like a table), ArqueumSpace will make it snap to the grid. This is a limitation of the physics engine
+used internally by ArqueumSpace.
 
 ## Deleting an object
 

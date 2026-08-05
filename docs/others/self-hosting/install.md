@@ -2,45 +2,45 @@
 
 ## Do you need self-hosting?
 
-WorkAdventure is a powerful and versatile platform that enables users to create immersive and interactive virtual
-environments for remote collaboration, events, and games. As an open project, WorkAdventure offers users the flexibility
-and freedom to host the platform on their own servers. However, self-hosting WorkAdventure requires technical expertise,
+ArqueumSpace is a powerful and versatile platform that enables users to create immersive and interactive virtual
+environments for remote collaboration, events, and games. As an open project, ArqueumSpace offers users the flexibility
+and freedom to host the platform on their own servers. However, self-hosting ArqueumSpace requires technical expertise,
 infrastructure, and maintenance, which may not be feasible or practical for all users.
 
-In order to self-host WorkAdventure, you will need:
+In order to self-host ArqueumSpace, you will need:
 
-- at least one server for WorkAdventure, with a public facing IP and a DNS name
-- in addition, WorkAdventure requires 2 additional services: Livekit and Coturn. In a typical setup, those services will be hosted on 2 additional servers (both with a public facing IP address and a DNS name)
+- at least one server for ArqueumSpace, with a public facing IP and a DNS name
+- in addition, ArqueumSpace requires 2 additional services: Livekit and Coturn. In a typical setup, those services will be hosted on 2 additional servers (both with a public facing IP address and a DNS name)
 - as an option, a Jitsi server for large meeting rooms (before v1.27, it was required but now it is optional as Jitsi is getting replaced by Livekit)
 - a strong technical expertise regarding Docker and containers
 - a good understanding of networking concepts
 - ... and time (!), to keep up with the updates (about once a month)
 
-Depending on your use-case, you might want to check the SAAS (i.e. hosted) version of WorkAdventure.
+Depending on your use-case, you might want to check the SAAS (i.e. hosted) version of ArqueumSpace.
 It provides:
 
 - **Fast and easy setup**: with just a few clicks, you can sign up, create your first virtual space, invite your team or friends, and start exploring and collaborating in real-time
-- **Automatic upgrades**: you don't have to worry about upgrading the platform yourself. WorkAdventure is a fast-evolving
+- **Automatic upgrades**: you don't have to worry about upgrading the platform yourself. ArqueumSpace is a fast-evolving
   technology, with frequent updates, bug fixes, and new features. The SAAS version takes care of all the upgrades and ensures that you always have access to the latest and greatest version of the platform.
 - **An advanced dashboard**: you can manage your virtual spaces, users, and get fine-grained access rights from the dashboard.
   You can also create and manage your own custom domains and logos.
-- **Lower costs and resources**: While self-hosting WorkAdventure may seem like a cost-effective option at first glance,
+- **Lower costs and resources**: While self-hosting ArqueumSpace may seem like a cost-effective option at first glance,
   it can quickly become expensive and resource-intensive in the long run. Self-hosting requires not only server hardware
   but also bandwidth, storage, and maintenance costs. Moreover, self-hosting requires technical expertise, time, and
-  effort to set up, configure, and troubleshoot the infrastructure. The SAAS version of WorkAdventure, on the other hand,
+  effort to set up, configure, and troubleshoot the infrastructure. The SAAS version of ArqueumSpace, on the other hand,
   offers a pay-as-you-go pricing model that scales with your usage and needs. You only pay for what you use (no need for those costly video servers),
   and you don't have to worry about upfront investments, hidden fees, or unpredictable costs. And most importantly,
-  you contribute to making WorkAdventure a sustainable product 👍
+  you contribute to making ArqueumSpace a sustainable product 👍
 
-Also, the WorkAdventure SAAS version provides a generous free-plan. Head over at https://workadventu.re to start right away.
+Also, the ArqueumSpace SAAS version provides a generous free-plan. Head over at https://workadventu.re to start right away.
 
 Still interested in self-hosting? All right! Read below.
 
-## A high level view of a WorkAdventure environment
+## A high level view of a ArqueumSpace environment
 
-In order to host WorkAdventure you will need to host:
+In order to host ArqueumSpace you will need to host:
 
-- **WorkAdventure** itself
+- **ArqueumSpace** itself
 - **Coturn**: this is a service that proxies the WebRTC video signal in case a user is on a network that does not allow
   peer-to-peer connections. Coturn is optional, but without Coturn, approximately 15% of the users will fail to establish
   a audio/video connection within bubbles.
@@ -48,7 +48,7 @@ In order to host WorkAdventure you will need to host:
 - **Jitsi** (optional): in large meeting rooms, Jitsi can be used instead of Livekit to host meetings. Jitsi was previously
   the default video conferencing solution, but it is being superseded by Livekit. If you are starting a fresh install,
   you can bypass Jitsi and use Livekit only.
-- **OIDC Provider** (optional): this is the service that authenticates users. It is optional as you can run a WorkAdventure
+- **OIDC Provider** (optional): this is the service that authenticates users. It is optional as you can run a ArqueumSpace
   instance with only anonymous users.
 - **Synapse** (optional): this is the server that hosts the Matrix chat rooms. It is optional. Without Synapse, users will not
   be able to send messages to each others when they are not in the same bubble or offline and chat conversations will not be persisted.
@@ -57,19 +57,19 @@ In order to host WorkAdventure you will need to host:
 flowchart LR
   
     subgraph Servers
-    WorkAdventure
+    ArqueumSpace
     Livekit
     Coturn
     Jitsi
     Synapse
     end
     Browser1["Your browser"]
-    Browser1-->WorkAdventure
+    Browser1-->ArqueumSpace
     Browser1-->Livekit
     Browser1-->Coturn
     Browser1-.->Jitsi
     Browser1-.->Synapse
-    WorkAdventure-.->OIDC[OIDC Provider - SSO]
+    ArqueumSpace-.->OIDC[OIDC Provider - SSO]
     Synapse-.->OIDC
   style Synapse stroke-width:1px,stroke-dasharray: 5 5
   style Jitsi stroke-width:1px,stroke-dasharray: 5 5
@@ -77,7 +77,7 @@ flowchart LR
 ```
 
 > [!WARNING]  
-> In the rest of this document, we will describe how to install the WorkAdventure server. We will leave Livekit, Jitsi,
+> In the rest of this document, we will describe how to install the ArqueumSpace server. We will leave Livekit, Jitsi,
 > Coturn and Synapse installs out of scope. OpenID Connect authentication is also out of scope for now.
 
 Livekit install guide: https://docs.livekit.io/home/self-hosting/deployment/  
@@ -85,10 +85,10 @@ Jitsi install guide: https://jitsi.github.io/handbook/docs/devops-guide/
 Coturn install guide: https://meetrix.io/blog/webrtc/coturn/installation.html  
 Synapse install guide: https://element-hq.github.io/synapse/latest/setup/installation.html
 
-## Installation method for the WorkAdventure server
+## Installation method for the ArqueumSpace server
 
-WorkAdventure is a set of different programs. There are countless ways of hosting WorkAdventure. In the past, we have
-seen people using Ansible, NixOS or Kubernetes to host WorkAdventure. You can host each component on a different
+ArqueumSpace is a set of different programs. There are countless ways of hosting ArqueumSpace. In the past, we have
+seen people using Ansible, NixOS or Kubernetes to host ArqueumSpace. You can host each component on a different
 domain name or run a "single-domain" install. The core maintainers of this project cannot possibly support all possible
 installation methods.
 
@@ -99,9 +99,9 @@ So we are maintaining TWO installation methods:
 
 ### Docker Compose
 
-The easiest way to install WorkAdventure if you do not have a Kubernetes cluster is to use Docker Compose.
+The easiest way to install ArqueumSpace if you do not have a Kubernetes cluster is to use Docker Compose.
 
-- **WorkAdventure works as a set of Docker containers.**
+- **ArqueumSpace works as a set of Docker containers.**
 - **We provide Docker images for each container in the Docker hub registry, and a docker-compose file to easily start the containers.**
 - **The proposed install runs on a single domain (you will still need additional domain names for Livekit, Coturn and Jitsi).**
 - **We assume you have one physical server with root access and Docker installed. The server has a public IP address.**
@@ -112,19 +112,19 @@ Of course, every production environment is different and this docker-compose fil
 fit all use cases. The file is yours. Fill free to modify it. Fill free to use it as a starting point to host the
 solution on Kubernetes if you want.
 
-If you have specific needs for a custom deployment, the WorkAdventure company can offer paid support. Don't hesitate to
-contact us at hello@workadventu.re. We also provide support to integrate WorkAdventure in your existing application.
+If you have specific needs for a custom deployment, the ArqueumSpace company can offer paid support. Don't hesitate to
+contact us at hello@workadventu.re. We also provide support to integrate ArqueumSpace in your existing application.
 
 Click here to see the [Docker Compose install guide](../../../contrib/docker/README.md).
 
 ### Helm chart for Kubernetes
 
-If you have a Kubernetes cluster, you can use the Helm chart to install WorkAdventure.
+If you have a Kubernetes cluster, you can use the Helm chart to install ArqueumSpace.
 
 The Helm Chart is well tested on each release and is known to work.
 It is newer than the Docker Compose install and might change frequently. The numbering of the Helm chart aligns with
-the version of WorkAdventure it installs. Therefore, when WorkAdventure releases a new version, the Helm chart is also updated.
-We do not guarantee backward compatibility of the Helm chart "values" file between WorkAdventure minor versions. Check the release
+the version of ArqueumSpace it installs. Therefore, when ArqueumSpace releases a new version, the Helm chart is also updated.
+We do not guarantee backward compatibility of the Helm chart "values" file between ArqueumSpace minor versions. Check the release
 notes before upgrading.
 
 Click here to see the [Helm chart install guide](../../../contrib/helm/README.md).

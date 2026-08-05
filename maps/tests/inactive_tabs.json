@@ -40,7 +40,7 @@
                     {
                      "fontfamily":"Sans Serif",
                      "pixelsize":11,
-                     "text":"Test:\nOpen WorkAdventure in 1 tab in Chrome and 1 tab in Firefox. Keep the Firefox tab open and open another tab in Chrome on any website (so that the WA Chrome tab is not visible). Do not enter in a bubble. Wait 6 minutes. (you can check time waited in a \"chrome:\/\/discards\" special tab.\n\nResult:\nOn the Firefox tab, the user of the Chrome tab is still visible. You can speak to the other user in a bubble.\n\nHere, we are checking that the Chrome does not \"freeze\" the non visible tab.\n\nRe-run this test with Safari, Edge and Firefox as the browsers with the hidden tabs",
+                     "text":"Test:\nOpen ArqueumSpace in 1 tab in Chrome and 1 tab in Firefox. Keep the Firefox tab open and open another tab in Chrome on any website (so that the WA Chrome tab is not visible). Do not enter in a bubble. Wait 6 minutes. (you can check time waited in a \"chrome:\/\/discards\" special tab.\n\nResult:\nOn the Firefox tab, the user of the Chrome tab is still visible. You can speak to the other user in a bubble.\n\nHere, we are checking that the Chrome does not \"freeze\" the non visible tab.\n\nRe-run this test with Safari, Edge and Firefox as the browsers with the hidden tabs",
                      "wrap":true
                     },
                  "type":"",

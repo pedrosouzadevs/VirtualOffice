@@ -14,7 +14,7 @@ You can load a script:
 ## Script restrictions
 
 If you load a script using the `script` property in your map properties (solution 1), you need to understand that
-WorkAdventure will generate an iframe, and will load the script inside this iframe.
+ArqueumSpace will generate an iframe, and will load the script inside this iframe.
 
 Things you should know:
 
@@ -47,8 +47,8 @@ The description below applies starting with wa-map-optimized-vite package v1.2+.
 in the `package.json` file of your map starter kit.
 :::
 
-When you use the map starter kit, the build tools (Vite + the WorkAdventure Vite plugin) are used.
-The WorkAdventure Vite plugin will:
+When you use the map starter kit, the build tools (Vite + the ArqueumSpace Vite plugin) are used.
+The ArqueumSpace Vite plugin will:
 
 1- scan your maps
 2- detect the `script` property in your map properties
@@ -83,7 +83,7 @@ If you load a JS script using the `script` property in your map properties (with
 scripts are loaded by default with the`type="module"` attribute. Because those scripts are [loaded as modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#applying_the_module_to_your_html),
 they need to abide by the same-origin policy, so they are using CORS.
 
-But when you load a script directly (if the "script" property refers a JS file instead of a HTML file), WorkAdventure will
+But when you load a script directly (if the "script" property refers a JS file instead of a HTML file), ArqueumSpace will
 create aan iframe on the fly but will put a sandbox on it (for security reasons). Because the iframe is 
 sandboxed, the script does not have an origin. Therefore, the web server hosting your script
 will need to allow **all** origins with:

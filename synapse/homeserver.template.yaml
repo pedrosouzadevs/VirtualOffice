@@ -58,7 +58,7 @@ oidc_providers:
         display_name_template: "{{ user.name }}"
         email_template: "{{ user.email }}"
 #  - idp_id: workadventure-admin
-#    idp_name: WorkAdventure Admin
+#    idp_name: ArqueumSpace Admin
 #    issuer: "http://member.workadventure.localhost"
 #    skip_verification: true
 #    client_id: "4"

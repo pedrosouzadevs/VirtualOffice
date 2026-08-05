@@ -35,7 +35,7 @@ From there, you should be able to use Typescript in your project.
 
 ## The long story
 
-Below is a step by step guide explaining how to set up Typescript + Vite along your WorkAdventure map.
+Below is a step by step guide explaining how to set up Typescript + Vite along your ArqueumSpace map.
 
 In your map directory, start by adding a `package.json` file. This file will contain dependencies on Vite, Typescript and the Workadventure typings:
 
@@ -151,7 +151,7 @@ Create your entry point (the index.html).
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta name="robots" content="noindex">
-    <title>WorkAdventure Starter</title>
+    <title>ArqueumSpace Starter</title>
 </head>
 
 <body></body>

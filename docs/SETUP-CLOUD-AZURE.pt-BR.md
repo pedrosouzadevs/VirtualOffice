@@ -1,6 +1,6 @@
 # Setup — Azure Entra ID (F2)
 
-> **Propósito.** Apontar o login do VirtualOffice para o Azure Entra ID em vez do mock OIDC de desenvolvimento — o
+> **Propósito.** Apontar o login do ArqueumSpace para o Azure Entra ID em vez do mock OIDC de desenvolvimento — o
 > *config swap* que o roadmap escolheu para o F2 (opção A: sem multi-provider; dev fica com o mock, produção usa o
 > Entra).
 > **Público.** Quem administra o tenant Azure e opera o deploy.
@@ -59,7 +59,7 @@ Cada passo em CLI pura, por auditabilidade. Valores em `<>` são os seus.
 
 ```bash
 # 1. O registration, com os três callbacks. Byte a byte: URI diferente por um caractere falha com AADSTS50011.
-az ad app create --display-name "VirtualOffice" \
+az ad app create --display-name "ArqueumSpace" \
   --sign-in-audience AzureADMyOrg \
   --web-redirect-uris \
     "https://<play-host>/openid-callback" \

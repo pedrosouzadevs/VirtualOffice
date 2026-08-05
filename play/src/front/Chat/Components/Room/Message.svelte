@@ -7,7 +7,7 @@
         ChatRoomMember,
         ChatThreadSummary,
     } from "../../Connection/ChatConnection";
-    import type { WorkAdventureComponent } from "../../../../types/component";
+    import type { ArqueumSpaceComponent } from "../../../../types/component";
     import LL, { locale } from "../../../../i18n/i18n-svelte";
     import AvatarBox from "../../../Components/UI/Avatar.svelte";
     import Avatar from "../Avatar.svelte";
@@ -68,7 +68,7 @@
 
     let messageFromSystem = $derived(type === "incoming" || type === "outcoming");
 
-    const messageType: { [key in ChatMessageType]: WorkAdventureComponent } = {
+    const messageType: { [key in ChatMessageType]: ArqueumSpaceComponent } = {
         image: MessageImage,
         text: MessageText,
         file: MessageFile,

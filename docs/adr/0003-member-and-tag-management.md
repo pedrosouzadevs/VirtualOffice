@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-31
-- **Deciders:** VirtualOffice team
+- **Deciders:** ArqueumSpace team
 - **Languages:** [0003-member-and-tag-management.pt-BR.md](0003-member-and-tag-management.pt-BR.md) (pt-BR) + this file (en-US), in lockstep.
 - **Source:** [ADR-0002](0002-admin-api.md), phase P1. Spec [0001 — Feature Roadmap](../specs/0001-feature-roadmap.md), Feature 3.
 

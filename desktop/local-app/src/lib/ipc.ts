@@ -1,5 +1,5 @@
-import type { WorkAdventureLocalAppApi, SettingsData, Server } from "@wa-preload-local-app";
+import type { ArqueumSpaceLocalAppApi, SettingsData, Server } from "@wa-preload-local-app";
 
-export { WorkAdventureLocalAppApi, SettingsData, Server };
+export { ArqueumSpaceLocalAppApi, SettingsData, Server };
 
 export const api = window?.WAD;

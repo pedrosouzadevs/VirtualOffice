@@ -223,7 +223,7 @@ describe("GET /api/map", () => {
             const details = buildMapDetails(`${BASE}/~/maps/areas.wam`, TEST_MAP_DETAILS_CONFIGURATION);
 
             expect(details).toMatchObject({
-                metatags: { title: "WorkAdventure", appName: "WorkAdventure", shortAppName: "WA" },
+                metatags: { title: "ArqueumSpace", appName: "ArqueumSpace", shortAppName: "WA" },
             });
         });
     });

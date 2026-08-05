@@ -9,7 +9,7 @@ export type ActionBarButtonDescriptor = AddButtonActionBarEvent & {
     callback?: ButtonActionBarClickedCallback;
 };
 
-export class WorkAdventureButtonActionBarCommands extends IframeApiContribution<WorkAdventureButtonActionBarCommands> {
+export class ArqueumSpaceButtonActionBarCommands extends IframeApiContribution<ArqueumSpaceButtonActionBarCommands> {
     private _callbacks: Map<string, () => void> = new Map<string, () => void>();
 
     callbacks = [
@@ -57,4 +57,4 @@ export class WorkAdventureButtonActionBarCommands extends IframeApiContribution<
     }
 }
 
-export default new WorkAdventureButtonActionBarCommands();
+export default new ArqueumSpaceButtonActionBarCommands();

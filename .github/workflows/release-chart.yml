@@ -41,7 +41,7 @@ jobs:
       - name: Install chart-museum push plugin
         run: helm plugin install https://github.com/chartmuseum/helm-push
 
-      - name: Adding WorkAdventure repository
+      - name: Adding ArqueumSpace repository
         run: helm repo add workadventure-charts https://charts.workadventu.re
 
       - name: Package and push Helm chart

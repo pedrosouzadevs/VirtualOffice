@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { WorkAdventureLocalAppApi } from "./types";
+import type { ArqueumSpaceLocalAppApi } from "./types";
 
-const api: WorkAdventureLocalAppApi = {
+const api: ArqueumSpaceLocalAppApi = {
     desktop: true,
     isDevelopment: () => ipcRenderer.invoke("is-development"),
     getVersion: () => ipcRenderer.invoke("get-version"),

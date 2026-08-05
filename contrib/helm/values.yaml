@@ -5,8 +5,8 @@
 appVersion: "master"
 domainName: wa.example.com
 
-# If singleDomain is true, WorkAdventure is hosted on the [domainName] domain.
-# If singleDomain is false, WorkAdventure is hosted in subdomains:
+# If singleDomain is true, ArqueumSpace is hosted on the [domainName] domain.
+# If singleDomain is false, ArqueumSpace is hosted in subdomains:
 # - play.[domainName]
 # - mapstorage.[domainName]
 # - ...
@@ -67,7 +67,7 @@ commonSecretEnv:
 # LiveKit integration
 # #########################################################
 livekit:
-  # Enable the LiveKit server dependency and automatic WorkAdventure<->LiveKit wiring.
+  # Enable the LiveKit server dependency and automatic ArqueumSpace<->LiveKit wiring.
   enabled: false
 
   egress:
@@ -83,7 +83,7 @@ livekit:
     # Enable ingress for LiveKit signaling endpoint.
     # This ingress is only created when `livekit-server.loadBalancer.type=disable`.
     enabled: true
-    # Domain name used by the WorkAdventure-managed LiveKit ingress.
+    # Domain name used by the ArqueumSpace-managed LiveKit ingress.
     # If not set, defaults to "livekit{{ domainNamePrefix }}{{ domainName }}".
     domainName: ""
     # If null, falls back to (root.ingress.tls).
@@ -96,7 +96,7 @@ livekit:
     # Additional annotations merged with (root.ingress.annotationsRoot).
     annotations: {}
 
-  # Public URL injected as LIVEKIT_HOST in WorkAdventure back.
+  # Public URL injected as LIVEKIT_HOST in ArqueumSpace back.
   # If empty, defaults to "https://<livekit ingress domain>".
   # Override only when back must reach LiveKit through a different URL.
   host: ""
@@ -143,17 +143,17 @@ livekit-server:
   storeKeysInSecret:
     enabled: true
     # This value is evaluated by the upstream chart using `tpl`.
-    # It is also used by WorkAdventure to resolve LIVEKIT_API_KEY/LIVEKIT_API_SECRET.
+    # It is also used by ArqueumSpace to resolve LIVEKIT_API_KEY/LIVEKIT_API_SECRET.
     existingSecret: "{{ .Release.Name }}-livekit-credentials"
   livekit:
     # Key file name used by the upstream chart to load API keys from the credentials secret.
     key_file: "keys.yaml"
-    # By default, LiveKit reuses the WorkAdventure Redis instance through a local alias service
-    # and stores its data in DB 2 to avoid sharing DB 0 with WorkAdventure back.
+    # By default, LiveKit reuses the ArqueumSpace Redis instance through a local alias service
+    # and stores its data in DB 2 to avoid sharing DB 0 with ArqueumSpace back.
     redis:
       address: "workadventure-livekit-redis:6379"
       db: 2
-  # Upstream loadBalancer must stay disabled when using the custom WorkAdventure LiveKit ingress.
+  # Upstream loadBalancer must stay disabled when using the custom ArqueumSpace LiveKit ingress.
   loadBalancer:
     type: "disable"
 
@@ -171,7 +171,7 @@ livekit-egress:
     api_secret: ""
     # Default points to the LiveKit service alias managed by this chart.
     ws_url: "ws://workadventure-livekit-server:80"
-    # By default, LiveKit Egress reuses the WorkAdventure Redis instance through the same alias
+    # By default, LiveKit Egress reuses the ArqueumSpace Redis instance through the same alias
     # as LiveKit server and stores its data in DB 2.
     redis:
       address: "workadventure-livekit-redis:6379"

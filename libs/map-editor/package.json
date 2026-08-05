@@ -18,7 +18,7 @@
     "build": "tsc",
     "export-json-schema": "tsx ./src/exportJsonSchema.ts"
   },
-  "author": "WorkAdventure",
+  "author": "ArqueumSpace",
   "license": "ISC",
   "dependencies": {
     "@types/uuid": "^10.0.0",

@@ -9,7 +9,7 @@ sidebar_position: 50
 Entity collections are JSON files that describe a collection of entities that can be placed on a map using the inline
 map editor.
 
-Each WAM file (the WorkAdventure map file format) can refer to one or more entity collections.
+Each WAM file (the ArqueumSpace map file format) can refer to one or more entity collections.
 
 Typical extensions for entity collections are `.json` (though we might come up with a better extension name in the future).
 

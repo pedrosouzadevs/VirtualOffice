@@ -16,7 +16,7 @@
         <h2>Limit of your room</h2>
         <p>Register your account!</p>
         <p>
-            This map is limited in the time and to continue to use WorkAdventure, you must register your account in our
+            This map is limited in the time and to continue to use ArqueumSpace, you must register your account in our
             back office.
         </p>
     </section>

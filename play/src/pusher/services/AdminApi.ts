@@ -175,7 +175,7 @@ class AdminApi implements AdminInterface {
              *     parameters:
              *      - name: "playUri"
              *        in: "query"
-             *        description: "The full URL of WorkAdventure"
+             *        description: "The full URL of ArqueumSpace"
              *        required: true
              *        type: "string"
              *        example: "http://play.workadventure.localhost/@/teamSlug/worldSLug/roomSlug"
@@ -312,7 +312,7 @@ class AdminApi implements AdminInterface {
              *        type: "string"
              *      - name: "playUri"
              *        in: "query"
-             *        description: "The full URL of WorkAdventure"
+             *        description: "The full URL of ArqueumSpace"
              *        required: true
              *        type: "string"
              *        example: "http://play.workadventure.localhost/@/teamSlug/worldSLug/roomSlug"
@@ -419,7 +419,7 @@ class AdminApi implements AdminInterface {
          *        type: "string"
          *      - name: "playUri"
          *        in: "query"
-         *        description: "The full URL of WorkAdventure"
+         *        description: "The full URL of ArqueumSpace"
          *        required: true
          *        type: "string"
          *        example: "http://play.workadventure.localhost/@/teamSlug/worldSlug/roomSlug"
@@ -1298,7 +1298,7 @@ class AdminApi implements AdminInterface {
      *     parameters:
      *      - name: "roomUrl"
      *        in: "query"
-     *        description: "The full URL to the current WorkAdventure room"
+     *        description: "The full URL to the current ArqueumSpace room"
      *        required: true
      *        type: "string"
      *        example: "http://play.workadventure.localhost/@/teamSlug/worldSlug/roomSlug"

@@ -55,8 +55,8 @@ const menu: DeepPartial<Translation["menu"]> = {
             echoCancellation: "回音消除",
             enableAdvancedNoiseReduction: "啟用進階降噪",
             noiseSuppressionMode: "噪音抑制模式：",
-            workAdventureNoiseSuppression: "WorkAdventure 噪音抑制",
-            workAdventureNoiseSuppressionDescription: "使用 WorkAdventure 的噪音抑制處理你的麥克風。",
+            workAdventureNoiseSuppression: "ArqueumSpace 噪音抑制",
+            workAdventureNoiseSuppressionDescription: "使用 ArqueumSpace 的噪音抑制處理你的麥克風。",
             recommended: "建議",
             browserNoiseSuppression: "瀏覽器噪音抑制",
             browserNoiseSuppressionDescription: "使用瀏覽器內建的噪音抑制。",
@@ -69,7 +69,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         privacySettings: {
             title: "離開模式設定",
             explanation:
-                "當 WorkAdventure 分頁在背景時，會切換到「離開模式」。在該模式中，您可以選擇自動停用攝影機和／或麥克風，直到分頁顯示為止。",
+                "當 ArqueumSpace 分頁在背景時，會切換到「離開模式」。在該模式中，您可以選擇自動停用攝影機和／或麥克風，直到分頁顯示為止。",
             cameraToggle: "在「離開模式」中保持攝影機開啟",
             microphoneToggle: "在「離開模式」中保持麥克風開啟",
         },
@@ -117,7 +117,7 @@ const menu: DeepPartial<Translation["menu"]> = {
         gettingStarted: {
             title: "開始使用",
             description:
-                "WorkAdventure 讓您能夠建立一個線上空間，與他人自然地交流。這一切都從建立您自己的空間開始。從我們團隊預製的大量選項中選擇一個地圖。",
+                "ArqueumSpace 讓您能夠建立一個線上空間，與他人自然地交流。這一切都從建立您自己的空間開始。從我們團隊預製的大量選項中選擇一個地圖。",
         },
         createMap: {
             title: "建立地圖",

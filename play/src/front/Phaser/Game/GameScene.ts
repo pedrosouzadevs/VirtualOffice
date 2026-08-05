@@ -690,7 +690,7 @@ export class GameScene extends DirtyScene {
             }
             if (!("image" in tileset)) {
                 throw new Error(
-                    `Tilesets made of a collection of images are not supported in WorkAdventure in the Tiled map "${this.mapUrlFile}".`,
+                    `Tilesets made of a collection of images are not supported in ArqueumSpace in the Tiled map "${this.mapUrlFile}".`,
                 );
             }
             const tilesetImage = this.Map.addTilesetImage(
@@ -4356,7 +4356,7 @@ ${escapedMessage}
                 type: "error",
                 code: "USER_BANNED",
                 title: "BANNED",
-                subtitle: "You were banned from WorkAdventure",
+                subtitle: "You were banned from ArqueumSpace",
                 details: "If you want more information, you may contact us at: hello@workadventu.re",
             }),
         );

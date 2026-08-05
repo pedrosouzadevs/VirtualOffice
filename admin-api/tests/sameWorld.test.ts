@@ -16,7 +16,7 @@ const office: Room = {
     name: "The office",
     description: "Where everybody sits",
     thumbnail: "http://example.com/office.png",
-    copyright: "© VirtualOffice",
+    copyright: "© ArqueumSpace",
     areasSearchable: 3,
     entitiesSearchable: 7,
 };
@@ -72,7 +72,7 @@ describe("GET /api/room/sameWorld", () => {
             wamUrl: "http://map-storage.workadventure.localhost/maps/office.wam",
             description: "Where everybody sits",
             thumbnail: "http://example.com/office.png",
-            copyright: "© VirtualOffice",
+            copyright: "© ArqueumSpace",
             areasSearchable: 3,
             entitiesSearchable: 7,
         });

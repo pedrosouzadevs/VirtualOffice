@@ -58,7 +58,7 @@ export function createTray() {
             click() {
                 showAboutWindow({
                     icon: path.join(assetsDirectory, "icons", "logo.png"),
-                    copyright: "Copyright © WorkAdventure",
+                    copyright: "Copyright © ArqueumSpace",
                 });
             },
         },

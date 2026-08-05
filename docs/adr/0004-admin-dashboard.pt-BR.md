@@ -2,7 +2,7 @@
 
 - **Status:** Aceito
 - **Data:** 2026-07-31 — questões em aberto respondidas no mesmo dia (decisões #6 a #8)
-- **Decisores:** Equipe VirtualOffice
+- **Decisores:** Equipe ArqueumSpace
 - **Idiomas:** este arquivo (pt-BR) + [0004-admin-dashboard.md](0004-admin-dashboard.md) (en-US), em lockstep.
 - **Origem:** [ADR-0002](0002-admin-api.pt-BR.md), fase P2. Revisa a decisão #3 dele. Sucede o [ADR-0003](0003-member-and-tag-management.pt-BR.md).
 

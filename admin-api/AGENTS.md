@@ -1,6 +1,6 @@
 # AGENTS.md - admin-api/
 
-VirtualOffice Admin API: members, tags and permissions. Implements the contract the `play` pusher expects when
+ArqueumSpace Admin API: members, tags and permissions. Implements the contract the `play` pusher expects when
 `ADMIN_API_URL` is set. Design and phasing: [ADR-0002](../docs/adr/0002-admin-api.md).
 
 ## The rule that governs this package

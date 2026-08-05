@@ -2,7 +2,7 @@
 
 - **Status:** Aceito
 - **Data:** 2026-08-04
-- **Decisores:** Equipe VirtualOffice
+- **Decisores:** Equipe ArqueumSpace
 - **Idiomas:** este arquivo (pt-BR) + [0005-moderation.md](0005-moderation.md) (en-US), em lockstep
 - **Origem:** [ADR-0002](0002-admin-api.pt-BR.md), fase P3. Última fase do F3 antes do F2.
 

@@ -10,7 +10,7 @@ export class AdminVerifyDomainService implements VerifyDomainInterface {
          * /api/domain/verify:
          *   get:
          *     tags: ["AdminAPI"]
-         *     description: Validates a domain name as valid for the WorkAdventure install
+         *     description: Validates a domain name as valid for the ArqueumSpace install
          *     security:
          *      - Bearer: []
          *     produces:

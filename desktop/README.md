@@ -4,7 +4,7 @@ The desktop component is an electron app inside `./electron/`. It uses a hybrid 
 - A `local-app` bundled into the electron app with two main parts:
   - A sidebar to show the server list, with the currently selected server
   - A main page which is used to manage servers and to show other "local" pages like the desktop-app settings
-- A BrowserView (often called `appView` or `app`) showing the actual frontend of an external WorkAdventure deployment.
+- A BrowserView (often called `appView` or `app`) showing the actual frontend of an external ArqueumSpace deployment.
   If a server is selected the BrowserView / `appView` is overlaying the whole main part right to the sidebar.
 
 ## Development
@@ -25,13 +25,13 @@ cd electron && yarn bundle
 TODO:
 
 ```ts
-if (window?.WorkAdventureDesktopApi?.desktop) {
+if (window?.ArqueumSpaceDesktopApi?.desktop) {
   alert('Yeah you are using the desktop app ;)');
 }
 
 let muted = false;
 
-window?.WorkAdventureDesktopApi?.onMutedKeyPress((event) => {
+window?.ArqueumSpaceDesktopApi?.onMutedKeyPress((event) => {
   if (muted) {
     document.getElementById("info-box").innerHTML =
       "Ready to speak! Press ctrl-alt-m to mute.";
@@ -42,5 +42,5 @@ window?.WorkAdventureDesktopApi?.onMutedKeyPress((event) => {
   muted = !muted;
 });
 
-window.WorkAdventureDesktopApi.notify("Hello from front");
+window.ArqueumSpaceDesktopApi.notify("Hello from front");
 ```

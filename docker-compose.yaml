@@ -354,7 +354,7 @@ services:
       retries: 10
     restart: unless-stopped
 
-  # VirtualOffice Admin API (ADR-0002). Members, tags and permissions.
+  # ArqueumSpace Admin API (ADR-0002). Members, tags and permissions.
   # NOTE: ADMIN_API_URL is deliberately NOT set on the "play" service yet. Pointing the pusher here before
   # /api/map and /api/room/access exist would break login and map loading. It gets wired up in P0/E6.
   admin-api:
@@ -704,7 +704,7 @@ services:
 #      #- --use-auth-secret
 #      #- --static-auth-secret=SomeStaticAuthSecret
 #      #- --userdb=/var/lib/turn/turndb
-#      - --user=workadventure:WorkAdventure123
+#      - --user=workadventure:ArqueumSpace123
 #      # use real-valid certificate/privatekey files
 #      #- --cert=/root/letsencrypt/fullchain.pem
 #      #- --pkey=/root/letsencrypt/privkey.pem
