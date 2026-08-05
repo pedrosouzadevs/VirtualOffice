@@ -26,3 +26,6 @@ synapse/media_store/*
 
 .vscode/settings.json
 play/src/i18n/ko-KR/*.backup
+
+# Build artifact of maps/build-arqueumspace-maps.js — regenerate, do not commit.
+maps/arqueumspace-maps.zip
