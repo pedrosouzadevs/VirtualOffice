@@ -114,7 +114,7 @@ If you want to add more maps to your project, no need to duplicate the whole sta
 Instead, simply copy and paste the `office.tmj` file. You can give any name to this file, but it must have the `.tmj` extension.
 
 From here, you can access your map by modifying the URL in the browser and replacing `office.tmj` by your new map name.
-For example, if you have a map named `map2.tmj`, you can access it by visiting `http://play.workadventure.localhost/_/some_random_chars/localhost:5137/map2.tmj`.
+For example, if you have a map named `map2.tmj`, you can access it by visiting `http://play.arqueum.localhost/_/some_random_chars/localhost:5137/map2.tmj`.
 
 ## Need some help?
 

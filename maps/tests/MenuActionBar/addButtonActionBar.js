@@ -20,7 +20,7 @@ WA.ui.actionBar.addButton({
     id: 'register-btn-2',
     type: 'action',
     toolTip: 'Test register button',
-    imageSrc: 'http://play.workadventure.localhost/static/images/applications/appOn.png',
+    imageSrc: 'http://play.arqueum.localhost/static/images/applications/appOn.png',
     callback: (event) => {
         console.log('Button registered triggered', event);
         WA.ui.actionBar.removeButton('register-btn-2');

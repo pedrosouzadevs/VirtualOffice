@@ -8,7 +8,7 @@ import {
     TEST_MAP_DETAILS_CONFIGURATION,
 } from "./helpers/testApp";
 
-const BASE = "http://play.workadventure.localhost";
+const BASE = "http://play.arqueum.localhost";
 
 const fetchMap = async (url: string, playUri: string) =>
     fetch(`${url}/api/map?playUri=${encodeURIComponent(playUri)}`, {
@@ -103,7 +103,7 @@ describe("GET /api/map", () => {
             const details = buildMapDetails(`${BASE}/~/maps/areas.wam`, TEST_MAP_DETAILS_CONFIGURATION);
 
             expect(details).toMatchObject({
-                wamUrl: "http://map-storage.workadventure.localhost/maps/areas.wam",
+                wamUrl: "http://map-storage.arqueum.localhost/maps/areas.wam",
                 mapUrl: undefined,
                 group: "default",
             });

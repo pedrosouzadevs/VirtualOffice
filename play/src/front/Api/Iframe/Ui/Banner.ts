@@ -7,7 +7,7 @@ export class WorkadventureBannerCommands extends IframeApiContribution<Workadven
     /**
      * Open banner message with link
      *
-     * {@link http://workadventure.localhost/map-building/api-ui.md#open-banner | Website documentation}
+     * {@link http://arqueum.localhost/map-building/api-ui.md#open-banner | Website documentation}
      * @param bannerEvent
      * @returns
      */
@@ -20,7 +20,7 @@ export class WorkadventureBannerCommands extends IframeApiContribution<Workadven
 
     /**
      * Close banner message
-     * {@link http://workadventure.localhost/map-building/api-ui.md#close-banner | Website documentation}
+     * {@link http://arqueum.localhost/map-building/api-ui.md#close-banner | Website documentation}
      * @returns
      */
     public closeBanner() {

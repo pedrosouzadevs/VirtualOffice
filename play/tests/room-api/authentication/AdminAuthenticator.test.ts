@@ -6,14 +6,14 @@ import authenticator from "../../../src/room-api/authentication/AdminAuthenticat
 import { GuardError } from "../../../src/room-api/types/GuardError";
 
 const roomUrl =
-    "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json";
+    "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json";
 const apiKey = "MYAWESOMEKEY";
 
 describe("AdminAuthenticator", () => {
     beforeAll(() => {
         vi.mock("../../../src/pusher/enums/EnvironmentVariable", () => {
             return {
-                ADMIN_API_URL: "https://workadventure.localhost",
+                ADMIN_API_URL: "https://arqueum.localhost",
             };
         });
 

@@ -362,7 +362,7 @@ describe("what a grant is actually worth", () => {
         const roomAccess = () =>
             fetch(
                 `${app.url}/api/room/access?userIdentifier=bob@example.com` +
-                    `&playUri=${encodeURIComponent("http://play.workadventure.localhost/~/maps/areas.wam")}` +
+                    `&playUri=${encodeURIComponent("http://play.arqueum.localhost/~/maps/areas.wam")}` +
                     `&characterTextureIds[]=male1`,
                 { headers: { Authorization: TEST_ADMIN_API_TOKEN } },
             );

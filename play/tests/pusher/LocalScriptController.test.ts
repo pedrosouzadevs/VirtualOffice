@@ -4,8 +4,8 @@ import type { Request, Response } from "express";
 
 // Mock environment variables before any imports
 vi.mock("../../src/pusher/enums/EnvironmentVariable", () => ({
-    PUSHER_URL: "http://pusher.workadventure.localhost",
-    FRONT_URL: "http://play.workadventure.localhost",
+    PUSHER_URL: "http://pusher.arqueum.localhost",
+    FRONT_URL: "http://play.arqueum.localhost",
 }));
 
 import { LocalScriptController } from "../../src/pusher/controllers/LocalScriptController";

@@ -17,7 +17,7 @@ if (!apiKey) {
 
 const client = createRoomApiClient(
     apiKey,
-    process.env.ROOM_API_HOSTNAME ?? "room-api.workadventure.localhost",
+    process.env.ROOM_API_HOSTNAME ?? "room-api.arqueum.localhost",
     process.env.ROOM_API_PORT ? Number(process.env.ROOM_API_PORT) : 80,
 );
 
@@ -33,7 +33,7 @@ test.describe("Room API @nomobile @nofirefox @nowebkit", () => {
     test("With a bad API key", async ({ browser }) => {
         const badClient = createRoomApiClient(
             "BAD KEY",
-            process.env.ROOM_API_HOSTNAME ?? "room-api.workadventure.localhost",
+            process.env.ROOM_API_HOSTNAME ?? "room-api.arqueum.localhost",
             process.env.ROOM_API_PORT ? Number(process.env.ROOM_API_PORT) : 80,
         );
         try {

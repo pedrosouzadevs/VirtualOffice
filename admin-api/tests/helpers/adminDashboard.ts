@@ -8,10 +8,10 @@ export const TEST_SESSION_SECRET = "test-session-secret-that-is-long-enough";
 
 export const TEST_DASHBOARD_CONFIGURATION: AdminDashboardConfiguration = {
     // http, so `secure` cookies stay off and the tests can read them back over plain HTTP.
-    publicUrl: "http://admin-api.workadventure.localhost",
+    publicUrl: "http://admin-api.arqueum.localhost",
     sessionSecret: TEST_SESSION_SECRET,
     oidc: {
-        issuer: "http://oidc.workadventure.localhost",
+        issuer: "http://oidc.arqueum.localhost",
         clientId: "authorization-code-client-id",
         clientSecret: "authorization-code-client-secret",
         scope: "openid email profile",
@@ -34,7 +34,7 @@ export class StubOidcAuthenticator implements OidcAuthenticator {
 
     constructor(
         public email: string,
-        public readonly authorizationUrl = "http://oidc.workadventure.localhost/connect/authorize?stub=1",
+        public readonly authorizationUrl = "http://oidc.arqueum.localhost/connect/authorize?stub=1",
     ) {}
 
     createAuthorizationRequest(): Promise<{ authorizationUrl: string; transaction: OidcTransaction }> {

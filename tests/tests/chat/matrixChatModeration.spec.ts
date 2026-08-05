@@ -43,17 +43,17 @@ test.describe("chat moderation @matrix @nowebkit", () => {
 
         await page.getByTestId(publicChatRoomName).getByTestId("manageParticipantOption").click();
 
-        await expect(page.getByTestId("@john.doe:matrix.workadventure.localhost-participant")).toBeAttached();
+        await expect(page.getByTestId("@john.doe:matrix.arqueum.localhost-participant")).toBeAttached();
 
         await expect(
             page
-                .getByTestId("@john.doe:matrix.workadventure.localhost-participant")
-                .getByTestId("@john.doe:matrix.workadventure.localhost-permissionLevel"),
+                .getByTestId("@john.doe:matrix.arqueum.localhost-participant")
+                .getByTestId("@john.doe:matrix.arqueum.localhost-permissionLevel"),
         ).toHaveText("Admin");
         await expect(
             page
-                .getByTestId("@john.doe:matrix.workadventure.localhost-participant")
-                .getByTestId("@john.doe:matrix.workadventure.localhost-membership"),
+                .getByTestId("@john.doe:matrix.arqueum.localhost-participant")
+                .getByTestId("@john.doe:matrix.arqueum.localhost-membership"),
         ).toHaveText("Joined");
     });
 
@@ -68,7 +68,7 @@ test.describe("chat moderation @matrix @nowebkit", () => {
         await page.getByTestId("createRoomName").fill(publicChatRoomName);
         await page.getByTestId("createRoomButton").click();
 
-        await matrixApi.overrideRateLimitForUser("@john.doe:matrix.workadventure.localhost");
+        await matrixApi.overrideRateLimitForUser("@john.doe:matrix.arqueum.localhost");
 
         await expect(page.getByText(publicChatRoomName)).toBeAttached();
 
@@ -79,36 +79,36 @@ test.describe("chat moderation @matrix @nowebkit", () => {
 
         await page.getByTestId(publicChatRoomName).getByTestId("manageParticipantOption").click();
 
-        await expect(page.getByTestId("@john.doe:matrix.workadventure.localhost-participant")).toBeAttached();
+        await expect(page.getByTestId("@john.doe:matrix.arqueum.localhost-participant")).toBeAttached();
 
         await expect(page.getByTestId("inviteParticipantsModalContent").getByPlaceholder("Users")).toBeAttached();
 
         await page
             .getByTestId("inviteParticipantsModalContent")
             .getByPlaceholder("Users")
-            .fill("@admin:matrix.workadventure.localhost");
+            .fill("@admin:matrix.arqueum.localhost");
 
         await page
             .getByTestId("inviteParticipantsModalContent")
-            .getByText("@admin:matrix.workadventure.localhost (@admin:matrix.workadventure.localhost)")
+            .getByText("@admin:matrix.arqueum.localhost (@admin:matrix.arqueum.localhost)")
             .click();
 
         await page.getByTestId("createRoomButton").click();
         await page.getByTestId("inviteParticipantsModalContent").locator(".clear-select").click();
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-kickButton")).toBeAttached();
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-banButton")).toBeAttached();
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-membership")).toHaveText("Invited");
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-kickButton")).toBeAttached();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-banButton")).toBeAttached();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-membership")).toHaveText("Invited");
 
-        await page.getByTestId("@admin:matrix.workadventure.localhost-banButton").click();
+        await page.getByTestId("@admin:matrix.arqueum.localhost-banButton").click();
 
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-membership")).toHaveText("Banned");
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-unbanButton")).toBeAttached();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-membership")).toHaveText("Banned");
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-unbanButton")).toBeAttached();
 
-        await page.getByTestId("@admin:matrix.workadventure.localhost-unbanButton").click();
+        await page.getByTestId("@admin:matrix.arqueum.localhost-unbanButton").click();
 
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-membership")).toHaveText("Left");
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-inviteButton")).toBeAttached();
-        await page.getByTestId("@admin:matrix.workadventure.localhost-inviteButton").click();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-membership")).toHaveText("Left");
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-inviteButton")).toBeAttached();
+        await page.getByTestId("@admin:matrix.arqueum.localhost-inviteButton").click();
 
         const roomId = ChatUtils.parseMatrixRoomIdFromRoomLabelText(
             (await page.getByTestId("roomID").textContent())?.trim() ?? "",
@@ -116,14 +116,14 @@ test.describe("chat moderation @matrix @nowebkit", () => {
 
         await matrixApi.acceptRoomInvitations(roomId);
 
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-membership")).toHaveText("Joined");
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-membership")).toHaveText("Joined");
 
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-kickButton")).toBeAttached();
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-banButton")).toBeAttached();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-kickButton")).toBeAttached();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-banButton")).toBeAttached();
 
-        await expect(page.getByTestId("@admin:matrix.workadventure.localhost-permissionLevel")).toBeEnabled();
+        await expect(page.getByTestId("@admin:matrix.arqueum.localhost-permissionLevel")).toBeEnabled();
 
-        await page.getByTestId("@admin:matrix.workadventure.localhost-permissionLevel").selectOption("MODERATOR");
+        await page.getByTestId("@admin:matrix.arqueum.localhost-permissionLevel").selectOption("MODERATOR");
 
         // Wait for power level update to be reflected in the Matrix API
         // eslint-disable-next-line playwright/no-wait-for-timeout

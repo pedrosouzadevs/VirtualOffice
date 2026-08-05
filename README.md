@@ -70,8 +70,8 @@ docker-compose up
 
 The environment will start with the OIDC mock server enabled by default.
 
-You should now be able to browse to http://play.workadventure.localhost/ and see the application.
-You can view the Traefik dashboard at http://traefik.workadventure.localhost
+You should now be able to browse to http://play.arqueum.localhost/ and see the application.
+You can view the Traefik dashboard at http://traefik.arqueum.localhost
 
 (Test user is "User1" and password is "pwd")
 
@@ -85,7 +85,7 @@ Note: on some OSes, you will need to add this line to your `/etc/hosts` file:
 
 **/etc/hosts**
 ```
-127.0.0.1 oidc.workadventure.localhost redis.workadventure.localhost play.workadventure.localhost traefik.workadventure.localhost matrix.workadventure.localhost extra.workadventure.localhost icon.workadventure.localhost map-storage.workadventure.localhost uploader.workadventure.localhost maps.workadventure.localhost api.workadventure.localhost front.workadventure.localhost
+127.0.0.1 oidc.arqueum.localhost redis.arqueum.localhost play.arqueum.localhost traefik.arqueum.localhost matrix.arqueum.localhost extra.arqueum.localhost icon.arqueum.localhost map-storage.arqueum.localhost uploader.arqueum.localhost maps.arqueum.localhost api.arqueum.localhost front.arqueum.localhost
 ```
 
 

@@ -60,7 +60,7 @@ docker-compose up
 # To disable OIDC (for anonymous access):
 # docker-compose -f docker-compose.yaml -f docker-compose-no-oidc.yaml up
 
-# Access: http://play.workadventure.localhost/_/global/maps.workadventure.localhost/starter/map.json
+# Access: http://play.arqueum.localhost/_/global/maps.arqueum.localhost/starter/map.json
 ```
 
 ### Manual Build / Typecheck

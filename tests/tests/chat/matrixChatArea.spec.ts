@@ -194,6 +194,6 @@ test.describe("matrix chat area property @matrix @nowebkit @nomobile", () => {
         await page2.getByTestId("name of new room").hover();
         await page2.getByTestId("name of new room").getByTestId("toggleRoomMenu").click();
         await page2.getByTestId("manageParticipantOption").click();
-        await expect(page2.getByTestId("@john.doe:matrix.workadventure.localhost-kickButton")).not.toBeAttached();
+        await expect(page2.getByTestId("@john.doe:matrix.arqueum.localhost-kickButton")).not.toBeAttached();
     });
 });

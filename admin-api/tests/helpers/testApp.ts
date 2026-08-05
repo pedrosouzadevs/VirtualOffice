@@ -25,7 +25,7 @@ export const TEST_ADMIN_API_TOKEN = "test-admin-api-token";
  */
 export const TEST_MAP_DETAILS_CONFIGURATION: MapDetailsConfiguration = {
     startRoomUrl: "/_/global/maps.workadventu.re/starter/map.json",
-    publicMapStorageUrl: "http://map-storage.workadventure.localhost",
+    publicMapStorageUrl: "http://map-storage.arqueum.localhost",
     disableAnonymous: false,
     enableChat: true,
     enableChatUpload: true,

@@ -105,7 +105,7 @@ export interface AdminSocketConfiguration {
     readonly adminSocketsToken: string;
     /** In-network address of the pusher's websocket app, e.g. `http://play:3001`. `http(s)` is rewritten to `ws(s)`. */
     readonly internalPlayUrl: string;
-    /** Public world origin, e.g. `http://play.workadventure.localhost` — what room IDs start with. */
+    /** Public world origin, e.g. `http://play.arqueum.localhost` — what room IDs start with. */
     readonly playUrl: string;
 }
 

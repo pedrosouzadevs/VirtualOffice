@@ -73,7 +73,7 @@ You should whitelist the URL of your ArqueumSpace instance. Don't forget to end 
 sso:
   client_whitelist:
     # Replace the URL below with the URL of your ArqueumSpace instance. Don't forget the trailing slash.
-    - http://play.workadventure.localhost/
+    - http://play.arqueum.localhost/
 ```
 
 ### Administrator

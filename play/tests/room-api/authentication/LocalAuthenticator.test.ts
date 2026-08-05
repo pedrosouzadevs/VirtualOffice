@@ -4,14 +4,14 @@ import authenticator from "../../../src/room-api/authentication/LocalAuthenticat
 import { GuardError } from "../../../src/room-api/types/GuardError";
 
 const roomUrl =
-    "http://play.workadventure.localhost/_/global/maps.workadventure.localhost/tests/Variables/shared_variables.json";
+    "http://play.arqueum.localhost/_/global/maps.arqueum.localhost/tests/Variables/shared_variables.json";
 const apiKey = "MYAWESOMEKEY";
 
 describe("LocalAuthenticator", () => {
     beforeAll(() => {
         vi.mock("../../../src/pusher/enums/EnvironmentVariable", () => {
             return {
-                FRONT_URL: "http://play.workadventure.localhost",
+                FRONT_URL: "http://play.arqueum.localhost",
                 ROOM_API_SECRET_KEY: "MYAWESOMEKEY",
             };
         });

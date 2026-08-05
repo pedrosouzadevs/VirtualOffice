@@ -21,7 +21,7 @@ export async function getPusherDump(): Promise<Record<string, unknown>> {
 }
 
 export async function getBackDump(): Promise<Array<{ roomUrl: string }>> {
-    let url = "http://api.workadventure.localhost/dump?token=" + ADMIN_API_TOKEN;
+    let url = "http://api.arqueum.localhost/dump?token=" + ADMIN_API_TOKEN;
     if (fs.existsSync("/project")) {
         // We are inside a container. Let's use a direct route
         url = "http://back:8080/dump?token=" + ADMIN_API_TOKEN;

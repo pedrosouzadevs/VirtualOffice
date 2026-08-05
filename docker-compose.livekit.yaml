@@ -7,7 +7,7 @@ services:
       - "7881:7881/udp" # WebRTC UDP
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.livekit.rule=Host(`livekit.workadventure.localhost`)"
+      - "traefik.http.routers.livekit.rule=Host(`livekit.arqueum.localhost`)"
       - "traefik.http.routers.livekit.entryPoints=web"
       - "traefik.http.services.livekit.loadbalancer.server.port=7880"
       - "traefik.udp.routers.livekit-udp.entrypoints=udp"
@@ -24,7 +24,7 @@ services:
     #restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.egress.rule=Host(`egress.workadventure.localhost`)"
+      - "traefik.http.routers.egress.rule=Host(`egress.arqueum.localhost`)"
       - "traefik.http.routers.egress.entryPoints=web"
       - "traefik.http.services.egress.loadbalancer.server.port=8080"
     environment:
@@ -58,11 +58,11 @@ services:
     command: ["/data"]
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rustfs-livekit.rule=Host(`rustfs-livekit.workadventure.localhost`)"
+      - "traefik.http.routers.rustfs-livekit.rule=Host(`rustfs-livekit.arqueum.localhost`)"
       - "traefik.http.routers.rustfs-livekit.entryPoints=web"
       - "traefik.http.services.rustfs-livekit.loadbalancer.server.port=9001"
       - "traefik.http.routers.rustfs-livekit.service=rustfs-livekit"
-      - "traefik.http.routers.cdn-livekit.rule=Host(`cdn-livekit.workadventure.localhost`)"
+      - "traefik.http.routers.cdn-livekit.rule=Host(`cdn-livekit.arqueum.localhost`)"
       - "traefik.http.routers.cdn-livekit.entryPoints=web"
       - "traefik.http.services.cdn-livekit.loadbalancer.server.port=9000"
       - "traefik.http.routers.cdn-livekit.service=cdn-livekit"
@@ -95,8 +95,8 @@ services:
     networks:
       default:
         aliases:
-          - "livekit.workadventure.localhost"
-          - "egress.workadventure.localhost"
+          - "livekit.arqueum.localhost"
+          - "egress.arqueum.localhost"
 
   back:
     depends_on:

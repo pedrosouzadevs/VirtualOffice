@@ -11,7 +11,7 @@ import { getPage } from "./utils/auth";
  * pusher-facing API is what `play` reads — so this is the only test that can prove they agree.
  */
 
-const DASHBOARD = "http://admin-api.workadventure.localhost";
+const DASHBOARD = "http://admin-api.arqueum.localhost";
 const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN ?? "123";
 
 /**
@@ -38,7 +38,7 @@ function deleteBansFor(identifier: string): void {
  */
 const TARGET = "e2e-dashboard@example.com";
 
-const ROOM = "http://play.workadventure.localhost/~/maps/areas.wam";
+const ROOM = "http://play.arqueum.localhost/~/maps/areas.wam";
 
 test.setTimeout(180_000);
 

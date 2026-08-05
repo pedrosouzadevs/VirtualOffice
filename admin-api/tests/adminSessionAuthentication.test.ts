@@ -64,7 +64,7 @@ describe("anonymous requests (ADR-0004, mandatory test #1)", () => {
         const login = await fetch(`${app.url}/admin/login`, NO_REDIRECT);
         const logout = await fetch(`${app.url}/admin/logout`, { method: "POST", ...NO_REDIRECT });
 
-        expect(login.headers.get("location")).toContain("oidc.workadventure.localhost");
+        expect(login.headers.get("location")).toContain("oidc.arqueum.localhost");
         expect(logout.status).toBe(204);
     });
 });
@@ -213,7 +213,7 @@ describe("invalid cookies (ADR-0004, mandatory test #5)", () => {
 
         // Off to the identity provider, not back to /admin/login.
         expect(second.status).toBe(302);
-        expect(second.headers.get("location")).toContain("oidc.workadventure.localhost");
+        expect(second.headers.get("location")).toContain("oidc.arqueum.localhost");
     });
 });
 

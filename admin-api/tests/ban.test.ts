@@ -19,7 +19,7 @@ const postAuth = {
 const banBody = (overrides: Record<string, unknown> = {}) =>
     JSON.stringify({
         uuidToBan: "troublemaker@example.com",
-        playUri: "http://play.workadventure.localhost/~/maps/office.wam",
+        playUri: "http://play.arqueum.localhost/~/maps/office.wam",
         name: "Trouble Maker",
         message: "User banned by admin john.doe@example.com",
         byUserUuid: "john.doe@example.com",
@@ -193,7 +193,7 @@ describe("POST /api/ban", () => {
                 identifier: "troublemaker@example.com",
                 displayName: "Trouble Maker",
                 message: "User banned by admin john.doe@example.com",
-                roomUrl: "http://play.workadventure.localhost/~/maps/office.wam",
+                roomUrl: "http://play.arqueum.localhost/~/maps/office.wam",
                 issuedBy: "john.doe@example.com",
             },
         ]);
@@ -222,7 +222,7 @@ describe("POST /api/ban", () => {
                 actorEmail: "john.doe@example.com",
                 action: "member.banned",
                 targetEmail: "troublemaker@example.com",
-                details: { roomUrl: "http://play.workadventure.localhost/~/maps/office.wam" },
+                details: { roomUrl: "http://play.arqueum.localhost/~/maps/office.wam" },
             },
         ]);
     });

@@ -8,7 +8,7 @@ describe("AuthenticationGuard", () => {
     beforeAll(() => {
         vi.mock("../../../src/pusher/enums/EnvironmentVariable", () => {
             return {
-                ADMIN_API_URL: "https://workadventure.localhost",
+                ADMIN_API_URL: "https://arqueum.localhost",
             };
         });
 

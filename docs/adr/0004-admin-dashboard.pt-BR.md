@@ -68,13 +68,13 @@ A autenticação responde *quem*; o **nosso banco** responde *o que pode* — a 
 F2 e F3.
 
 O `openid-client@5.7.1` já é dependência do `play`, então não há nada novo a avaliar. O Azure Entra ID vai precisar de
-`http://admin-api.workadventure.localhost/admin/callback` — ou o equivalente de produção — adicionada como redirect
+`http://admin-api.arqueum.localhost/admin/callback` — ou o equivalente de produção — adicionada como redirect
 URI quando o F2 chegar.
 
 > **Correção (2026-07-31, durante o G0).** Este ADR afirmava que o `RedirectUris:
-> ["http://*.workadventure.localhost", ...]` do mock de desenvolvimento já cobria o nosso callback, e que portanto
+> ["http://*.arqueum.localhost", ...]` do mock de desenvolvimento já cobria o nosso callback, e que portanto
 > **nenhum client novo precisava ser registrado**. É falso, e o motivo merece registro: o wildcard do mock não casa
-> com **hífen** no hostname. `http://adminapi.workadventure.localhost/...` é aceito; `admin-api` e `map-storage` são
+> com **hífen** no hostname. `http://adminapi.arqueum.localhost/...` é aceito; `admin-api` e `map-storage` são
 > recusados, qualquer que seja o caminho. A falha aparece como `invalid_request / Invalid redirect_uri` na página de
 > erro do próprio provedor, o que parece configuração errada nossa e não é.
 >

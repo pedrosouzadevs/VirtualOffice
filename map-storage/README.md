@@ -35,7 +35,7 @@ $ npm run upload-test-map
 > **Note:**
 > This command only works for the dev environment and must be run out of the container.
 
-This test map is accessible at http://play.workadventure.localhost/~/maps/areas.json
+This test map is accessible at http://play.arqueum.localhost/~/maps/areas.json
 
 ## Configuration
 

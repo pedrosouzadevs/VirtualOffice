@@ -47,7 +47,7 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
     test("the Admin API is the one answering, and it declares its capabilities @oidc", async ({ request }) => {
         // Guards the two tests below from passing for the wrong reason. /api/capabilities is deliberately public:
         // the pusher calls it with no Authorization header at all.
-        const response = await request.get("http://admin-api.workadventure.localhost/api/capabilities");
+        const response = await request.get("http://admin-api.arqueum.localhost/api/capabilities");
 
         expect(response.status()).toBe(200);
         expect(await response.json()).toMatchObject({ "api/woka/list": "v1" });
@@ -74,7 +74,7 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
 
     test("member search answers with the bootstrapped administrator @oidc", async ({ request }) => {
         // Backs the picker exercised in map_editor/personal_area_owner_picker.spec.ts, at the HTTP boundary.
-        const response = await request.get("http://admin-api.workadventure.localhost/api/members", {
+        const response = await request.get("http://admin-api.arqueum.localhost/api/members", {
             params: { searchText: "john.doe" },
             headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
         });
@@ -84,7 +84,7 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
     });
 
     test("tag search answers with the tags the bootstrap creates @oidc", async ({ request }) => {
-        const response = await request.get("http://admin-api.workadventure.localhost/api/world/tags", {
+        const response = await request.get("http://admin-api.arqueum.localhost/api/world/tags", {
             headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
         });
 
@@ -136,7 +136,7 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
 
         // And the ban is a record, not an event that vanished. `GET /api/ban` has no caller in the pusher
         // (ADR-0005, correction #7), so it is asserted at the HTTP boundary rather than through a screen.
-        const check = await request.get("http://admin-api.workadventure.localhost/api/ban", {
+        const check = await request.get("http://admin-api.arqueum.localhost/api/ban", {
             params: { token: "alice.doe@example.com", ipAddress: "127.0.0.1", roomUrl: room },
             headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
         });
@@ -148,7 +148,7 @@ test.describe("Admin API @oidc @nomobile @nowebkit", () => {
         });
 
         // Since ADR-0006 the door also refuses her: the very connection endpoint answers the error variant now.
-        const door = await request.get("http://admin-api.workadventure.localhost/api/room/access", {
+        const door = await request.get("http://admin-api.arqueum.localhost/api/room/access", {
             params: { userIdentifier: "alice.doe@example.com", playUri: room, "characterTextureIds[]": "male1" },
             headers: { Authorization: process.env.ADMIN_API_TOKEN ?? "123" },
         });

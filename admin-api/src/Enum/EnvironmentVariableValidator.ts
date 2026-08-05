@@ -70,7 +70,7 @@ export const EnvironmentVariables = z.object({
     // --- Admin dashboard (ADR-0004) ------------------------------------------------------------------------------
 
     /**
-     * Public origin the dashboard is served from, e.g. `http://admin-api.workadventure.localhost`.
+     * Public origin the dashboard is served from, e.g. `http://admin-api.arqueum.localhost`.
      *
      * The OIDC redirect URI is `${ADMIN_API_PUBLIC_URL}/admin/callback`, so this has to be the URL a **browser** uses,
      * never the in-network one: the identity provider redirects the person, not us.
@@ -148,7 +148,7 @@ export const EnvironmentVariables = z.object({
     ADMIN_SOCKETS_TOKEN: optionalString(),
 
     /**
-     * The world's public origin, e.g. `http://play.workadventure.localhost` — what a room URL starts with by the
+     * The world's public origin, e.g. `http://play.arqueum.localhost` — what a room URL starts with by the
      * time it is a pusher `roomId`. The kick names rooms exactly as the pusher knows them, and the pusher knows them
      * by the URL the browser connected with.
      */

@@ -21,7 +21,7 @@ rolling back.
   entries the other services already have:
 
   ```
-  127.0.0.1 admin-api.workadventure.localhost
+  127.0.0.1 admin-api.arqueum.localhost
   ```
 
   Browsers and `curl` resolve `*.localhost` on their own, so the app works without it. Node does not, so the
@@ -32,7 +32,7 @@ rolling back.
 
 | Service | Role |
 |---|---|
-| `admin-api` | HTTP API the pusher calls. Port 3000 inside the network, `http://admin-api.workadventure.localhost` from your browser. |
+| `admin-api` | HTTP API the pusher calls. Port 3000 inside the network, `http://admin-api.arqueum.localhost` from your browser. |
 | `admin-api-db` | Its own PostgreSQL 17. Not shared with any other service: this one owns identity and authorisation. |
 
 Data lives in the named volume `admin-api-db-data`, so `docker compose down` keeps your members and tags. Only
@@ -56,19 +56,19 @@ it can run on every boot rather than being a script somebody has to remember.
 Liveness, and readiness (which actually queries Postgres):
 
 ```bash
-curl -s http://admin-api.workadventure.localhost/readyz
+curl -s http://admin-api.arqueum.localhost/readyz
 ```
 
 Capability negotiation. This endpoint is deliberately public — the pusher calls it with no `Authorization` header:
 
 ```bash
-curl -s http://admin-api.workadventure.localhost/api/capabilities
+curl -s http://admin-api.arqueum.localhost/api/capabilities
 ```
 
 Everything else requires the token, so this must answer `403`:
 
 ```bash
-curl -i -s http://admin-api.workadventure.localhost/api/room/access | head -1
+curl -i -s http://admin-api.arqueum.localhost/api/room/access | head -1
 ```
 
 Confirm the pusher connected. You are looking for `Remote admin api connection successful`:
@@ -77,7 +77,7 @@ Confirm the pusher connected. You are looking for `Remote admin api connection s
 docker compose logs play | grep -a "admin api"
 ```
 
-Then open `http://play.workadventure.localhost`, log in as `User1` / `pwd`, and check that **Map editor** appears in
+Then open `http://play.arqueum.localhost`, log in as `User1` / `pwd`, and check that **Map editor** appears in
 the map menu.
 
 > There is no page at `/`. `admin-api` serves `/api/*`, `/healthz` and `/readyz` only, so a `404` with
@@ -156,7 +156,7 @@ working administrator without anyone editing a file.
 
 ## Administration dashboard (ADR-0004)
 
-Open `http://admin-api.workadventure.localhost/admin/`, sign in through the identity provider, and manage members
+Open `http://admin-api.arqueum.localhost/admin/`, sign in through the identity provider, and manage members
 from the screen. Everything below documents how it is wired.
 
 | Route | Method | Who |
@@ -173,7 +173,7 @@ Four variables, all with working development defaults in `docker-compose.yaml`:
 
 | Variable | Default | Notes |
 |---|---|---|
-| `ADMIN_API_PUBLIC_URL` | `http://admin-api.workadventure.localhost` | The address a **browser** uses. Empty disables the dashboard. |
+| `ADMIN_API_PUBLIC_URL` | `http://admin-api.arqueum.localhost` | The address a **browser** uses. Empty disables the dashboard. |
 | `ADMIN_API_SESSION_SECRET` | a development-only value | At least 32 characters. **Change it outside local development.** |
 | `ADMIN_API_TRUST_PROXY` | `1` | Set to `false` if `admin-api` is ever exposed without a proxy in front. |
 | `OPENID_CLIENT_ID` / `_SECRET` / `_ISSUER` | the mock's client | The same provider `play` uses. |
@@ -213,11 +213,11 @@ in one language fails the build until the other has it.
 ### Verification
 
 ```bash
-curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.workadventure.localhost/admin/me
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://admin-api.arqueum.localhost/admin/me
 ```
 
 Expect `302` to `/admin/login?returnTo=%2Fadmin%2Fme`. Then open
-`http://admin-api.workadventure.localhost/admin/` in a browser and sign in as `User1` / `pwd`. You should land on the
+`http://admin-api.arqueum.localhost/admin/` in a browser and sign in as `User1` / `pwd`. You should land on the
 member list, with your own row showing the `admin` tag.
 
 Two properties worth checking by hand, because they are the whole point of this slice:
@@ -225,7 +225,7 @@ Two properties worth checking by hand, because they are the whole point of this 
 ```bash
 # The pusher's token does not open the dashboard: still a redirect to the login.
 curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: $ADMIN_API_TOKEN" \
-  http://admin-api.workadventure.localhost/admin/me
+  http://admin-api.arqueum.localhost/admin/me
 
 # A revoked administrator is refused on the very next request, with the same cookie.
 docker compose exec admin-api npm run member:revoke -- john.doe@example.com admin
@@ -463,9 +463,9 @@ This is the part that surprises people.
 ## Troubleshooting
 
 **`invalid_request / Invalid redirect_uri` on the provider's error page when logging into the dashboard.** It reads
-like our misconfiguration and is not. The development mock's wildcard, `http://*.workadventure.localhost`, does **not
+like our misconfiguration and is not. The development mock's wildcard, `http://*.arqueum.localhost`, does **not
 match a hyphen in the hostname** — `adminapi` is accepted, `admin-api` and `map-storage` are not, whatever the path.
-That is why `http://admin-api.workadventure.localhost/admin/callback` is registered explicitly in
+That is why `http://admin-api.arqueum.localhost/admin/callback` is registered explicitly in
 [`contrib/oidc-server-mock/clients-config.json`](../contrib/oidc-server-mock/clients-config.json). If you change
 `ADMIN_API_PUBLIC_URL`, add the new callback there and recreate the mock:
 
@@ -505,7 +505,7 @@ compare with the email your identity provider issues. Remember the change only a
 front sends:
 
 ```bash
-docker compose exec play node -e "const a=require('/usr/src/app/node_modules/axios'); a.get('http://admin-api:3000/api/room/access',{params:{userIdentifier:'john.doe@example.com',playUri:'http://play.workadventure.localhost/~/maps/areas.wam',characterTextureIds:['male1','body1']},headers:{Authorization:process.env.ADMIN_API_TOKEN}}).then(r=>console.log(JSON.stringify(r.data.characterTextures)))"
+docker compose exec play node -e "const a=require('/usr/src/app/node_modules/axios'); a.get('http://admin-api:3000/api/room/access',{params:{userIdentifier:'john.doe@example.com',playUri:'http://play.arqueum.localhost/~/maps/areas.wam',characterTextureIds:['male1','body1']},headers:{Authorization:process.env.ADMIN_API_TOKEN}}).then(r=>console.log(JSON.stringify(r.data.characterTextures)))"
 ```
 
 **Migrations failed at boot.** `admin-api` refuses to serve rather than answering against an unmigrated schema, since

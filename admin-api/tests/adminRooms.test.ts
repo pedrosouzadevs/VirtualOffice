@@ -11,7 +11,7 @@ const ADMIN_EMAIL = "john.doe@example.com";
 const ADMIN = testMember(ADMIN_EMAIL, ["admin"]);
 const T0 = new Date("2026-07-31T09:00:00.000Z");
 
-const PUBLIC_MAP_STORAGE = "http://map-storage.workadventure.localhost";
+const PUBLIC_MAP_STORAGE = "http://map-storage.arqueum.localhost";
 
 describe("toRooms", () => {
     it("builds the room, its in-world address and the absolute WAM url", () => {

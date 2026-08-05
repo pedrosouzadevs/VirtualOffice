@@ -245,7 +245,7 @@ jobs:
           sed -i "s/MAP_STORAGE_API_TOKEN=/MAP_STORAGE_API_TOKEN=MYAWESOMEKEY/g" .env  
           sed -i "s/OPENID_PROMPT=/OPENID_PROMPT=login/g" .env
           sed -i "s/MAX_USERS_FOR_WEBRTC=4/MAX_USERS_FOR_WEBRTC=3/g" .env
-          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=http:\/\/livekit.workadventure.localhost/g" .env
+          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=http:\/\/livekit.arqueum.localhost/g" .env
           sed -i "s/LIVEKIT_API_KEY=/LIVEKIT_API_KEY=devkey/g" .env
           sed -i "s/LIVEKIT_API_SECRET=/LIVEKIT_API_SECRET=12345678901234567890123456789012/g" .env
           sed -i "s/#MAX_DISPLAYED_VIDEOS=16/MAX_DISPLAYED_VIDEOS=6/g" .env
@@ -523,7 +523,7 @@ jobs:
         run: |
           sed -i "s/SECRET_KEY=/SECRET_KEY=someSecret/g" .env
           sed -i "s/VERSION=master/VERSION=${DOCKER_TAG}/g" .env
-          sed -i "s/DOMAIN=workadventure.localhost/DOMAIN=play.workadventure.localhost/g" .env
+          sed -i "s/DOMAIN=arqueum.localhost/DOMAIN=play.arqueum.localhost/g" .env
           sed -i "s/MAP_STORAGE_AUTHENTICATION_USER=/MAP_STORAGE_AUTHENTICATION_USER=john.doe/g" .env
           sed -i "s/MAP_STORAGE_AUTHENTICATION_PASSWORD=/MAP_STORAGE_AUTHENTICATION_PASSWORD=password/g" .env
           sed -i "s/ADMIN_API_TOKEN=/ADMIN_API_TOKEN=123/g" .env
@@ -534,14 +534,14 @@ jobs:
           sed -i "s/ROOM_API_SECRET_KEY=/ROOM_API_SECRET_KEY=MYAWESOMEKEY/g" .env
           sed -i "s/OPENID_PROMPT=/OPENID_PROMPT=login/g" .env
           sed -i "s/MAX_USERS_FOR_WEBRTC=4/MAX_USERS_FOR_WEBRTC=3/g" .env
-          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=https:\/\/livekit.workadventure.localhost/g" .env
+          sed -i "s/LIVEKIT_HOST=/LIVEKIT_HOST=https:\/\/livekit.arqueum.localhost/g" .env
           sed -i "s/LIVEKIT_API_KEY=/LIVEKIT_API_KEY=devkey/g" .env
           sed -i "s/LIVEKIT_API_SECRET=/LIVEKIT_API_SECRET=12345678901234567890123456789012/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_ACCESS_KEY=/LIVEKIT_RECORDING_S3_ACCESS_KEY=rustfs-access-key/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_SECRET_KEY=/LIVEKIT_RECORDING_S3_SECRET_KEY=rustfs-secret-access-key/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_REGION=/LIVEKIT_RECORDING_S3_REGION=eu-west-1/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_BUCKET=/LIVEKIT_RECORDING_S3_BUCKET=livekit-recording/g" .env
-          sed -i "s/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=https:\/\/cdn-livekit.workadventure.localhost/g" .env
+          sed -i "s/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=/LIVEKIT_RECORDING_S3_CDN_ENDPOINT=https:\/\/cdn-livekit.arqueum.localhost/g" .env
           sed -i "s/LIVEKIT_RECORDING_S3_ENDPOINT=/LIVEKIT_RECORDING_S3_ENDPOINT=https:\/\/rustfs-livekit:9000/g" .env
           sed -i "s/MAX_PER_GROUP=4/MAX_PER_GROUP=100/g" .env
           echo "MAX_DISPLAYED_VIDEOS=6" >> .env
@@ -840,7 +840,7 @@ jobs:
           NAMESPACE: workadventure-${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG_URL || env.GITHUB_REF_SLUG_URL }}
 
       - name: "Fix path to assets in WAM test files"
-        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.workadventure.localhost|${PLAY_URL}|g" {} \;
+        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.arqueum.localhost|${PLAY_URL}|g" {} \;
         working-directory: map-storage/tests
         env:
           PLAY_URL: "https://play-${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG_URL || env.GITHUB_REF_SLUG_URL }}.test.workadventu.re"
@@ -900,7 +900,7 @@ jobs:
         working-directory: "libs/room-api-clients/room-api-client-js"
 
       - name: "Fix path to assets in WAM test files"
-        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.workadventure.localhost|${PLAY_URL}|g" {} \;
+        run: find "." -type f -name "*.wam" -exec sed -i "s|http://play.arqueum.localhost|${PLAY_URL}|g" {} \;
         working-directory: map-storage/tests
         env:
           PLAY_URL: "https://play-${{ github.event_name == 'pull_request' && env.GITHUB_HEAD_REF_SLUG_URL || env.GITHUB_REF_SLUG_URL }}.test.workadventu.re"

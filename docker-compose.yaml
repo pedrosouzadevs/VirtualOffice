@@ -14,23 +14,23 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.port=8080"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.workadventure.localhost`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.arqueum.localhost`)"
       - "traefik.http.routers.traefik.service=api@internal"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       default:
         aliases:
-          - "front.workadventure.localhost"
-          - "play.workadventure.localhost"
-          - "room-api.workadventure.localhost"
-          - "maps.workadventure.localhost"
-          - "oidc.workadventure.localhost"
-          - "admin-api.workadventure.localhost"
-          - "map-storage.workadventure.localhost"
-          - "xmpp.workadventure.localhost"
-          - "matrix.workadventure.localhost"
-          - "pusher.workadventure.localhost"
+          - "front.arqueum.localhost"
+          - "play.arqueum.localhost"
+          - "room-api.arqueum.localhost"
+          - "maps.arqueum.localhost"
+          - "oidc.arqueum.localhost"
+          - "admin-api.arqueum.localhost"
+          - "map-storage.arqueum.localhost"
+          - "xmpp.arqueum.localhost"
+          - "matrix.arqueum.localhost"
+          - "pusher.arqueum.localhost"
   play:
     image: ghcr.io/thecodingmachine/nodejs:v2-24-trixie
     command: npm run dev
@@ -68,11 +68,11 @@ services:
       ENABLE_MAP_EDITOR: "$ENABLE_MAP_EDITOR"
       HOST: "0.0.0.0"
       NODE_ENV: development
-      ALLOWED_CORS_ORIGIN: "http://play.workadventure.localhost"
-      PUSHER_URL: http://play.workadventure.localhost
-      FRONT_URL: http://play.workadventure.localhost
-      UPLOADER_URL: http://uploader.workadventure.localhost
-      ICON_URL: http://icon.workadventure.localhost
+      ALLOWED_CORS_ORIGIN: "http://play.arqueum.localhost"
+      PUSHER_URL: http://play.arqueum.localhost
+      FRONT_URL: http://play.arqueum.localhost
+      UPLOADER_URL: http://uploader.arqueum.localhost
+      ICON_URL: http://icon.arqueum.localhost
       STUN_SERVER: "${STUN_SERVER:-}"
       TURN_SERVER: "${TURN_SERVER:-}"
       DISABLE_NOTIFICATIONS: "$DISABLE_NOTIFICATIONS"
@@ -89,7 +89,7 @@ services:
       # The same values feed admin-api below, deliberately: one provider for the world and the dashboard.
       OPENID_CLIENT_ID: "${OPENID_CLIENT_ID:-authorization-code-client-id}"
       OPENID_CLIENT_SECRET: "${OPENID_CLIENT_SECRET:-authorization-code-client-secret}"
-      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-http://oidc.workadventure.localhost}"
+      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-http://oidc.arqueum.localhost}"
       OPENID_PROFILE_SCREEN_PROVIDER: ${OPENID_PROFILE_SCREEN_PROVIDER:-}
       # "tags-scope" exists only on the mock. Entra ID rejects unknown scopes (AADSTS70011), so the Azure value drops
       # it — harmless since the pusher stops reading the tags claim the moment ADMIN_API_URL is set (F3).
@@ -109,7 +109,7 @@ services:
       API_URL: back:50051
       DISABLE_ANONYMOUS: $DISABLE_ANONYMOUS
       #Map editor
-      PUBLIC_MAP_STORAGE_URL: "http://map-storage.workadventure.localhost"
+      PUBLIC_MAP_STORAGE_URL: "http://map-storage.arqueum.localhost"
       INTERNAL_MAP_STORAGE_URL: "http://map-storage:3000"
       REDIS_HOST: redis
       ENABLE_OPENAPI_ENDPOINT: "true"
@@ -172,10 +172,10 @@ services:
       MINIMUM_DISTANCE: "${MINIMUM_DISTANCE}"
       #Chat
       MATRIX_API_URI: http://synapse:8008/
-      MATRIX_PUBLIC_URI: http://matrix.workadventure.localhost
+      MATRIX_PUBLIC_URI: http://matrix.arqueum.localhost
       MATRIX_ADMIN_USER: admin
       MATRIX_ADMIN_PASSWORD: MySecretPassword
-      MATRIX_DOMAIN: matrix.workadventure.localhost
+      MATRIX_DOMAIN: matrix.arqueum.localhost
       # oEmbed providers
       EMBEDLY_KEY: "$EMBEDLY_KEY"
       # Map editor restrictions (allow all users when OIDC is enabled by default)
@@ -189,7 +189,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.front.rule=Host(`front.workadventure.localhost`)"
+      - "traefik.http.routers.front.rule=Host(`front.arqueum.localhost`)"
       - "traefik.http.routers.front.service=front"
       - "traefik.http.services.front.loadbalancer.server.port=8080"
 
@@ -202,7 +202,7 @@ services:
       - "traefik.http.routers.play-vite.priority=2"
       - "traefik.http.routers.play-vite.service=front"
 
-      - "traefik.http.routers.room-api.rule=Host(`room-api.workadventure.localhost`)"
+      - "traefik.http.routers.room-api.rule=Host(`room-api.arqueum.localhost`)"
       - "traefik.http.routers.room-api.service=room-api"
       - "traefik.http.services.room-api.loadbalancer.server.port=50051"
       - "traefik.http.services.room-api.loadbalancer.server.scheme=h2c"
@@ -227,7 +227,7 @@ services:
       DEBUG_MODE: "$DEBUG_MODE"
       HOST: "0.0.0.0"
       NODE_ENV: development
-      FRONT_URL: http://play.workadventure.localhost
+      FRONT_URL: http://play.arqueum.localhost
       #APACHE_DOCUMENT_ROOT: dist/
       #APACHE_EXTENSIONS: headers
       #APACHE_EXTENSION_HEADERS: 1
@@ -237,7 +237,7 @@ services:
       - ./maps:/var/www/html
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.maps.rule=Host(`maps.workadventure.localhost`)"
+      - "traefik.http.routers.maps.rule=Host(`maps.arqueum.localhost`)"
       - "traefik.http.routers.maps.entryPoints=web,traefik"
       - "traefik.http.services.maps.loadbalancer.server.port=80"
 
@@ -247,7 +247,7 @@ services:
     working_dir: /usr/src/app/back
     environment:
       #DEBUG: "*"
-      PLAY_URL: http://play.workadventure.localhost
+      PLAY_URL: http://play.arqueum.localhost
       MINIMUM_DISTANCE: "${MINIMUM_DISTANCE}"
       GROUP_RADIUS: "${GROUP_RADIUS}"
       # On startup, we ask the messages container to regenerate the files.
@@ -273,7 +273,7 @@ services:
       STORE_VARIABLES_FOR_LOCAL_MAPS: "true"
       PROMETHEUS_AUTHORIZATION_TOKEN: "$PROMETHEUS_AUTHORIZATION_TOKEN"
       MAP_STORAGE_URL: "map-storage:50053"
-      PUBLIC_MAP_STORAGE_URL: "http://map-storage.workadventure.localhost"
+      PUBLIC_MAP_STORAGE_URL: "http://map-storage.arqueum.localhost"
       INTERNAL_MAP_STORAGE_URL: "http://map-storage:3000"
       PLAYER_VARIABLES_MAX_TTL: $PLAYER_VARIABLES_MAX_TTL
       ENABLE_CHAT: "$ENABLE_CHAT"
@@ -289,7 +289,7 @@ services:
       - "9232:9229"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.back.rule=Host(`api.workadventure.localhost`)"
+      - "traefik.http.routers.back.rule=Host(`api.arqueum.localhost`)"
       - "traefik.http.routers.back.entryPoints=web"
       - "traefik.http.routers.back.service=back"
       - "traefik.http.services.back.loadbalancer.server.port=8080"
@@ -317,7 +317,7 @@ services:
       SENTRY_RELEASE: ${SENTRY_RELEASE:-}
       PATH_PREFIX: ""
       MAP_STORAGE_API_TOKEN: "FFVSGBSGBSGFB23SFGBSFG4BS"
-      PUSHER_URL: http://play.workadventure.localhost
+      PUSHER_URL: http://play.arqueum.localhost
       WHITELISTED_RESOURCE_URLS: ""
       SECRET_KEY: "$SECRET_KEY"
     volumes:
@@ -327,11 +327,11 @@ services:
       - "9233:9229"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.map-storage.rule=Host(`map-storage.workadventure.localhost`)"
+      - "traefik.http.routers.map-storage.rule=Host(`map-storage.arqueum.localhost`)"
       - "traefik.http.routers.map-storage.entryPoints=web"
       - "traefik.http.routers.map-storage.service=map-storage"
       - "traefik.http.services.map-storage.loadbalancer.server.port=3000"
-      - "traefik.http.routers.map-storage-ui.rule=Host(`map-storage.workadventure.localhost`) && PathPrefix(`/ui/`)"
+      - "traefik.http.routers.map-storage-ui.rule=Host(`map-storage.arqueum.localhost`) && PathPrefix(`/ui/`)"
       - "traefik.http.routers.map-storage-ui.entryPoints=web"
       - "traefik.http.routers.map-storage-ui.service=map-storage-ui"
       - "traefik.http.services.map-storage-ui.loadbalancer.server.port=8080"
@@ -376,20 +376,20 @@ services:
       ADMIN_API_BOOTSTRAP_ADMIN_EMAIL: "${ADMIN_API_BOOTSTRAP_ADMIN_EMAIL:-john.doe@example.com}"
       # Administration dashboard (ADR-0004). Empty ADMIN_API_PUBLIC_URL in .env to switch /admin off; the dashboard
       # then answers 503 and /api — the surface "play" depends on — is untouched.
-      ADMIN_API_PUBLIC_URL: "${ADMIN_API_PUBLIC_URL:-http://admin-api.workadventure.localhost}"
+      ADMIN_API_PUBLIC_URL: "${ADMIN_API_PUBLIC_URL:-http://admin-api.arqueum.localhost}"
       # Development-only default so a fresh clone has a working dashboard. Override it in .env for anything else.
       ADMIN_API_SESSION_SECRET: "${ADMIN_API_SESSION_SECRET:-dev-only-admin-dashboard-session-secret-change-me}"
       ADMIN_API_TRUST_PROXY: "${ADMIN_API_TRUST_PROXY:-1}"
       # The same OIDC client the pusher uses, interpolated from the same .env values (F2, config swap): pointing the
       # world at Azure Entra ID points the dashboard there in the same motion. In development the mock allows
-      # http://*.workadventure.localhost as a redirect URI, which already covers /admin/callback; on Entra ID the
+      # http://*.arqueum.localhost as a redirect URI, which already covers /admin/callback; on Entra ID the
       # /admin/callback URL must be registered explicitly (docs/SETUP-CLOUD-AZURE.md).
       # "tags-scope" is deliberately absent from the default — authorisation comes from our database, never from an
       # OIDC claim — and the dashboard ignores OPENID_SCOPE from .env for the same reason: a scope list tuned for the
       # world (which may carry tags-scope for the mock) must not leak claims into the dashboard's session.
       OPENID_CLIENT_ID: "${OPENID_CLIENT_ID:-authorization-code-client-id}"
       OPENID_CLIENT_SECRET: "${OPENID_CLIENT_SECRET:-authorization-code-client-secret}"
-      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-http://oidc.workadventure.localhost}"
+      OPENID_CLIENT_ISSUER: "${OPENID_CLIENT_ISSUER:-http://oidc.arqueum.localhost}"
       OPENID_SCOPE: openid email profile
       # Read only by the dashboard's room list (ADR-0004, G3). GET /maps on map-storage is unauthenticated, so
       # there is no token here — the same call "play" makes from LocalAdmin. Empty it to switch that screen off.
@@ -397,7 +397,7 @@ services:
       # The kick channel (ADR-0006): the pusher's /ws/admin/rooms websocket, reached in-network, naming rooms by the
       # public URL browsers connect with. Empty ADMIN_SOCKETS_TOKEN degrades a dashboard ban to record-plus-door.
       ADMIN_SOCKETS_TOKEN: "${ADMIN_SOCKETS_TOKEN:-dev-only-admin-sockets-token-change-me}"
-      PLAY_URL: "${PLAY_URL:-http://play.workadventure.localhost}"
+      PLAY_URL: "${PLAY_URL:-http://play.arqueum.localhost}"
       # 3001, not 3000: the pusher serves HTTP on 3000 and every /ws/ endpoint on a second uWS app on 3001 —
       # the same split the play-ws Traefik router encodes.
       INTERNAL_PLAY_URL: "${INTERNAL_PLAY_URL:-http://play:3001}"
@@ -406,7 +406,7 @@ services:
       # Everything below also feeds "play". Once ADMIN_API_URL is set, /api/map is built from THESE values and play's
       # copies stop applying to those fields, so both services must read the same .env (ADR-0002).
       START_ROOM_URL: "$START_ROOM_URL"
-      PUBLIC_MAP_STORAGE_URL: "http://map-storage.workadventure.localhost"
+      PUBLIC_MAP_STORAGE_URL: "http://map-storage.arqueum.localhost"
       DISABLE_ANONYMOUS: "$DISABLE_ANONYMOUS"
       ENABLE_CHAT: "$ENABLE_CHAT"
       ENABLE_CHAT_UPLOAD: "$ENABLE_CHAT_UPLOAD"
@@ -441,10 +441,10 @@ services:
       # Hardcoded to the very values the "play" service above uses. These are NOT in .env, so interpolating them
       # would yield empty strings here and enableMatrixChat would be false for us and true for play.
       MATRIX_API_URI: http://synapse:8008/
-      MATRIX_PUBLIC_URI: http://matrix.workadventure.localhost
+      MATRIX_PUBLIC_URI: http://matrix.arqueum.localhost
       MATRIX_ADMIN_USER: admin
       MATRIX_ADMIN_PASSWORD: MySecretPassword
-      MATRIX_DOMAIN: matrix.workadventure.localhost
+      MATRIX_DOMAIN: matrix.arqueum.localhost
       LIVEKIT_RECORDING_S3_ENDPOINT: "${LIVEKIT_RECORDING_S3_ENDPOINT:-}"
       LIVEKIT_RECORDING_S3_BUCKET: "${LIVEKIT_RECORDING_S3_BUCKET:-}"
       LIVEKIT_RECORDING_S3_ACCESS_KEY: "${LIVEKIT_RECORDING_S3_ACCESS_KEY:-}"
@@ -468,7 +468,7 @@ services:
       - "9236:9229"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.admin-api.rule=Host(`admin-api.workadventure.localhost`)"
+      - "traefik.http.routers.admin-api.rule=Host(`admin-api.arqueum.localhost`)"
       - "traefik.http.routers.admin-api.entryPoints=web"
       - "traefik.http.services.admin-api.loadbalancer.server.port=3000"
 
@@ -480,7 +480,7 @@ services:
     environment:
       DEBUG: "*"
       STARTUP_COMMAND_1: ../npm-install.sh
-      UPLOADER_URL: http://uploader.workadventure.localhost
+      UPLOADER_URL: http://uploader.arqueum.localhost
       #AWS
       AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
@@ -501,7 +501,7 @@ services:
       - "9234:9229"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.uploader.rule=Host(`uploader.workadventure.localhost`)"
+      - "traefik.http.routers.uploader.rule=Host(`uploader.arqueum.localhost`)"
       - "traefik.http.routers.uploader.entryPoints=web"
       - "traefik.http.services.uploader.loadbalancer.server.port=8080"
 
@@ -525,7 +525,7 @@ services:
     image: redislabs/redisinsight:latest
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.redisinsight.rule=Host(`redis.workadventure.localhost`)"
+      - "traefik.http.routers.redisinsight.rule=Host(`redis.arqueum.localhost`)"
       - "traefik.http.routers.redisinsight.entryPoints=web"
       - "traefik.http.services.redisinsight.loadbalancer.server.port=8001"
 
@@ -533,7 +533,7 @@ services:
     image: matthiasluedtke/iconserver:v3.21.0
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.icon.rule=Host(`icon.workadventure.localhost`)"
+      - "traefik.http.routers.icon.rule=Host(`icon.arqueum.localhost`)"
       - "traefik.http.routers.icon.entryPoints=web"
       - "traefik.http.services.icon.loadbalancer.server.port=8080"
 
@@ -653,7 +653,7 @@ services:
       - ./contrib/oidc-server-mock:/tmp/config:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.oidc.rule=Host(`oidc.workadventure.localhost`)"
+      - "traefik.http.routers.oidc.rule=Host(`oidc.arqueum.localhost`)"
       - "traefik.http.routers.oidc.entryPoints=web"
     healthcheck:
       #disable: true
@@ -667,19 +667,19 @@ services:
     entrypoint: /data/start.sh
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.matrix.rule=Host(`matrix.workadventure.localhost`)"
+      - "traefik.http.routers.matrix.rule=Host(`matrix.arqueum.localhost`)"
       - "traefik.http.routers.matrix.entryPoints=web"
       - "traefik.http.services.matrix.loadbalancer.server.port=8008"
       - "traefik.http.routers.matrix.service=matrix"
     volumes:
       - ./synapse:/data/
       #- ./synapse/homeserver.template.yaml:/data/homeserver.template.yaml
-      - ./synapse/federation:/etc/nginx/vhost.d/matrix.workadventure.localhost
+      - ./synapse/federation:/etc/nginx/vhost.d/matrix.arqueum.localhost
     environment:
-      VIRTUAL_HOST: "matrix.workadventure.localhost"
+      VIRTUAL_HOST: "matrix.arqueum.localhost"
       VIRTUAL_PORT: 8008
-      LETSENCRYPT_HOST: "matrix.workadventure.localhost"
-      SYNAPSE_SERVER_NAME: "matrix.workadventure.localhost"
+      LETSENCRYPT_HOST: "matrix.arqueum.localhost"
+      SYNAPSE_SERVER_NAME: "matrix.arqueum.localhost"
       SYNAPSE_REPORT_STATS: "yes"
       MATRIX_ADMIN_USER: admin
       MATRIX_ADMIN_PASSWORD: MySecretPassword
@@ -697,8 +697,8 @@ services:
 #      - --max-port=10010
 #      - --tls-listening-port=5349
 #      - --listening-ip=0.0.0.0
-#      - --realm=coturn.workadventure.localhost
-#      - --server-name=coturn.workadventure.localhost
+#      - --realm=coturn.arqueum.localhost
+#      - --server-name=coturn.arqueum.localhost
 #      - --lt-cred-mech
 #      # Enable Coturn "REST API" to validate temporary passwords.
 #      #- --use-auth-secret
