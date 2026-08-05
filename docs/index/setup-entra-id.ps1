@@ -100,7 +100,13 @@ Write-Info ("Signed in as: {0}" -f $account.user.name)
 
 $existingJson = az ad app list --display-name $DisplayName --output json
 if ($LASTEXITCODE -ne 0) { Write-Fail "Could not list app registrations."; exit 3 }
-$existing = @($existingJson | ConvertFrom-Json)
+
+# Filtered through the pipeline rather than wrapped in @(...), and that is not style. Windows PowerShell 5.1's
+# ConvertFrom-Json emits a JSON array as ONE object instead of enumerating it, so `@($json | ConvertFrom-Json)` on
+# an empty `[]` yields a one-element array whose single element is the empty array — "found 1 registration" with a
+# blank appId, and `--id` reaches az with no argument. Piping forces the enumeration on 5.1 and 7 alike, and the
+# appId test drops anything that is not an app object.
+$existing = @(($existingJson | ConvertFrom-Json) | Where-Object { $_.appId })
 
 if ($existing.Count -gt 1) {
     Write-Fail ("{0} app registrations are named '{1}'. Rename or delete the strays, then re-run." -f $existing.Count, $DisplayName)
@@ -119,6 +125,14 @@ if ($existing.Count -eq 1) {
     $createdJson = az ad app create --display-name $DisplayName --web-redirect-uris @redirectUris --sign-in-audience AzureADMyOrg --enable-id-token-issuance false --output json
     if ($LASTEXITCODE -ne 0) { Write-Fail "Could not create the app registration."; exit 3 }
     $appId = ($createdJson | ConvertFrom-Json).appId
+}
+
+# Belt and braces after the 5.1 enumeration trap above: an empty appId is silently dropped when PowerShell builds a
+# native command line, so `--id ""` becomes `--id` with nothing after it and az fails with a help dump that names
+# the wrong culprit. Fail here instead, where the cause is legible.
+if ([string]::IsNullOrWhiteSpace($appId)) {
+    Write-Fail "Azure returned no application id. Re-run; if it persists, check 'az ad app list --display-name $DisplayName'."
+    exit 3
 }
 
 Write-Ok ("App registration ready: {0}" -f $appId)
