@@ -42,6 +42,11 @@ peer-to-peer e não cruza o servidor. Seu plano é folgado; o primeiro build de 
 Um registro `A` do seu domínio (digamos `office.exemplo.com.br`) apontando para o IP do VPS. Nada mais. Deixe o DNS
 propagar antes de começar — o Let's Encrypt precisa resolver o nome para esta máquina.
 
+> **Vai colocar a Cloudflare na frente?** Faça o deploy até o fim deste guia primeiro — direto, DNS only — e depois
+> siga o [SETUP-CLOUDFLARE.pt-BR.md](SETUP-CLOUDFLARE.pt-BR.md). Quatro ajustes são obrigatórios lá (modo SSL,
+> desafio de certificado, hostname cinza para o TURN, IPs reais); ligar o proxy antes deles quebra certificado e
+> vídeo de um jeito que parece bug daqui.
+
 ## 2. Primeiro acesso e endurecimento
 
 ```bash
@@ -240,6 +245,7 @@ divide o mesmo VPS e o tráfego de relay cabe com folga nos 16 TB (trinta pessoa
 
 ## Referências
 
+- [SETUP-CLOUDFLARE.pt-BR.md](SETUP-CLOUDFLARE.pt-BR.md) — colocar o proxy da Cloudflare na frente deste deploy
 - [SETUP-CLOUD-AZURE.pt-BR.md](SETUP-CLOUD-AZURE.pt-BR.md) — o app registration, rotação, a tabela de AADSTS
 - [SETUP-ADMIN-API.pt-BR.md](SETUP-ADMIN-API.pt-BR.md) — permissões, moderação, a CLI, recuperação de lockout
 - [Modelo de ameaças](security/threat-model.pt-BR.md) — o checklist de go-live que a seção de segredos implementa

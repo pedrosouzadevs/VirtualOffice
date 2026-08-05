@@ -42,6 +42,11 @@ does not cross the server. Your plan is comfortable; the first image build is th
 One `A` record for your domain (say `office.example.com`) pointing at the VPS IP. Nothing else. Let DNS propagate
 before starting — Let's Encrypt must resolve the name to this machine.
 
+> **Putting Cloudflare in front?** Deploy to the end of this guide first — direct, DNS only — then follow
+> [SETUP-CLOUDFLARE.md](SETUP-CLOUDFLARE.md). Four adjustments are mandatory there (SSL mode, certificate
+> challenge, a grey-cloud TURN hostname, real client IPs); flipping the proxy on before they are in place breaks
+> certificates and video in ways that look like bugs here.
+
 ## 2. First access and hardening
 
 ```bash
@@ -239,6 +244,7 @@ the same VPS and its relay traffic fits comfortably inside 16 TB (thirty users r
 
 ## References
 
+- [SETUP-CLOUDFLARE.md](SETUP-CLOUDFLARE.md) — putting the Cloudflare proxy in front of this deploy
 - [SETUP-CLOUD-AZURE.md](SETUP-CLOUD-AZURE.md) — the app registration, rotation, AADSTS table
 - [SETUP-ADMIN-API.md](SETUP-ADMIN-API.md) — permissions, moderation, the CLI, lockout recovery
 - [Threat model](security/threat-model.md) — the go-live checklist this guide's secrets section implements
