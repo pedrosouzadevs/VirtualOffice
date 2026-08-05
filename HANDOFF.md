@@ -257,6 +257,16 @@ continua logando sem configurar nada, e produção troca de provedor preenchendo
 Postgres, então o Entra só fornece identidade. Aposentar o mock (F2/P2) fica deliberadamente para depois — sem ele
 não há login offline em dev.
 
+**O caminho de produção está pronto (VPS Hostinger, decidido 2026-08-04):** o
+[`contrib/docker/docker-compose.prod.yaml`](contrib/docker/docker-compose.prod.yaml) agora **builda as cinco imagens
+do fork** (as do Docker Hub não têm o F4 nem o admin-api), inclui `admin-api` + `admin-api-db` com a cadeia de
+healthcheck, e serve o dashboard em `/admin` **no mesmo domínio** — um A record, um certificado, portas 80/443. O
+`.env.prod.template` foi atualizado (era o do upstream e nem tinha as variáveis novas), o compose valida com
+`docker compose config`, e a imagem de produção do `admin-api` **builda** (verificado). O passo a passo do VPS —
+DNS, endurecimento, segredos, Entra, coturn, backups, upgrade, rollback — está em
+[`docs/SETUP-DEPLOY.pt-BR.md`](docs/SETUP-DEPLOY.pt-BR.md) (bilíngue). A validação de staging do F2 acontece
+naturalmente no primeiro deploy seguindo esse guia.
+
 ### Antes de qualquer uso real
 
 O **modelo de ameaças STRIDE** está escrito em [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md)
