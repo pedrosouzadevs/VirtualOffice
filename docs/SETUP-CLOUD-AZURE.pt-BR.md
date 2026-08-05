@@ -29,6 +29,8 @@ valendo, porque as tags estão presas ao e-mail no nosso banco, não ao provedor
 - Um tenant Entra ID com os seus usuários, e uma conta que possa criar app registrations
   (o papel Application Developer basta).
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) 2.60+, logada: `az login --tenant <tenant>`.
+  No Windows: `winget install --exact --id Microsoft.AzureCLI`, depois **feche e reabra o terminal** (o PATH só
+  atualiza numa sessão nova).
 - As URLs públicas das duas superfícies, HTTPS, decididas antes. O Entra recusa redirect URI `http://` fora de
   localhost — não existe o perdão de wildcard do mock.
 - `ADMIN_API_SESSION_SECRET` trocado por um valor gerado (F7 do modelo de ameaças): `openssl rand -base64 48`.
@@ -44,9 +46,12 @@ como Conditional Access exigem licença P1/P2, mas nada aqui depende disso.)
 pwsh docs/index/setup-entra-id.ps1 -PlayUrl https://play.example.com -AdminApiUrl https://admin.example.com
 ```
 
+No **Windows PowerShell 5.1** (o padrão, onde `pwsh` não existe), rode `.\docs\index\setup-entra-id.ps1` com os
+mesmos parâmetros — o script é compatível com o 5.1 de propósito (ASCII puro, sem sintaxe de PowerShell 7).
+
 Idempotente: encontra o registration pelo display name e completa o que faltar. Imprime o bloco `OPENID_*` exato
 para o `.env` — o client secret **uma vez**, salvo em lugar nenhum. Códigos de saída: 0 sucesso, 1 parâmetro errado,
-2 ambiente não pronto, 3 o Entra respondeu erro.
+**2 ambiente não pronto** (é o que você recebe sem o Azure CLI, ou sem `az login`), 3 o Entra respondeu erro.
 
 ## Caminho manual
 

@@ -56,6 +56,11 @@ pwsh docs/index/setup-entra-id.ps1 -PlayUrl https://<seu-dominio> -AdminApiUrl h
 ```
 
 O mesmo hostname nos dois parâmetros. Cole o bloco `OPENID_*` impresso no `.env`.
+
+> **No Windows PowerShell 5.1** (o padrão, onde `pwsh` não existe), rode `.\docs\index\setup-entra-id.ps1` com os
+> mesmos parâmetros — o script é compatível com o 5.1 de propósito. O que realmente falta é o Azure CLI:
+> `winget install --exact --id Microsoft.AzureCLI`, **feche e reabra o terminal**, e `az login`.
+
 Detalhes e troubleshooting por AADSTS: [SETUP-CLOUD-AZURE.pt-BR.md](SETUP-CLOUD-AZURE.pt-BR.md).
 
 ## 3. Buildar e subir

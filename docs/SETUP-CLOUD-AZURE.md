@@ -28,6 +28,8 @@ tags are attached to the email in our database, not to the provider.
 - An Entra ID tenant containing your users, and an account allowed to create app registrations
   (Application Developer role is enough).
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) 2.60+, logged in: `az login --tenant <tenant>`.
+  On Windows: `winget install --exact --id Microsoft.AzureCLI`, then **close and reopen the terminal** (PATH only
+  refreshes in a new session).
 - The public URLs of both surfaces, HTTPS, decided beforehand. Entra refuses `http://` redirect URIs for anything
   but localhost — there is no wildcard forgiveness like the mock's.
 - `ADMIN_API_SESSION_SECRET` replaced with a generated value (threat model F7): `openssl rand -base64 48`.
@@ -43,9 +45,12 @@ hardening such as Conditional Access requires P1/P2 licences, but nothing here d
 pwsh docs/index/setup-entra-id.ps1 -PlayUrl https://play.example.com -AdminApiUrl https://admin.example.com
 ```
 
+On **Windows PowerShell 5.1** (the default, where `pwsh` does not exist), run `.\docs\index\setup-entra-id.ps1`
+with the same parameters — the script is 5.1-compatible by design (pure ASCII, no PowerShell 7 syntax).
+
 Idempotent: it finds the registration by display name and completes whatever is missing. It prints the exact
 `OPENID_*` block for `.env` — the client secret **once**, saved nowhere. Exit codes: 0 success, 1 wrong parameters,
-2 environment not ready, 3 Entra answered an error.
+**2 environment not ready** (what you get with no Azure CLI, or without `az login`), 3 Entra answered an error.
 
 ## Manual path
 
