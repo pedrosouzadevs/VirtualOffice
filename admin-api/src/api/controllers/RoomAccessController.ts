@@ -93,7 +93,20 @@ export class RoomAccessController {
 
                 // An unknown visitor is not an error: they enter with no tags. Failing here would mean nobody new
                 // could ever join the world.
-                const member = await this.members.findByEmail(userIdentifier);
+                const known = await this.members.findByEmail(userIdentifier);
+
+                // First arrival through the identity provider: record the person so an administrator can see them
+                // and grant tags from the dashboard, instead of having to know and type an address that has never
+                // appeared anywhere. The row carries no tags, so it grants exactly nothing on its own — invariant
+                // #6 is untouched, and this runs once per person rather than once per connection.
+                //
+                // Only for somebody who actually authenticated. `accessToken` is present precisely when the pusher
+                // completed an OIDC login; an anonymous visitor is identified by a uuid, and creating rows for
+                // those would fill the member table with entries nobody can act on or recognise.
+                const member =
+                    known === undefined && accessToken !== undefined
+                        ? await this.members.ensureMember(userIdentifier)
+                        : known;
 
                 const [characterTextures, companionTexture] = await Promise.all([
                     this.wokaCatalogue.resolveTextures(characterTextureIds),

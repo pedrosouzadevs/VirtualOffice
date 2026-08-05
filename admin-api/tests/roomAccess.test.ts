@@ -154,6 +154,102 @@ describe("GET /api/room/access", () => {
         });
     });
 
+    describe("first arrival through the identity provider", () => {
+        it("records the person, so an administrator can find them on the dashboard", async () => {
+            // What an administrator expects: somebody signs in with Entra and shows up in the member list. Without
+            // this, the list only ever holds the bootstrap admin and every grant needs an address typed from memory.
+            const members = new StubMemberRepository();
+            const url = await serveTestApp({ memberRepository: members });
+
+            await roomAccess(url, {
+                userIdentifier: "newcomer@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+                accessToken: "an-oidc-access-token",
+            });
+
+            expect(await members.findByEmail("newcomer@example.com")).toMatchObject({
+                email: "newcomer@example.com",
+                tags: [],
+            });
+        });
+
+        it("grants nothing by doing so", async () => {
+            // The row is a record of who arrived, not a permission. Invariant #6 stands: no tags, no map editor.
+            const url = await serveTestApp();
+
+            const response = await roomAccess(url, {
+                userIdentifier: "newcomer@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+                accessToken: "an-oidc-access-token",
+            });
+
+            expect(await response.json()).toMatchObject({ status: "ok", tags: [], canEdit: false });
+        });
+
+        it("does not record an anonymous visitor, who has no address to act on", async () => {
+            // An anonymous visitor is identified by a uuid. Rows for those would fill the member table with entries
+            // nobody can recognise or grant anything to.
+            const members = new StubMemberRepository();
+            const url = await serveTestApp({ memberRepository: members });
+
+            await roomAccess(url, {
+                userIdentifier: "998ce839-3dea-4698-8b41-ebbdf7688ad9",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+            });
+
+            expect(await members.listAll(10)).toHaveLength(0);
+        });
+
+        it("leaves an existing member untouched, tags included", async () => {
+            // The write happens once per person, and must never overwrite what an administrator granted.
+            const members = new StubMemberRepository([testMember("known@example.com", ["admin"], "Known Person")]);
+            const url = await serveTestApp({ memberRepository: members });
+
+            await roomAccess(url, {
+                userIdentifier: "known@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+                accessToken: "an-oidc-access-token",
+            });
+
+            expect(await members.findByEmail("known@example.com")).toMatchObject({
+                username: "Known Person",
+                tags: ["admin"],
+            });
+            expect(await members.listAll(10)).toHaveLength(1);
+        });
+
+        it("records nobody when the door refused them", async () => {
+            // A banned person is turned away before this runs; creating a row for them would be recording an
+            // arrival that never happened.
+            const members = new StubMemberRepository();
+            const url = await serveTestApp({
+                memberRepository: members,
+                banRepository: new StubBanRepository([
+                    {
+                        identifier: "banned@example.com",
+                        displayName: null,
+                        message: "Banned",
+                        roomUrl: "/~/a.wam",
+                        issuedBy: "boss@example.com",
+                    },
+                ]),
+            });
+
+            await roomAccess(url, {
+                userIdentifier: "banned@example.com",
+                playUri: EDITABLE_ROOM,
+                characterTextureIds: ["male1"],
+                accessToken: "an-oidc-access-token",
+            });
+
+            expect(await members.listAll(10)).toHaveLength(0);
+        });
+    });
+
     describe("an unknown visitor", () => {
         it("gets in with no tags rather than being rejected", async () => {
             // Rejecting here would mean nobody new could ever enter the world.

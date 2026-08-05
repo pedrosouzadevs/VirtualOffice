@@ -246,6 +246,14 @@ Como isso não vira armadilha: `world` continua sendo um campo da resposta desde
 4. **`/api/capabilities` responde `200` mesmo sem capability alguma** (`{}` é corpo válido). ⚠️ *Isto substitui o teste #4 original — "404 não derruba o `play`" — que afirmava um comportamento inexistente: um 404 pendura o pusher (Armadilha #2).*
 5. Token errado → 403 em todos os endpoints **exceto o `/api/capabilities`**, que precisa responder 200 sem token e precisa rejeitar token embrulhado em `Bearer`.
 6. Membro desconhecido no `/api/room/access` entra com `tags: []` e `canEdit: false` — **nunca erro**, senão nenhum visitante novo consegue entrar.
+
+   > **Refinado em 2026-08-05.** Quem chega **autenticado** pelo provedor de identidade e ainda não tem linha passa a
+   > ter uma criada, sem tag nenhuma. Não era decisão registrada não criar — era ausência de implementação, e ela
+   > tornava o dashboard inútil na prática: a lista só continha o admin do bootstrap, e conceder qualquer coisa exigia
+   > digitar de cabeça um endereço que nunca apareceu em lugar nenhum. A linha não concede nada, então a invariante
+   > acima continua valendo palavra por palavra. **Visitante anônimo continua sem linha**: ele é identificado por uuid,
+   > e registrar isso encheria a tabela de entradas que ninguém reconhece nem consegue usar. O sinal usado é o
+   > `accessToken`, presente exatamente quando o pusher completou um login OIDC.
 7. Qualquer caminho não implementado responde JSON, nunca o HTML padrão do Express: todo chamador parseia nossas respostas com `zod`.
 
 ## Correções (2026-07-30)

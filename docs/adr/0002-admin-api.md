@@ -245,6 +245,14 @@ Why this does not become a trap: `world` stays part of the response from day one
 4. **`/api/capabilities` answers `200` even with no capability at all** (`{}` is a valid body). ⚠️ *This replaces the original test #4 — "a 404 does not take `play` down" — which asserted a behaviour that does not exist: a 404 hangs the pusher (Trap #2).*
 5. Wrong token → 403 on every endpoint **except `/api/capabilities`**, which must answer 200 with no token, and must reject a token wrapped in `Bearer`.
 6. An unknown member on `/api/room/access` gets in with `tags: []` and `canEdit: false` — **never an error**, otherwise no new visitor can ever enter.
+
+   > **Refined 2026-08-05.** Somebody arriving **authenticated** through the identity provider with no row now gets
+   > one, carrying no tags. Not creating was never a recorded decision — it was an absence of implementation, and it
+   > made the dashboard useless in practice: the list held only the bootstrap admin, and granting anything meant
+   > typing an address from memory that had never appeared anywhere. The row grants nothing, so the invariant above
+   > still holds word for word. **An anonymous visitor still gets no row**: they are identified by a uuid, and
+   > recording those would fill the table with entries nobody recognises or can act on. The signal is `accessToken`,
+   > present exactly when the pusher completed an OIDC login.
 7. Any unimplemented path answers JSON, never Express's default HTML: every caller parses our responses with `zod`.
 
 ## Corrections (2026-07-30)
