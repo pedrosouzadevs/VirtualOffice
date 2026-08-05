@@ -18,6 +18,8 @@ concurrency:
 
 jobs:
   build_on_linux:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     name: "Build & release desktop app for ${{ matrix.os }}"
 
     strategy:

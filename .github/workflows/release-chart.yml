@@ -10,6 +10,8 @@ on:
 
 jobs:
   release:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout

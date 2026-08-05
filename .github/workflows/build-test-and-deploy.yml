@@ -14,6 +14,8 @@ concurrency:
 
 jobs:
   build-play:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -31,6 +33,8 @@ jobs:
 
 
   build-back:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -46,6 +50,8 @@ jobs:
       context: ./
 
   build-uploader:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -61,6 +67,8 @@ jobs:
       context: ./
 
   build-maps:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -76,6 +84,8 @@ jobs:
       context: ./maps
 
   build-map-storage:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     uses: ./.github/workflows/build-multi-arch-image.yml
     secrets: inherit
     with:
@@ -91,6 +101,8 @@ jobs:
       context: ./
 
   end-to-end-tests:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     name: "End to end tests with ${{ matrix.project }} ${{ matrix.shard }}/${{ matrix.nbShards }}"
     strategy:
       fail-fast: false
@@ -333,8 +345,9 @@ jobs:
           retention-days: 30
 
   run-gitlab-saas-tests:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Run Gitlab SaaS tests"
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'release') || (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas') || contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'linked_to_saas_branch'))) }}
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && ((github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'release') || (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas') || contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'linked_to_saas_branch')))) }}
     runs-on: ubuntu-latest
     needs:
       - build-back
@@ -477,6 +490,7 @@ jobs:
           fail: ${{ steps.poll-pipeline.outputs.failed == 'true' }}
           recreate: true
   prod-single-domain-deploy-tests:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Test production docker compose (${{ matrix.shard }}/${{ matrix.nbShards }})"
     strategy:
       fail-fast: false
@@ -486,7 +500,7 @@ jobs:
             nbShards: 2
           - shard: 2
             nbShards: 2
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas')) }}
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && (github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas'))) }}
     needs:
       - build-play
       - build-back
@@ -603,6 +617,7 @@ jobs:
           retention-days: 30
 
   helm-deploy:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Deploy in Kubernetes"
     needs:
       - build-play
@@ -611,7 +626,7 @@ jobs:
       - build-uploader
       - build-map-storage
     runs-on: ubuntu-24.04
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas')) }}
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && (github.event_name == 'push' || github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'deploy') || contains(github.event.pull_request.labels.*.name, 'deploy-with-livekit-saas'))) }}
 
     steps:
       - name: Checkout
@@ -863,6 +878,8 @@ jobs:
           fail: false
           recreate: true
   helm-test:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
+    if: github.repository == 'thecodingmachine/workadventure'
     name: "End to end tests in Kubernetes (${{ matrix.shard }}/${{ matrix.nbShards }})"
     needs:
       - helm-deploy
@@ -939,6 +956,7 @@ jobs:
           retention-days: 30
 
   cleanup:
+    # Upstream-only: publishes to WorkAdventure's own infrastructure with secrets a fork has not.
     name: "Cleanup images"
     runs-on: ubuntu-latest
     needs:
@@ -946,7 +964,7 @@ jobs:
       - prod-single-domain-deploy-tests
       - helm-test
     # This will fail if the token does not belong to an admin, hence the always
-    if: always() && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure'))
+    if: ${{ github.repository == 'thecodingmachine/workadventure' && (always() && ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'workadventure') || (github.event_name != 'pull_request' && github.repository_owner == 'workadventure'))) }}
     continue-on-error: true
     steps:
       - name: Prune play
