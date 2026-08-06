@@ -11,12 +11,15 @@ import type {
 } from "@workadventure/map-editor";
 import {
     AreaDataProperties,
+    ClearTileOverlayCommand,
     CreateAreaCommand,
     CreateEntityCommand,
     EntityPermissions,
+    SetTilesCommand,
     UpdateWAMMetadataCommand,
     UpdateWAMSettingCommand,
 } from "@workadventure/map-editor";
+import { canEditTiles } from "@workadventure/map-editor/src/Utils";
 import type {
     EditMapCommandMessage,
     EditMapCommandsArrayMessage,
@@ -56,6 +59,11 @@ const COMMANDS_ACCESSIBLE_WITHOUT_CAN_EDIT = new Set<string>([
     "uploadFileMessage",
     "modifyAreaMessage",
 ]);
+
+// Server-side sanity caps for structural edits (ADR-0007): the WAM is zod-re-validated after every command
+// and serialized whole by the 15s autosave, so an unbounded overlay would turn both into a DoS surface.
+const MAX_TILES_PER_SET_COMMAND = 2048;
+const MAX_TILE_OVERLAY_CELLS = 50_000;
 
 const mapStorageServer: MapStorageServer = {
     ping(call: ServerUnaryCall<PingMessage, Empty>, callback: sendUnaryData<PingMessage>): void {
@@ -139,6 +147,19 @@ const mapStorageServer: MapStorageServer = {
                     throw new Error(
                         `User ${userUUID} is not allowed to edit the map but tried to execute command: ${editMapMessage.$case} on map ${mapUrl}`,
                     );
+                }
+
+                // Structural edits have a narrower gate than canEdit: only the adminMap tag passes, with no
+                // admin or editor override (ADR-0007). Throwing here lands in the outer catch, which answers
+                // a real errorCommandMessage BEFORE anything is queued or echoed — the author's client rolls
+                // its optimistic stroke back. This is the authoritative check; the front's tool visibility
+                // and the pusher's pre-gate are conveniences layered on top of it.
+                if (
+                    (editMapMessage.$case === "setTilesMessage" ||
+                        editMapMessage.$case === "clearTileOverlayMessage") &&
+                    !canEditTiles(connectedUserTags)
+                ) {
+                    throw new Error(`User ${userUUID} lacks the adminMap tag required to edit tiles on map ${mapUrl}`);
                 }
 
                 switch (editMapMessage.$case) {
@@ -389,6 +410,43 @@ const mapStorageServer: MapStorageServer = {
                             new UploadFileMapStorageCommand(uploadFileMessage, mapUrl.hostname),
                         );
                         editMapMessage.uploadFileMessage.file = new Uint8Array(0);
+                        break;
+                    }
+                    case "setTilesMessage": {
+                        const message = editMapMessage.setTilesMessage;
+                        if (message.tiles.length === 0) {
+                            throw new Error("setTilesMessage carried no tiles");
+                        }
+                        if (message.tiles.length > MAX_TILES_PER_SET_COMMAND) {
+                            throw new Error(
+                                `setTilesMessage carried ${message.tiles.length} tiles; the limit per stroke is ${MAX_TILES_PER_SET_COMMAND}`,
+                            );
+                        }
+                        const overlay = wamFile.getWam().tileOverlay;
+                        const overlayCells = overlay
+                            ? Object.values(overlay.layers).reduce(
+                                  (count, cells) => count + Object.keys(cells).length,
+                                  0,
+                              )
+                            : 0;
+                        if (overlayCells + message.tiles.length > MAX_TILE_OVERLAY_CELLS) {
+                            throw new Error(
+                                `The tile overlay would exceed ${MAX_TILE_OVERLAY_CELLS} cells; export the consolidated .tmj, re-upload it and clear the overlay instead (ADR-0007)`,
+                            );
+                        }
+                        await mapsManager.executeCommand(
+                            mapKey,
+                            mapUrl.host,
+                            new SetTilesCommand(wamFile, message.tiles, commandId),
+                        );
+                        break;
+                    }
+                    case "clearTileOverlayMessage": {
+                        await mapsManager.executeCommand(
+                            mapKey,
+                            mapUrl.host,
+                            new ClearTileOverlayCommand(wamFile, commandId),
+                        );
                         break;
                     }
                     default: {

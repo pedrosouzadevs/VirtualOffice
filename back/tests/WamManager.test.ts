@@ -83,6 +83,45 @@ describe("WamManager", () => {
         expect(wam?.lastCommandId).toBe("cmd-update-settings");
     });
 
+    it("applies setTiles and clearTileOverlay commands to its WAM mirror", async () => {
+        // The back keeps its own WAM copy in sync by replaying every edit command (ADR-0007). If these two
+        // cases fell out of the switch, the mirror would silently drift from what map-storage persisted.
+        const manager = new WamManager(createInitialWam());
+
+        await manager.applyCommand({
+            id: "cmd-set-tiles",
+            editMapMessage: {
+                message: {
+                    $case: "setTilesMessage",
+                    setTilesMessage: {
+                        tiles: [
+                            { x: 1, y: 2, layerName: "walls1", gid: 42 },
+                            { x: 1, y: 3, layerName: "collisions", gid: 3 },
+                            { x: 5, y: 6, layerName: "walls1", gid: 0 },
+                        ],
+                    },
+                },
+            },
+        });
+
+        let wam = manager.getWam();
+        expect(wam?.tileOverlay).toEqual({
+            layers: { walls1: { "1,2": 42, "5,6": 0 }, collisions: { "1,3": 3 } },
+        });
+        expect(wam?.lastCommandId).toBe("cmd-set-tiles");
+
+        await manager.applyCommand({
+            id: "cmd-clear-overlay",
+            editMapMessage: {
+                message: { $case: "clearTileOverlayMessage", clearTileOverlayMessage: {} },
+            },
+        });
+
+        wam = manager.getWam();
+        expect(wam?.tileOverlay).toBeUndefined();
+        expect(wam?.lastCommandId).toBe("cmd-clear-overlay");
+    });
+
     it("preserves area properties when modifyProperties is false", async () => {
         const manager = new WamManager(createInitialWam());
 

@@ -2,6 +2,8 @@ import type { EditMapCommandMessage } from "@workadventure/messages";
 import type { GameMapFrontWrapper } from "../../GameMap/GameMapFrontWrapper";
 import type { GameScene } from "../../GameScene";
 import type { MapEditorModeManager } from "../MapEditorModeManager";
+import { ClearTileOverlayFrontCommand } from "../Commands/Tiles/ClearTileOverlayFrontCommand";
+import { SetTilesFrontCommand } from "../Commands/Tiles/SetTilesFrontCommand";
 import { MapEditorTool } from "./MapEditorTool";
 
 export class FloorEditorTool extends MapEditorTool {
@@ -33,10 +35,41 @@ export class FloorEditorTool extends MapEditorTool {
         // To implement
     }
     /**
-     * React on commands coming from the outside
+     * React on commands coming from the outside: another editor's stroke broadcast by the back, or the
+     * join-time catch-up replay. Both build a fresh front command (fresh previous-gids at this moment)
+     * and run it locally without re-emitting. Applying is idempotent — SetTiles writes absolute gids —
+     * so a command already baked into the fetched WAM replaying here is a no-op.
      */
-    public handleIncomingCommandMessage(editMapCommandMessage: EditMapCommandMessage): Promise<void> {
-        // To implement
-        return Promise.resolve();
+    public async handleIncomingCommandMessage(editMapCommandMessage: EditMapCommandMessage): Promise<void> {
+        const message = editMapCommandMessage.editMapMessage?.message;
+        const wamFile = this.scene.getGameMap().getWamFile();
+        if (!message || !wamFile) {
+            return;
+        }
+        switch (message.$case) {
+            case "setTilesMessage": {
+                await this.mapEditorModeManager.executeLocalCommand(
+                    new SetTilesFrontCommand(
+                        wamFile,
+                        message.setTilesMessage.tiles,
+                        editMapCommandMessage.id,
+                        this.scene.getGameMapFrontWrapper(),
+                    ),
+                );
+                break;
+            }
+            case "clearTileOverlayMessage": {
+                await this.mapEditorModeManager.executeLocalCommand(
+                    new ClearTileOverlayFrontCommand(
+                        wamFile,
+                        editMapCommandMessage.id,
+                        this.scene.getGameMapFrontWrapper(),
+                    ),
+                );
+                break;
+            }
+            default:
+                break;
+        }
     }
 }

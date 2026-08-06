@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { AnswerMessage, CompanionDetail, ErrorApiData, WokaDetail } from "@workadventure/messages";
 import { apiVersionHash, noUndefined } from "@workadventure/messages";
+import { canEditTiles } from "@workadventure/map-editor/src/Utils";
 import { errors } from "jose";
 import * as Sentry from "@sentry/node";
 import type { TemplatedApp, WebSocket } from "uWebSockets.js";
@@ -1066,6 +1067,36 @@ export class IoSocketController {
                                 break;
                             }
                             case "editMapCommandMessage": {
+                                const editMapCommandMessage = message.message.editMapCommandMessage;
+                                const editMapMessage = editMapCommandMessage.editMapMessage?.message;
+                                if (
+                                    (editMapMessage?.$case === "setTilesMessage" ||
+                                        editMapMessage?.$case === "clearTileOverlayMessage") &&
+                                    !canEditTiles(socket.getUserData().tags)
+                                ) {
+                                    // Defence in depth for structural edits (ADR-0007): map-storage holds the
+                                    // authoritative adminMap check; refusing here just saves the back and
+                                    // map-storage round-trip. Same reply shape and command id as map-storage's
+                                    // refusal, so the author's editor rolls the stroke back through the normal
+                                    // errorCommandMessage path.
+                                    socket.emitInBatch({
+                                        message: {
+                                            $case: "editMapCommandMessage",
+                                            editMapCommandMessage: {
+                                                id: editMapCommandMessage.id,
+                                                editMapMessage: {
+                                                    message: {
+                                                        $case: "errorCommandMessage",
+                                                        errorCommandMessage: {
+                                                            reason: "You are not allowed to edit tiles on this map",
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    });
+                                    break;
+                                }
                                 socketManager.forwardMessageToBack(socket, message.message);
                                 break;
                             }

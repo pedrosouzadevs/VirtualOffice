@@ -729,6 +729,9 @@ export class GameScene extends DirtyScene {
             this.Terrains,
         );
         this.gameMapFrontWrapper.initialize().catch((e) => console.error(e));
+        // In-game structural edits (ADR-0007) ride the WAM; painting them now, before
+        // createCollisionWithPlayer runs, is what makes their collision flags load for free.
+        this.gameMapFrontWrapper.applyTileOverlay(this.wamFile?.tileOverlay);
         for (const layer of this.gameMapFrontWrapper.getFlatLayers()) {
             if (layer.type === "tilelayer") {
                 const exitSceneUrl = this.getExitSceneUrl(layer);
@@ -3453,6 +3456,9 @@ ${escapedMessage}
                                 this.Map,
                                 this.Terrains,
                             );
+                            // The rebuilt layers start from the pristine .tmj; re-apply the structural
+                            // edits before the colliders are recreated below (ADR-0007).
+                            this.gameMapFrontWrapper.applyTileOverlay(this.wamFile?.tileOverlay);
                             // Unsubscribe if needed and subscribe to GameMapChanged event again
                             this.subscribeToGameMapChanged();
                             this.subscribeToEntitiesManagerObservables();

@@ -395,6 +395,24 @@ export const WAMSettings = z.object({
     recording: RecordingSettings.optional(),
 });
 
+/**
+ * One flat tile layer's overlay cells, keyed "x,y" in tile coordinates. The value is the raw Tiled gid,
+ * flip flags included (hence the uint32 upper bound), written verbatim into layer data on consolidation.
+ * 0 is an explicit "erased" override — distinct from an absent key, which means "no override": erasing a
+ * tile the base .tmj painted must survive a consolidated export.
+ */
+export const TileOverlayCells = z.record(z.string().regex(/^\d+,\d+$/), z.number().int().nonnegative().max(0xffffffff));
+
+/**
+ * In-game structural edits (ADR-0007). The base .tmj stays untouched after upload; every tile painted in
+ * the editor lands here, keyed by flat tile layer name. A flat dict rather than a patch list on purpose:
+ * last-write-wins dedup keeps the WAM O(cells touched), not O(edits made) — this object is re-validated by
+ * zod after every command and serialized by the 15s autosave.
+ */
+export const TileOverlay = z.object({
+    layers: z.record(z.string(), TileOverlayCells),
+});
+
 export const WAMFileFormat = z.object({
     version: z.string(),
     mapUrl: z.string(),
@@ -405,6 +423,9 @@ export const WAMFileFormat = z.object({
     settings: WAMSettings.optional(),
     metadata: WAMMetadata.optional().describe("Contains metadata about the map (name, description, copyright, etc.)"),
     vendor: WAMVendor.optional(),
+    tileOverlay: TileOverlay.optional().describe(
+        "Structural edits made in-game: per-layer tile gids overriding the base .tmj (ADR-0007).",
+    ),
 });
 
 export const MapsCacheSingleMapFormat = z.object({
@@ -456,6 +477,8 @@ export type PlayAudioPropertyData = z.infer<typeof PlayAudioPropertyData>;
 export type OpenWebsitePropertyData = z.infer<typeof OpenWebsitePropertyData>;
 export type OpenFilePropertyData = z.infer<typeof OpenFilePropertyData>;
 export type WAMSettings = z.infer<typeof WAMSettings>;
+export type TileOverlayCells = z.infer<typeof TileOverlayCells>;
+export type TileOverlay = z.infer<typeof TileOverlay>;
 export type WAMFileFormat = z.infer<typeof WAMFileFormat>;
 export type MapsCacheSingleMapFormat = z.infer<typeof MapsCacheSingleMapFormat>;
 export type MapsCacheFileFormat = z.infer<typeof MapsCacheFileFormat>;

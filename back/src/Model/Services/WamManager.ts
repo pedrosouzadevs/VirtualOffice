@@ -1,10 +1,12 @@
 import type { AreaData, AtLeast, EntityDataProperties, WAMEntityData, WAMFileFormat } from "@workadventure/map-editor";
 import {
+    ClearTileOverlayCommand,
     CreateAreaCommand,
     CreateEntityCommand,
     DeleteAreaCommand,
     DeleteCustomEntityCommand,
     DeleteEntityCommand,
+    SetTilesCommand,
     UpdateAreaCommand,
     UpdateEntityCommand,
     UpdateWAMMetadataCommand,
@@ -190,6 +192,18 @@ export class WamManager {
             case "deleteCustomEntityMessage": {
                 const message = editMapMessage.deleteCustomEntityMessage;
                 await new DeleteCustomEntityCommand(message, wamFile).execute();
+                break;
+            }
+            case "setTilesMessage": {
+                await new SetTilesCommand(
+                    wamFile,
+                    editMapMessage.setTilesMessage.tiles,
+                    editMapCommandMessage.id,
+                ).execute();
+                break;
+            }
+            case "clearTileOverlayMessage": {
+                await new ClearTileOverlayCommand(wamFile, editMapCommandMessage.id).execute();
                 break;
             }
             case "uploadEntityMessage":

@@ -30,6 +30,7 @@ import { TrashEditorTool } from "./Tools/TrashEditorTool";
 import { ExplorerTool } from "./Tools/ExplorerTool";
 import { CloseTool } from "./Tools/CloseTool";
 import { UpdateAreaFrontCommand } from "./Commands/Area/UpdateAreaFrontCommand";
+import { SetTilesFrontCommand } from "./Commands/Tiles/SetTilesFrontCommand";
 
 export enum EditorToolName {
     AreaEditor = "AreaEditor",
@@ -343,6 +344,12 @@ export class MapEditorModeManager {
                     if (command) {
                         logger("removing command of pendingList : ", editMapCommandMessage.id);
                         this.pendingCommands.splice(this.pendingCommands.indexOf(command), 1);
+                        if (command instanceof SetTilesFrontCommand) {
+                            // A stroke the server refused must not stay painted on the author's screen.
+                            // Scoped to tile commands on purpose: the other command types keep their
+                            // historical drop-only behaviour here.
+                            await command.getUndoCommand().execute();
+                        }
                     }
                     return;
                 }

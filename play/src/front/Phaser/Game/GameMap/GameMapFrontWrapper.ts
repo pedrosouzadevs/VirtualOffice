@@ -6,6 +6,8 @@ import type {
     GameMap,
     AreaDataProperties,
     AreaUpdateCallback,
+    TileChange,
+    TileOverlay,
 } from "@workadventure/map-editor";
 import { AreaCoordinates, GameMapProperties } from "@workadventure/map-editor";
 import { MathUtils } from "@workadventure/math-utils";
@@ -289,6 +291,18 @@ export class GameMapFrontWrapper {
             const tileIndex = tileId & ~TILED_TILE_FLIP_FLAGS;
             if (tileIndex > 0) {
                 tileIndices.add(tileIndex);
+            }
+        }
+        // The tile overlay (ADR-0007) may bring gids from another tileset into this layer. Missing them
+        // here would let the layer take the single-tileset GPU fast path and then silently refuse those
+        // cells when the overlay is applied right after construction.
+        const overlayCells = this.gameMap.getWamFile()?.getWam().tileOverlay?.layers[layer.name];
+        if (overlayCells) {
+            for (const gid of Object.values(overlayCells)) {
+                const tileIndex = gid & ~TILED_TILE_FLIP_FLAGS;
+                if (tileIndex > 0) {
+                    tileIndices.add(tileIndex);
+                }
             }
         }
         return tileIndices;
@@ -913,11 +927,10 @@ export class GameMapFrontWrapper {
                 this.gameMap.putTileInFlatLayer(tileIndex, x, y, layer);
                 const phaserTile = phaserLayer.putTileAt(tileIndex, x, y);
                 if (phaserTile !== null) {
-                    for (const property of this.gameMap.getTileProperty(tileIndex)) {
-                        if (property.name === GameMapProperties.COLLIDES && property.value) {
-                            phaserTile.setCollision(true);
-                        }
-                    }
+                    // Set AND clear: replacing a colliding tile with a walkable one must not leave a
+                    // phantom collider behind (the recomputed pathfinding grid never had this bug, so the
+                    // two used to disagree).
+                    phaserTile.setCollision(this.tileIndexCollides(tileIndex));
                 }
             }
             if (this.isGpuTilemapLayer(phaserLayer)) {
@@ -927,6 +940,129 @@ export class GameMapFrontWrapper {
         } else {
             console.error("The layer '" + layer + "' does not exist (or is not a tilelaye).");
         }
+    }
+
+    /**
+     * Pre-edit gid per "layer\nx,y" cell, captured on the first write to that cell. applyTileOverlay runs
+     * right after construction, while the in-memory map is still pristine, so for overlay cells these are
+     * the base .tmj values — what restoreBaseTiles puts back when the overlay is cleared.
+     */
+    private baseTileGids = new Map<string, number>();
+
+    private rememberBaseTileGid(layerName: string, x: number, y: number): void {
+        const key = `${layerName}\n${x},${y}`;
+        if (this.baseTileGids.has(key)) {
+            return;
+        }
+        const current = this.getRawTileGidAt(x, y, layerName);
+        if (current !== undefined) {
+            this.baseTileGids.set(key, current);
+        }
+    }
+
+    private tileIndexCollides(tileIndex: number): boolean {
+        return this.gameMap
+            .getTileProperty(tileIndex)
+            .some((property) => property.name === GameMapProperties.COLLIDES && Boolean(property.value));
+    }
+
+    /**
+     * The raw gid (flip flags included) currently stored in the flat layer data for a cell, or undefined
+     * when the layer is missing, not a tile layer, or base64-encoded. Used to capture "previous" values
+     * for undo commands.
+     */
+    public getRawTileGidAt(x: number, y: number, layerName: string): number | undefined {
+        const layer = this.gameMap.findLayer(layerName);
+        if (layer === undefined || layer.type !== "tilelayer" || !Array.isArray(layer.data)) {
+            return undefined;
+        }
+        const value = layer.data[x + y * layer.width];
+        return typeof value === "number" ? value : undefined;
+    }
+
+    /**
+     * Applies a batch of raw-gid tile writes (ADR-0007): flat-layer data, the Phaser layer, per-tile
+     * collision — set AND cleared, so replacing a wall with floor cannot leave a phantom collider — then
+     * ONE GPU texture regen per touched GPU layer and ONE collision-grid invalidation per touched layer,
+     * which is what makes applying a whole overlay at load affordable.
+     *
+     * The flat layer keeps the raw gid (flip flags included) so a consolidated export stays faithful;
+     * Phaser receives the masked index, because it carries flips on Tile properties, not in the index —
+     * an overlay cell with flip flags renders unrotated in-game, a documented MVP limitation.
+     */
+    public setTilesBatch(tiles: TileChange[]): void {
+        const touchedLayers = new Map<string, RenderableTilemapLayer>();
+        for (const tile of tiles) {
+            const phaserLayer = this.findPhaserLayer(tile.layerName);
+            if (!phaserLayer) {
+                console.warn(`setTilesBatch: layer "${tile.layerName}" does not exist or is not a tile layer.`);
+                continue;
+            }
+            const maskedIndex = tile.gid & ~TILED_TILE_FLIP_FLAGS;
+            if (
+                tile.gid !== 0 &&
+                this.isGpuTilemapLayer(phaserLayer) &&
+                !phaserLayer.tileset.containsTileIndex(maskedIndex)
+            ) {
+                console.warn(
+                    `setTilesBatch: cannot place tile ${maskedIndex} on GPU tile layer "${tile.layerName}" because it belongs to another tileset.`,
+                );
+                continue;
+            }
+            this.rememberBaseTileGid(tile.layerName, tile.x, tile.y);
+            this.gameMap.putTileInFlatLayer(tile.gid, tile.x, tile.y, tile.layerName);
+            if (tile.gid === 0) {
+                phaserLayer.putTileAt(-1, tile.x, tile.y);
+            } else {
+                const phaserTile = phaserLayer.putTileAt(maskedIndex, tile.x, tile.y);
+                if (phaserTile !== null) {
+                    phaserTile.setCollision(this.tileIndexCollides(maskedIndex));
+                }
+            }
+            touchedLayers.set(tile.layerName, phaserLayer);
+        }
+        for (const layer of touchedLayers.values()) {
+            if (this.isGpuTilemapLayer(layer)) {
+                layer.generateLayerDataTexture();
+            }
+            this.invalidateCollisionGrid({ modifiedLayer: layer });
+        }
+    }
+
+    /**
+     * Applies the WAM tile overlay (in-game structural edits) onto freshly built layers. Called right
+     * after construction and on the scripting-API map rebuild — before collider creation, so
+     * setCollisionByProperty covers overlay tiles with no extra work.
+     */
+    public applyTileOverlay(overlay: TileOverlay | undefined): void {
+        if (!overlay) {
+            return;
+        }
+        const tiles: TileChange[] = [];
+        for (const [layerName, cells] of Object.entries(overlay.layers)) {
+            for (const [key, gid] of Object.entries(cells)) {
+                const [x, y] = key.split(",").map(Number);
+                tiles.push({ x, y, layerName, gid });
+            }
+        }
+        this.setTilesBatch(tiles);
+    }
+
+    /**
+     * Visually reverts every cell edits have touched back to its base .tmj value. Used when the tile
+     * overlay is cleared: without this, clearing would only take effect after a reload.
+     */
+    public restoreBaseTiles(): void {
+        const restores: TileChange[] = [];
+        for (const [key, gid] of this.baseTileGids) {
+            const [layerName, coords] = key.split("\n");
+            const [x, y] = coords.split(",").map(Number);
+            restores.push({ x, y, layerName, gid });
+        }
+        this.baseTileGids.clear();
+        this.setTilesBatch(restores);
+        // setTilesBatch re-remembered the restored cells; the map is back at base, so drop the bookkeeping.
+        this.baseTileGids.clear();
     }
 
     public canEntityBePlacedOnMap(

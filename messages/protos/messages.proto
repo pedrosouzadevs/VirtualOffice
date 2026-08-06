@@ -249,6 +249,8 @@ message EditMapMessage {
     DeleteCustomEntityMessage deleteCustomEntityMessage = 11;
     ModifiyWAMMetadataMessage modifiyWAMMetadataMessage = 12;
     UploadFileMessage uploadFileMessage = 13;
+    SetTilesMessage setTilesMessage = 14;
+    ClearTileOverlayMessage clearTileOverlayMessage = 15;
   }
 }
 
@@ -269,6 +271,27 @@ message UpdateMegaphoneSettingMessage {
 
 message UpdateRecordingSettingMessage {
   google.protobuf.Value settings = 1;
+}
+
+// One cell of a structural (tile) edit. Coordinates are tile-space, layerName targets a FLAT tile layer.
+message TileChangeMessage {
+  int32 x = 1;
+  int32 y = 2;
+  string layerName = 3;
+  // Raw Tiled gid, flip flags included, stored verbatim in the WAM tile overlay. 0 erases the cell — an
+  // explicit override over the base .tmj, distinct from "no overlay entry".
+  uint32 gid = 4;
+}
+
+// A brush stroke: every cell painted between pointer-down and pointer-up travels as one command, which is
+// what makes undo/redo and rebroadcast granular per stroke instead of per cell.
+message SetTilesMessage {
+  repeated TileChangeMessage tiles = 1;
+}
+
+// Drops the whole WAM tile overlay, reverting the map to its base .tmj. The commit flow (consolidated
+// export, then authenticated PUT of the merged .tmj, then this) is documented in ADR-0007.
+message ClearTileOverlayMessage {
 }
 
 message EditMapCommandMessage {

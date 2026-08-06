@@ -79,6 +79,7 @@ import type {
     MeetingInvitationRequestClosedMessage,
     MeetingInvitationRequestTooHighMessage,
     VideoQualityReportMessage,
+    TileChangeMessage,
     ClientToServerMessage as ClientToServerMessageTsProto,
     ServerToClientMessage as ServerToClientMessageTsProto,
 } from "@workadventure/messages";
@@ -1347,6 +1348,40 @@ export class RoomConnection implements RoomConnection {
                                 width: entityDimensions.width,
                                 height: entityDimensions.height,
                             },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    public emitMapEditorSetTiles(commandId: string, tiles: TileChangeMessage[]): void {
+        this.send({
+            message: {
+                $case: "editMapCommandMessage",
+                editMapCommandMessage: {
+                    id: commandId,
+                    editMapMessage: {
+                        message: {
+                            $case: "setTilesMessage",
+                            setTilesMessage: { tiles },
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    public emitMapEditorClearTileOverlay(commandId: string): void {
+        this.send({
+            message: {
+                $case: "editMapCommandMessage",
+                editMapCommandMessage: {
+                    id: commandId,
+                    editMapMessage: {
+                        message: {
+                            $case: "clearTileOverlayMessage",
+                            clearTileOverlayMessage: {},
                         },
                     },
                 },
