@@ -517,6 +517,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "統合済み .tmj をダウンロード",
+        clearOverlay: "構造編集をクリア",
+        clearOverlayConfirm:
+            "すべての構造編集をクリアして全員をベースマップに再読み込みしますか？再読み込み後は元に戻せません。",
         modePaint: "床",
         modeWall: "壁",
         modeErase: "消しゴム",

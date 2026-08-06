@@ -7,7 +7,11 @@ import { MapStorageService } from "@workadventure/messages/src/ts-proto-generate
 import passport from "passport";
 import bodyParser from "body-parser";
 import { setErrorHandler } from "@workadventure/shared-utils/src/ErrorHandler";
+import nodePath from "node:path";
+import { applyTileOverlayToTmj } from "@workadventure/map-editor";
+import type { ITiledMap } from "@workadventure/tiled-map-type-guard";
 import { mapStorageServer } from "./MapStorageServer";
+import { mapsManager } from "./MapsManager";
 
 import { proxyFiles } from "./FileFetcher/FileFetcher";
 import { UploadController } from "./Upload/UploadController";
@@ -111,6 +115,15 @@ app.get(/.*\.wam$/, (req, res, next) => {
     }
     const key = mapPathUsingDomain(wamPath, domain);
 
+    if (req.query["consolidated-tmj"] !== undefined) {
+        // Structural-edit export (ADR-0007): the base .tmj with the WAM tile overlay baked in, served as a
+        // download from the wam's own URL — the one address the front already knows in every deploy
+        // topology. Public like the .wam and .tmj themselves: the overlay is broadcast to every connected
+        // client anyway, so this reveals nothing new.
+        serveConsolidatedTmj(key, res).catch(next);
+        return;
+    }
+
     res.setHeader("Content-Type", "application/json");
     // Let's disable any kind of cache (we allow for a 5 seconds cache just to avoid spamming the server and
     // to allow a CDN to take over the load). 5 seconds is ok, because it is lower than the 30 seconds of
@@ -121,6 +134,44 @@ app.get(/.*\.wam$/, (req, res, next) => {
     // changes the map)
     fileSystem.serveStaticFile(key, res, next);
 });
+
+async function serveConsolidatedTmj(wamKey: string, res: express.Response): Promise<void> {
+    // Read through mapsManager so strokes younger than the 15s autosave are included in the export.
+    let wam;
+    try {
+        wam = (await mapsManager.getOrLoadWamFile(wamKey)).getWam();
+    } catch (e) {
+        console.warn(`[${new Date().toISOString()}] Consolidated export: could not load WAM ${wamKey}`, e);
+        res.status(404).send("Map not found");
+        return;
+    }
+    // Auto-generated and hand-written WAMs both use a relative mapUrl; an absolute one would point outside
+    // this storage and cannot be consolidated here.
+    if (wam.mapUrl.includes("://") || wam.mapUrl.startsWith("//") || wam.mapUrl.includes("..")) {
+        res.status(400).send("Only maps with a relative mapUrl can be consolidated");
+        return;
+    }
+    const tmjKey = nodePath.posix.normalize(nodePath.posix.join(nodePath.posix.dirname(wamKey), wam.mapUrl));
+    let tmj: ITiledMap;
+    try {
+        tmj = JSON.parse(await fileSystem.readFileAsString(tmjKey)) as ITiledMap;
+    } catch (e) {
+        console.warn(`[${new Date().toISOString()}] Consolidated export: could not load TMJ ${tmjKey}`, e);
+        res.status(404).send("Base map not found");
+        return;
+    }
+    const merge = applyTileOverlayToTmj(tmj, wam.tileOverlay);
+    console.info(
+        `[${new Date().toISOString()}] Consolidated export for ${wamKey}: ${merge.applied} cell(s) applied, ${
+            merge.skipped
+        } skipped`,
+    );
+    const baseName = nodePath.posix.basename(wam.mapUrl, ".tmj");
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Disposition", `attachment; filename="${baseName}-consolidated.tmj"`);
+    res.send(JSON.stringify(tmj));
+}
 
 // On-demand S3 connectivity checks. Kubernetes drives the cadence and the consecutive-failure
 // counting via its probe config; the endpoints below just run a live check when polled, so a wedged

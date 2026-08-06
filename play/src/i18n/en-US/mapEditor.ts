@@ -515,6 +515,10 @@ const mapEditor: BaseTranslation = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "Download consolidated .tmj",
+        clearOverlay: "Clear structural edits",
+        clearOverlayConfirm:
+            "Clear ALL structural edits and reload everyone into the base map? This cannot be undone after the reload.",
         modePaint: "Floor",
         modeWall: "Wall",
         modeErase: "Eraser",

@@ -137,6 +137,20 @@ class MapsManager {
         this.clearSaveMapInterval(key);
     }
 
+    /**
+     * Persists a loaded map to storage immediately, bypassing the 15s autosave. Required by any caller
+     * about to trigger clearAfterUpload, which drops the in-memory copy WITHOUT saving: without this
+     * flush, a mutation younger than the autosave would silently resurrect from the stale file on the
+     * next load. ADR-0007's clear-overlay is exactly that case.
+     */
+    public async flushMapToStorage(key: string): Promise<void> {
+        const wamFile = this.getWamFile(key);
+        if (!wamFile) {
+            return;
+        }
+        await fileSystem.writeStringAsFile(key, JSON.stringify(wamFile.getWam()));
+    }
+
     public addCommandToQueue(mapKey: string, message: EditMapCommandMessage): void {
         let queue = this.loadedMapsCommandsQueue.get(mapKey);
         if (queue === undefined) {

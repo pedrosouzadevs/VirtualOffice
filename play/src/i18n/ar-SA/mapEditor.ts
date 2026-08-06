@@ -512,6 +512,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "تنزيل ‎.tmj الموحّد",
+        clearOverlay: "مسح التعديلات الهيكلية",
+        clearOverlayConfirm:
+            "هل تريد مسح كل التعديلات الهيكلية وإعادة تحميل الجميع إلى الخريطة الأساسية؟ لا يمكن التراجع بعد إعادة التحميل.",
         modePaint: "أرضية",
         modeWall: "جدار",
         modeErase: "ممحاة",

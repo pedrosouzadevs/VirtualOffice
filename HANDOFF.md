@@ -26,6 +26,7 @@ sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versiona
 | F2 | Entra ID como troca de configuração; falta só validar em staging | ✅ config entregue |
 | Rebrand | `WorkAdventure`/`VirtualOffice` → `ArqueumSpace`; domínios de dev → `arqueum.localhost` | ✅ entregue |
 | Deploy | Compose de produção com `admin-api`, guias VPS / Cloudflare / túnel | ✅ entregue |
+| ADR-0007 | Editor estrutural (tiles) gated por `adminMap`: overlay no `.wam`, UI de pisos/paredes/borracha, export consolidado | ✅ código entregue (branch `feature/tile-editor`); pendem spike S0, e2e e smoke — ver [Next Step](#next-step) |
 
 **Verificação atual:** 355 testes unitários, 93 de integração (Postgres real), 10 e2e (Playwright, contra a stack
 rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O `play` mantém seus **436 erros de typecheck
@@ -79,9 +80,11 @@ Nesta ordem, e não pule o ADR-0002 — ele é o contrato:
    decisão #8** no fim dela: o `admin` só se atribui por SQL
 4. [`docs/adr/0005-moderation.pt-BR.md`](docs/adr/0005-moderation.pt-BR.md) — a P3, com as **oito correções de
    contrato** e a decisão #2, que diz o que o ban *não* faz
-5. [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md) — o STRIDE e o que continua aberto
-6. [`admin-api/AGENTS.md`](admin-api/AGENTS.md) — as convenções do pacote
-7. [`docs/SETUP-ADMIN-API.pt-BR.md`](docs/SETUP-ADMIN-API.pt-BR.md) — subir, verificar, gerir permissões, rollback
+5. [`docs/adr/0007-tile-overlay-map-editing.pt-BR.md`](docs/adr/0007-tile-overlay-map-editing.pt-BR.md) — o editor
+   estrutural: overlay vs `.tmj`, `adminMap` sem override, o fluxo de commit manual
+6. [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md) — o STRIDE e o que continua aberto
+7. [`admin-api/AGENTS.md`](admin-api/AGENTS.md) — as convenções do pacote
+8. [`docs/SETUP-ADMIN-API.pt-BR.md`](docs/SETUP-ADMIN-API.pt-BR.md) — subir, verificar, gerir permissões, rollback
 
 ---
 
@@ -340,9 +343,18 @@ P2P. Em rede restritiva ele falha. A seção 8 do guia de deploy tem a configura
 
 **3. Recortar o mapa.** O `office.tmj` tem 405 KB para 1.394 tiles desenhados, porque é declarado 144×128 e o desenho
 ocupa 31×21 — 3,5%. Recortar no Tiled corta ~96%. Fica no Tiled de propósito: recortar desloca coordenadas, e a
-camada de objetos tem spawn, as duas zonas Jitsi, a zona silenciosa e as duas saídas.
+camada de objetos tem spawn, as duas zonas Jitsi, a zona silenciosa e as duas saídas. **Atenção pós-ADR-0007:** o
+canvas vazio agora é espaço útil do editor estrutural — recortar também exigiria transpor o overlay de tiles;
+consolide e limpe o overlay antes de qualquer recorte.
 
 **4. Arte do ArqueumSpace.** Quatro imagens do logo antigo continuam no repositório (ver seção do rebrand).
+
+**5. Fechar o editor estrutural (branch `feature/tile-editor`).** O código das quatro fases está commitado e
+verificado por unit/integração; ficaram para a janela em que a produção puder descer (o Traefik de dev disputa a
+porta 80 com o piloto): o spike S0 de performance (2k tiles batched no Phaser — critério <100 ms), o e2e novo
+[`tests/tests/map_editor/tile_editor.spec.ts`](tests/tests/map_editor/tile_editor.spec.ts) e o smoke manual
+(conceder `adminMap` pela dashboard → pintar piso e parede → colidir → segundo browser vê → export consolidado abre
+no Tiled). Guia de operação: [`docs/MAP-STRUCTURAL-EDITING.pt-BR.md`](docs/MAP-STRUCTURAL-EDITING.pt-BR.md).
 
 ### Antes de qualquer uso real
 
@@ -459,6 +471,23 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
     registro de chegada, não permissão. O sinal é o `accessToken`, presente só quando houve login OIDC; visitante
     anônimo é identificado por uuid e criar linhas para ele encheria a tabela de entradas inúteis. A escrita só
     acontece quando não existe linha, então uma reconexão nunca sobrescreve tag ou nome concedido.
+
+28. **Comandos de tile só passam com a tag `adminMap` — `admin` e `editor` não têm override.** Decisão de produto
+    do ADR-0007, checada autoritativamente no map-storage por `canEditTiles` (o predicado único em
+    `libs/map-editor/src/Utils.ts`), com throw ANTES do enfileiramento — nunca o padrão Sentry-e-break do
+    `EntityPermissions`, que ecoa comando recusado como sucesso. O e2e pina que usuário `admin` não vê a ferramenta.
+
+29. **O overlay de tiles guarda gid cru (flip flags inclusas) e `0` é apagamento explícito.** Chave ausente =
+    sem override; `0` = célula apagada que sobrevive à consolidação. As chaves de camada são os nomes ACHATADOS
+    (`walls/walls1`). Mascarar gids na escrita ou tratar `0` como ausência corrompe o export consolidado.
+
+30. **Limpar o overlay descarrega o WAM para o storage ANTES do `uploadDetector.refresh`.** O refresh faz os
+    backs chamarem `clearAfterUpload`, que descarta a cópia em memória SEM salvar — sem o
+    `flushMapToStorage`, um clear mais novo que o autosave de 15s ressuscita do arquivo velho.
+
+31. **O export consolidado (`<wam>?consolidated-tmj`) é público e pendurado na URL do próprio wam.** É o único
+    endereço válido em toda topologia de deploy, e o overlay já é transmitido a todo cliente conectado — mover
+    para rota autenticada quebraria o botão de download sem ganhar sigilo nenhum.
 
 ### Também não mexer sem conversar
 

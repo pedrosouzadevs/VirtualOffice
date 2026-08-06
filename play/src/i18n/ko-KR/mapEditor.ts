@@ -515,6 +515,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "통합된 .tmj 다운로드",
+        clearOverlay: "구조 편집 지우기",
+        clearOverlayConfirm:
+            "모든 구조 편집을 지우고 모두를 기본 맵으로 다시 불러올까요? 다시 불러온 후에는 되돌릴 수 없습니다.",
         modePaint: "바닥",
         modeWall: "벽",
         modeErase: "지우개",

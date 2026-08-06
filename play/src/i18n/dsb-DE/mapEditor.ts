@@ -518,6 +518,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "Konsoliděrowanu .tmj ześěgnuś",
+        clearOverlay: "Strukturne změny lašowaś",
+        clearOverlayConfirm:
+            "WŠYKNE strukturne změny lašowaś a wšyknych do zakładneje kórty znowego zacytaś? Pó znowegozacytanju njedajo se slědk wześ.",
         modePaint: "Zemja",
         modeWall: "Sćěna",
         modeErase: "Gumka",

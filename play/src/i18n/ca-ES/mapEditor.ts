@@ -520,6 +520,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "Baixa el .tmj consolidat",
+        clearOverlay: "Esborra les edicions estructurals",
+        clearOverlayConfirm:
+            "Vols esborrar TOTES les edicions estructurals i recarregar tothom al mapa base? No es pot desfer després de la recàrrega.",
         modePaint: "Terra",
         modeWall: "Paret",
         modeErase: "Esborrador",

@@ -523,6 +523,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "Konsolidierte .tmj herunterladen",
+        clearOverlay: "Strukturänderungen löschen",
+        clearOverlayConfirm:
+            "ALLE Strukturänderungen löschen und alle in die Basiskarte neu laden? Nach dem Neuladen nicht rückgängig zu machen.",
         modePaint: "Boden",
         modeWall: "Wand",
         modeErase: "Radierer",

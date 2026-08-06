@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { LL } from "../../../../i18n/i18n-svelte";
     import { gameManager } from "../../../Phaser/Game/GameManager";
+    import { ClearTileOverlayFrontCommand } from "../../../Phaser/Game/MapEditor/Commands/Tiles/ClearTileOverlayFrontCommand";
     import {
         tileEditorAvailableLayersStore,
         tileEditorCollisionMarkerStore,
@@ -27,10 +28,14 @@
 
     let tilesets = $state<PaletteTileset[]>([]);
     let openTileset = $state<string | null>(null);
+    let consolidatedUrl = $state<string | null>(null);
 
     onMount(() => {
         const scene = gameManager.getCurrentGameScene();
         const map = scene.getGameMap().getMap();
+        // The consolidated export hangs off the wam's own URL, the one address valid in every deploy
+        // topology (ADR-0007). Maps without a .wam cannot have an overlay, so no link for them.
+        consolidatedUrl = scene.wamUrlFile ? `${scene.wamUrlFile}?consolidated-tmj` : null;
         // Tileset image paths are relative to the .tmj, exactly like the Phaser loader resolves them.
         const baseUrl = scene.mapUrlFile;
         tilesets = map.tilesets.flatMap((tileset) => {
@@ -70,6 +75,23 @@
             case "erase":
                 return $LL.mapEditor.floorEditor.modeErase();
         }
+    }
+
+    function clearOverlay() {
+        // Clearing drops every structural edit for everyone and triggers a room-wide reload (the server
+        // side pairs it with the map-upload refresh path), so it deserves a real confirmation.
+        if (!window.confirm($LL.mapEditor.floorEditor.clearOverlayConfirm())) {
+            return;
+        }
+        const scene = gameManager.getCurrentGameScene();
+        const wamFile = scene.getGameMap().getWamFile();
+        if (!wamFile) {
+            return;
+        }
+        scene
+            .getMapEditorModeManager()
+            .executeCommand(new ClearTileOverlayFrontCommand(wamFile, undefined, scene.getGameMapFrontWrapper()))
+            .catch((e) => console.error("Failed to clear the tile overlay", e));
     }
 </script>
 
@@ -155,4 +177,25 @@
     {:else}
         <span class="text-sm opacity-80">{$LL.mapEditor.floorEditor.eraseHint()}</span>
     {/if}
+
+    <div class="flex flex-col gap-2 border-t border-white/20 pt-3 mt-2">
+        {#if consolidatedUrl}
+            <a
+                class="p-2 rounded bg-white/10 hover:bg-white/20 text-center"
+                href={consolidatedUrl}
+                download
+                data-testid="tileEditorDownloadConsolidated"
+            >
+                {$LL.mapEditor.floorEditor.downloadConsolidated()}
+            </a>
+        {/if}
+        <button
+            type="button"
+            class="p-2 rounded bg-red-500/60 hover:bg-red-500/80"
+            data-testid="tileEditorClearOverlay"
+            onclick={clearOverlay}
+        >
+            {$LL.mapEditor.floorEditor.clearOverlay()}
+        </button>
+    </div>
 </div>

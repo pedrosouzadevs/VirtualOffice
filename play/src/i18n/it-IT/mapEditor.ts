@@ -520,6 +520,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "Scarica il .tmj consolidato",
+        clearOverlay: "Cancella le modifiche strutturali",
+        clearOverlayConfirm:
+            "Cancellare TUTTE le modifiche strutturali e ricaricare tutti sulla mappa base? Non si può annullare dopo il ricaricamento.",
         modePaint: "Pavimento",
         modeWall: "Muro",
         modeErase: "Gomma",

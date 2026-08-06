@@ -44,6 +44,7 @@ import { UploadFileMapStorageCommand } from "./Commands/File/UploadFileMapStorag
 import { hookManager } from "./Modules/HookManager";
 import { UpdateEntityMapStorageCommand } from "./Commands/Entity/UpdateEntityMapStorageCommand";
 import { isModifyAreaMessageOnlyClaim } from "./Services/isModifyAreaMessageOnlyClaim";
+import { uploadDetector } from "./Services/UploadDetector";
 
 /**
  * List of commands that can be executed even if the user does not have edit rights on the map
@@ -447,6 +448,20 @@ const mapStorageServer: MapStorageServer = {
                             mapUrl.host,
                             new ClearTileOverlayCommand(wamFile, commandId),
                         );
+                        // Commit-flow coherence (ADR-0007): connected clients hold the old overlay baked
+                        // into their in-memory tilemaps, so clearing must reload everyone into the
+                        // (freshly re-uploaded) base .tmj. Reuse the map-upload mechanism: every back gets
+                        // told, sends refreshRoomMessage (30s countdown) and calls clearAfterUpload back
+                        // on us. That call DROPS the in-memory WAM without saving — flush first, or the
+                        // cleared overlay would resurrect from the stale file on the next load.
+                        await mapsManager.flushMapToStorage(mapKey);
+                        uploadDetector.refresh(call.request.mapKey).catch((e) => {
+                            console.error(
+                                `[${new Date().toISOString()}] Failed to refresh rooms after clearTileOverlay`,
+                                e,
+                            );
+                            Sentry.captureException(e);
+                        });
                         break;
                     }
                     default: {

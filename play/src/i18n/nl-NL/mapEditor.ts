@@ -523,6 +523,10 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "Geconsolideerde .tmj downloaden",
+        clearOverlay: "Structurele bewerkingen wissen",
+        clearOverlayConfirm:
+            "ALLE structurele bewerkingen wissen en iedereen opnieuw in de basiskaart laden? Kan niet ongedaan worden gemaakt na het herladen.",
         modePaint: "Vloer",
         modeWall: "Muur",
         modeErase: "Gum",

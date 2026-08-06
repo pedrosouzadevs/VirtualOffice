@@ -504,6 +504,9 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
         },
     },
     floorEditor: {
+        downloadConsolidated: "下载合并后的 .tmj",
+        clearOverlay: "清除结构编辑",
+        clearOverlayConfirm: "清除所有结构编辑并让所有人重新加载基础地图？重新加载后无法撤销。",
         modePaint: "地板",
         modeWall: "墙壁",
         modeErase: "橡皮擦",
