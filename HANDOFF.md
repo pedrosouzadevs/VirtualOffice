@@ -1,7 +1,6 @@
 # HANDOFF
 
-Feature 3 do [Spec 0001](docs/specs/0001-feature-roadmap.pt-BR.md) — a Admin API própria (`admin-api`).
-Branch **`feature/admin-api`**, 25 commits à frente de `master`.
+O projeto **ArqueumSpace** — fork do WorkAdventure. Branch **`master`**, tudo mergeado.
 
 Este documento não depende de nada que tenha sido dito em conversa. Tudo o que é preciso para continuar está aqui ou
 nos documentos linkados.
@@ -10,11 +9,12 @@ nos documentos linkados.
 
 ## Current Status
 
-**O F3 inteiro está entregue: P0, P1, P2 e P3, verificadas e commitadas.** O que resta antes de uso real não é código
-de feature — está em [Antes de qualquer uso real](#antes-de-qualquer-uso-real).
+**O F3 inteiro está entregue (P0–P3), o F2 virou config swap, o projeto foi rebatizado, e existe uma produção rodando
+por túnel.** O que resta antes de uso real de verdade não é código de feature — está em
+[Antes de qualquer uso real](#antes-de-qualquer-uso-real).
 
-O `play` já consome o `admin-api` de verdade: tags e `canEdit` vêm do Postgres, e não mais da claim OIDC. O ambiente
-de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versionado).
+O `play` consome o `admin-api`: tags e `canEdit` vêm do Postgres, não da claim OIDC. O ambiente de desenvolvimento
+sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versionado).
 
 | Fase | Escopo | Estado |
 |---|---|---|
@@ -22,11 +22,51 @@ de desenvolvimento sobe ligado por padrão (`ADMIN_API_URL` está no `docker-com
 | P1 (F0–F3) | `/api/members*`, `/api/*/tags`, CLI de gestão, docs, e2e | ✅ entregue |
 | P2 (G0–G4) | Dashboard: barreira de sessão, API, UI Svelte, salas e áreas, auditoria | ✅ entregue |
 | P3 (H0–H3) | Moderação: ban, report, `sameWorld`, telas, CLI e docs | ✅ entregue |
+| ADR-0006 | Ban emitido pela dashboard, porta no `/api/room/access`, expulsão pelo canal admin | ✅ entregue |
+| F2 | Entra ID como troca de configuração; falta só validar em staging | ✅ config entregue |
+| Rebrand | `WorkAdventure`/`VirtualOffice` → `ArqueumSpace`; domínios de dev → `arqueum.localhost` | ✅ entregue |
+| Deploy | Compose de produção com `admin-api`, guias VPS / Cloudflare / túnel | ✅ entregue |
 
-**Verificação atual:** 329 testes unitários, 93 de integração (Postgres real), 9 e2e (Playwright, executados contra a
-stack rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O fluxo foi exercido ponta a ponta no
-navegador contra o mock OIDC real: login, conceder tag, ver o `canEdit` mudar no `/api/room/access`, e a entrada de
-auditoria nomeando quem concedeu.
+**Verificação atual:** 355 testes unitários, 93 de integração (Postgres real), 10 e2e (Playwright, contra a stack
+rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O `play` mantém seus **436 erros de typecheck
+pré-existentes** — esse é o baseline; qualquer número diferente é regressão.
+
+### A produção que existe hoje (piloto por ngrok)
+
+Roda **na máquina do desenvolvedor**, publicada por túnel ngrok com domínio estático. Não é canal 24/7 — é piloto.
+
+| Item | Valor |
+|---|---|
+| URL | `https://unintrusted-loblolly-londa.ngrok-free.dev` |
+| Dashboard | `/admin/` — mesma URL, sufixo `/admin/` (com barra) |
+| Mundo | `/` redireciona para `/~/maps/office.wam` |
+| Upload de mapas | `/map-storage/` (basic auth) |
+| Compose | `contrib/docker/docker-compose.prod.yaml` + `docker-compose.tunnel.yaml` |
+| `.env` | `contrib/docker/.env` — **gitignored**, com segredos gerados |
+| Login | Azure Entra ID, tenant `7ac12efa-2494-4ee4-88b7-26bfeaa77a48`, app `ArqueumSpace` |
+| Admin do bootstrap | `pedro.henrique@arqueum.com` |
+| Mapa | `maps/office.wam` + `maps/conference.wam`, já subidos |
+
+Para subir de novo, a partir de `contrib/docker`:
+
+```bash
+docker compose -f docker-compose.prod.yaml -f docker-compose.tunnel.yaml --env-file .env up -d
+ngrok http --url=unintrusted-loblolly-londa.ngrok-free.dev 80
+```
+
+O passo a passo completo (e as letras miúdas do plano gratuito) está em
+[`docs/SETUP-TUNNEL.pt-BR.md`](docs/SETUP-TUNNEL.pt-BR.md).
+
+> **Truque útil:** o Traefik roteia por `Host`, então dá para exercitar a produção **sem o túnel**, direto do host:
+> `curl -H "Host: unintrusted-loblolly-londa.ngrok-free.dev" http://localhost/...`. Foi assim que o upload dos mapas
+> foi feito com o ngrok offline.
+
+### O portão de quem entra
+
+Não há verificação de domínio no nosso código. Quem entra é decidido pelo Entra: o app registration é
+**`signInAudience: AzureADMyOrg`** (single-tenant), então só contas do tenant da Arqueum autenticam, e
+`DISABLE_ANONYMOUS=true` impede visitante anônimo. **A brecha seria convidar um guest B2B** para o tenant — ele
+entraria com e-mail externo.
 
 ### Onde a leitura deve começar
 
@@ -169,15 +209,40 @@ Continuam de fora, deliberadamente e por escrito:
   no banco tranca o usuário de teste de todas as suítes seguintes; os specs limpam com `deleteBansFor` no
   finally/afterEach.
 
+### Rebrand para ArqueumSpace (2026-08-05)
+
+Feito em dois commits, mais um de CI. **"ArqueumSpace" é uma palavra só, de propósito** — um nome com espaço não
+caberia em identificador (`ArqueumSpaceComponent`) e deixaria duas grafias para manter em sincronia.
+
+- **1402 ocorrências** de `WorkAdventure`/`VirtualOffice` em 352 arquivos: strings de UI nos dois idiomas, manifest
+  PWA, títulos, tela de `BANNED`, todos os ADRs e guias, e identificadores de código.
+- **634 domínios** de dev → `arqueum.localhost`, mais os dois arquivos do Synapse cujo nome carrega o homeserver.
+- **4 arquivos renomeados em disco** para acompanhar imports que a troca já havia reescrito — foi o que o primeiro
+  typecheck pegou (441 contra o baseline 436, três "cannot find module").
+
+**Não foi tocado, e cada item por um motivo:**
+
+| Item | Motivo |
+|---|---|
+| Escopo npm `@workadventure/*` | Exige ser dono do escopo npm e mata o merge com o upstream. **E:** aquele escopo mistura nossos pacotes com externos que consumimos (`design-system`, `tiled-map-type-guard`, `simple-peer`, `noise-suppression`) — o rename cego apontou 4 dependências para pacotes inexistentes. Revertido depois de provado. |
+| Links `workadventu.re` e repo upstream | Renomeados viram 404. |
+| `LICENSE.txt` e `NOTICE.txt` | O texto é declaração legal sobre obra de terceiros. |
+| Objeto global `WA` da API de scripting | Todo script de mapa depende dele. Só o `short_name` do PWA virou `AS`. |
+| 4 imagens `Workadventure.gif`, `icon-workadventure-white.png` | Grafadas com "a" minúsculo. São o logo antigo — trocar o nome do arquivo sem trocar a arte não adianta. **Quando houver arte do ArqueumSpace, arquivo e referência mudam juntos.** |
+
 ### Fora do F3, em aberto no roadmap
 
-- **F2 (Azure Entra ID)** — o config swap está entregue (ver Next Step); falta a validação em staging com tenant
-  real.
+- **F2 (Azure Entra ID)** — o config swap está entregue; falta a validação em staging com tenant real, que acontece
+  naturalmente no primeiro deploy seguindo o guia.
 - **`MemberData.name` fica nulo** no fluxo normal — o `/api/room/access` não recebe nome do pusher. Contornável pelo
   `member:set-name`. Decisão registrada no ADR-0003 (#2).
 - **Sem `member:delete`** na CLI. Removido por SQL; documentado no setup.
+- **Não há "convidar membro" na dashboard.** A tela só concede tag a quem já aparece na lista. Ficou dispensável
+  depois que a chegada autenticada passou a criar a linha (invariante #6 refinada, abaixo), mas ainda seria o
+  caminho para **preparar acesso antes** da primeira entrada de alguém. Decisão de produto (2026-08-05): não fazer,
+  porque todo mundo que pode entrar já tem conta no tenant.
 - **Sujeira no banco de dev:** `dev@arqueum.com`, `pedro.henrique@arqueum.com` e `fulano@empresa.com` existem sem
-  tags. Inofensivos.
+  tags. Inofensivos. **O banco de produção é outro** e nasceu limpo.
 
 ---
 
@@ -233,6 +298,19 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
   O `Compress-Archive` do PowerShell produz zip com `\` que o `unzipper` rejeita — precisa ser zip POSIX (use
   `adm-zip`, que está no `node_modules`).
 - **O `play` leva minutos para subir** (só o Vite gasta ~150 s). O 502 do Traefik durante esse período é normal.
+- **O `pwsh` não existe num Windows padrão** — é o PowerShell 7, pacote à parte. O
+  [`setup-entra-id.ps1`](docs/index/setup-entra-id.ps1) é compatível com o **5.1** de propósito (ASCII puro, sem
+  sintaxe de 7), mas precisa ser chamado como
+  `powershell -NoProfile -ExecutionPolicy Bypass -File <caminho>` — a política padrão do Windows cliente é
+  `Restricted`, e sem `-File` o conteúdo do script pode ser exibido em vez de executado.
+- **O `ConvertFrom-Json` do PowerShell 5.1 não desempacota array.** `@($json | ConvertFrom-Json)` sobre um `[]` do
+  `az` devolve **um** elemento (o próprio array vazio), não zero — foi o que fez o script dizer "Found existing app
+  registration ()" num tenant sem nenhum. Filtrar pelo pipe (`| Where-Object { $_.appId }`) força a enumeração nas
+  duas versões. O PowerShell 7 enumera, então isso só quebra no shell padrão do Windows.
+- **`Compress-Archive` gera zip com `\` nos caminhos.** Para qualquer coisa que o Linux vá descompactar (upload de
+  mapa, por exemplo), use zip POSIX — `docker run --rm -v "...:/m" alpine sh -c "apk add zip && zip -r ..."`.
+- **Instalar o Azure CLI não atualiza o PATH da sessão aberta.** Depois do `winget install`, é preciso **abrir um
+  terminal novo**; senão o `az` "não existe" mesmo instalado.
 
 ### Riscos do produto
 
@@ -246,26 +324,25 @@ O callback do dashboard está registrado explicitamente em `contrib/oidc-server-
 
 ## Next Step
 
-**F2 (Azure Entra ID) está entregue do lado que dá para entregar sem tenant: o config swap.** Os valores OIDC do
-`docker-compose.yaml` deixaram de ser hardcoded — interpolam do `.env` com o mock como padrão, então um clone limpo
-continua logando sem configurar nada, e produção troca de provedor preenchendo cinco variáveis. O
-[`docs/SETUP-CLOUD-AZURE.pt-BR.md`](docs/SETUP-CLOUD-AZURE.pt-BR.md) tem o passo a passo (scriptado e manual) e o
-[`docs/index/setup-entra-id.ps1`](docs/index/setup-entra-id.ps1) provisiona o app registration idempotente.
+O piloto está **no ar e funcionando**. O que vem agora é escolha de rumo, não trabalho pendente de código.
 
-**O que resta do F2 precisa de um tenant real: a validação em staging** (F2/P0 do spec) — o checklist está na seção
-"Verificação" do setup doc. O mapeamento de tags que o spec previa ficou **obsoleto**: o F3 moveu autorização para o
-Postgres, então o Entra só fornece identidade. Aposentar o mock (F2/P2) fica deliberadamente para depois — sem ele
-não há login offline em dev.
+**1. Promover o piloto para algo permanente.** O túnel gratuito não é canal 24/7: tem página interstitial, franquia
+de banda (~1 GB/mês, e um escritório virtual é WebSocket o dia inteiro), sem UDP para TURN, e depende da máquina do
+desenvolvedor ficar ligada. Os dois caminhos, ambos com guia pronto:
 
-**O caminho de produção está pronto (VPS Hostinger, decidido 2026-08-04):** o
-[`contrib/docker/docker-compose.prod.yaml`](contrib/docker/docker-compose.prod.yaml) agora **builda as cinco imagens
-do fork** (as do Docker Hub não têm o F4 nem o admin-api), inclui `admin-api` + `admin-api-db` com a cadeia de
-healthcheck, e serve o dashboard em `/admin` **no mesmo domínio** — um A record, um certificado, portas 80/443. O
-`.env.prod.template` foi atualizado (era o do upstream e nem tinha as variáveis novas), o compose valida com
-`docker compose config`, e a imagem de produção do `admin-api` **builda** (verificado). O passo a passo do VPS —
-DNS, endurecimento, segredos, Entra, coturn, backups, upgrade, rollback — está em
-[`docs/SETUP-DEPLOY.pt-BR.md`](docs/SETUP-DEPLOY.pt-BR.md) (bilíngue). A validação de staging do F2 acontece
-naturalmente no primeiro deploy seguindo esse guia.
+- **VPS** (decidido 2026-08-04: Hostinger, 4 vCPU/16 GB) — [`docs/SETUP-DEPLOY.pt-BR.md`](docs/SETUP-DEPLOY.pt-BR.md).
+  O mesmo `.env` acompanha; muda o `DOMAIN` e a história de certificados.
+- **Domínio próprio + Cloudflare** (~R$40/ano) — [`docs/SETUP-CLOUDFLARE.pt-BR.md`](docs/SETUP-CLOUDFLARE.pt-BR.md),
+  com os quatro ajustes obrigatórios (SSL Full strict, DNS-01, TURN em nuvem cinza, IPs reais).
+
+**2. TURN (coturn), quando alguém estiver em rede corporativa.** Nenhum túnel carrega UDP, então hoje o vídeo é 100%
+P2P. Em rede restritiva ele falha. A seção 8 do guia de deploy tem a configuração com static secret.
+
+**3. Recortar o mapa.** O `office.tmj` tem 405 KB para 1.394 tiles desenhados, porque é declarado 144×128 e o desenho
+ocupa 31×21 — 3,5%. Recortar no Tiled corta ~96%. Fica no Tiled de propósito: recortar desloca coordenadas, e a
+camada de objetos tem spawn, as duas zonas Jitsi, a zona silenciosa e as duas saídas.
+
+**4. Arte do ArqueumSpace.** Quatro imagens do logo antigo continuam no repositório (ver seção do rebrand).
 
 ### Antes de qualquer uso real
 
@@ -371,6 +448,17 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
 25. **O agrupamento do kick usa `roomId.split("/")[5]`, literalmente.** É o filtro do próprio pusher
     (`IoSocketController`), esquisitice inclusa: para `/~/maps/x.wam` cai no nome do arquivo. Há teste fixando isso;
     "consertar" o parsing aqui quebra a entrega do kick sem nenhum erro visível.
+
+26. **O `PUSHER_URL` não pode terminar com barra.** O `play` monta o callback OIDC concatenando
+    `PUSHER_URL + "/openid-callback"`; uma barra final produz `//openid-callback`, que o Entra recusa com
+    `AADSTS50011`. O compose de produção do upstream vinha com a barra — corrigido, mas é o tipo de coisa que volta
+    num merge com o upstream.
+
+27. **A chegada autenticada cria a linha de membro; a anônima não.** Refinamento da invariante #6 do ADR-0002
+    (2026-08-05): quem entra pelo provedor de identidade e ainda não tem linha ganha uma, **sem tag nenhuma** — é
+    registro de chegada, não permissão. O sinal é o `accessToken`, presente só quando houve login OIDC; visitante
+    anônimo é identificado por uuid e criar linhas para ele encheria a tabela de entradas inúteis. A escrita só
+    acontece quando não existe linha, então uma reconexão nunca sobrescreve tag ou nome concedido.
 
 ### Também não mexer sem conversar
 
