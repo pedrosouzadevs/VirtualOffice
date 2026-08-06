@@ -32,6 +32,7 @@ import {
     WAMSettingsUtils,
 } from "@workadventure/map-editor";
 import { wamFileMigration } from "@workadventure/map-editor/src/Migrations/WamFileMigration";
+import { canEditTiles } from "@workadventure/map-editor/src/Utils";
 import Debug from "debug";
 import { asError } from "catch-unknown";
 import { userMessageManager } from "../../Administration/UserMessageManager";
@@ -91,6 +92,7 @@ import {
     jitsiParticipantsCountStore,
     userIsAdminStore,
     userIsEditorStore,
+    userIsMapAdminStore,
     userIsJitsiDominantSpeakerStore,
 } from "../../Stores/GameStore";
 import {
@@ -2037,6 +2039,7 @@ export class GameScene extends DirtyScene {
                 playersStore.connectToRoomConnection(this.connection);
                 userIsAdminStore.set(this.connection.hasTag("admin"));
                 userIsEditorStore.set(this.connection.hasTag("editor"));
+                userIsMapAdminStore.set(canEditTiles(this.connection.getAllTags()));
 
                 // The userJoinedMessageStream stream is completed in the RoomConnection. No need to unsubscribe.
                 //eslint-disable-next-line rxjs/no-ignored-subscription, svelte/no-ignored-unsubscribe
@@ -3784,6 +3787,10 @@ ${escapedMessage}
                         break;
                     }
                     case "floor": {
+                        // Structural editing is gated by the adminMap tag even when the editor itself is available.
+                        if (!get(userIsMapAdminStore)) {
+                            break;
+                        }
                         mapEditorModeStore.switchMode(true);
                         mapEditorSelectedToolStore.set(EditorToolName.FloorEditor);
                         break;

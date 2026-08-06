@@ -83,8 +83,8 @@ describe("bootstrapAdmin", () => {
 
         const result = await bootstrapAdmin(repository, undefined);
 
-        expect(repository.ensureTagCalls).toEqual(["admin", "editor"]);
-        expect(result.ensuredTags).toEqual(["admin", "editor"]);
+        expect(repository.ensureTagCalls).toEqual(["admin", "editor", "adminMap"]);
+        expect(result.ensuredTags).toEqual(["admin", "editor", "adminMap"]);
     });
 
     it("grants the admin tag to the configured email", async () => {

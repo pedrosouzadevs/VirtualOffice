@@ -226,3 +226,20 @@ export function canEjectFromArea(area: AreaData, userId: string | undefined): bo
     // Admins block ejection per area via this flag; only an explicit false blocks it.
     return lockable?.ownerCanEject !== false;
 }
+
+/**
+ * The tags allowed to edit map STRUCTURE (tiles) in-game. Deliberately narrower than map-editor access:
+ * `editor`/`admin` open the editor for objects and areas, but repainting floors and walls reshapes the world
+ * for everyone, so it takes this dedicated tag — and only it. No `admin` override, by product decision
+ * (ADR-0007): an administrator grants the tag to themselves through the dashboard when they need it.
+ */
+export const TILE_EDITOR_TAGS: readonly string[] = ["adminMap"];
+
+/**
+ * Single source of truth for who may edit tiles. Used by the front (to show the floor tool and honour the
+ * `#mapEditor=floor` deep link), by the pusher (cheap pre-gate before forwarding) and by map-storage (the
+ * authoritative server-side check), so the button and the server can never disagree.
+ */
+export function canEditTiles(userTags: string[]): boolean {
+    return userTags.some((tag) => TILE_EDITOR_TAGS.includes(tag));
+}

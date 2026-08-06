@@ -21,8 +21,14 @@ export interface Member extends MemberSummary {
     readonly tags: readonly string[];
 }
 
-/** Tags that grant map-editor access. Mirrors the check `LocalAdmin.fetchMemberDataByUuid` performs today. */
-export const MAP_EDITOR_TAGS = ["admin", "editor"] as const;
+/**
+ * Tags that grant map-editor access. `admin` and `editor` mirror the check `LocalAdmin.fetchMemberDataByUuid`
+ * performs today; `adminMap` additionally unlocks structural (tile) editing, whose authoritative gate lives
+ * server-side in map-storage (`canEditTiles` in `@workadventure/map-editor`, ADR-0007). Being listed here is
+ * what opens the editor at all for the tag — and what pre-creates it at bootstrap, so it appears in the
+ * dashboard's autocomplete from day one.
+ */
+export const MAP_EDITOR_TAGS = ["admin", "editor", "adminMap"] as const;
 
 /**
  * Tags no application surface may grant — only direct SQL, and the idempotent bootstrap.

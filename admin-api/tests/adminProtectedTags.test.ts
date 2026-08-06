@@ -90,6 +90,18 @@ describe("the admin tag cannot be granted through the application", () => {
 
         expect((await grant(app, session, ALICE.email, "administrative")).status).toBe(200);
     });
+
+    it("does not refuse adminMap, the structural-editing tag, despite its admin prefix", async () => {
+        // adminMap unlocks tile editing (ADR-0007) and must stay grantable through the dashboard — that is how
+        // an administrator gives it to themselves. It shares a prefix with the protected tag, nothing more.
+        const app = await serveDashboardTestApp({ members: [ADMIN, ALICE], now: T0 });
+        const session = await signInAs(ADMIN_EMAIL, T0);
+
+        const response = await grant(app, session, ALICE.email, "adminMap");
+
+        expect(response.status).toBe(200);
+        expect(app.alerter.raised).toEqual([]);
+    });
 });
 
 describe("revoking admin stays possible", () => {

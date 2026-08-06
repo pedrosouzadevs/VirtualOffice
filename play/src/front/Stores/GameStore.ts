@@ -9,6 +9,8 @@ export const requestVisitCardsStore = writable<string | null>(null);
 
 export const userIsAdminStore = writable(false);
 export const userIsEditorStore = writable(false);
+// True when the user's tags allow structural (tile) editing — see canEditTiles in @workadventure/map-editor.
+export const userIsMapAdminStore = writable(false);
 
 export const userIsJitsiDominantSpeakerStore = writable(false);
 

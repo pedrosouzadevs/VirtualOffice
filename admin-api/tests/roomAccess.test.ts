@@ -488,6 +488,12 @@ describe("canEditMap", () => {
         expect(canEditMap(EDITABLE_ROOM, ["editor"], true)).toBe(true);
     });
 
+    it("is true for a map-storage room when the member holds adminMap, which opens the full editor", () => {
+        // adminMap exists for structural (tile) editing (ADR-0007). Opening the editor is this check; the
+        // tile-specific gate is canEditTiles in @workadventure/map-editor, enforced server-side by map-storage.
+        expect(canEditMap(EDITABLE_ROOM, ["adminMap"], true)).toBe(true);
+    });
+
     it("is false without one of those tags", () => {
         expect(canEditMap(EDITABLE_ROOM, [], true)).toBe(false);
         expect(canEditMap(EDITABLE_ROOM, ["someone-else"], true)).toBe(false);

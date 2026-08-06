@@ -21,10 +21,10 @@ beforeEach(async () => {
 });
 
 describe("bootstrapAdmin", () => {
-    it("creates the admin and editor tags", async () => {
+    it("creates the admin, adminMap and editor tags", async () => {
         const result = await bootstrapAdmin(repository, undefined);
 
-        expect(result.ensuredTags.slice().sort()).toEqual(["admin", "editor"]);
+        expect(result.ensuredTags.slice().sort()).toEqual(["admin", "adminMap", "editor"]);
     });
 
     it("grants the admin tag to the configured email", async () => {
@@ -51,7 +51,7 @@ describe("bootstrapAdmin", () => {
         const grants = await connection.sql`select count(*)::int as count from "member_tag"`;
 
         expect(members[0]?.count).toBe(1);
-        expect(tags[0]?.count).toBe(2);
+        expect(tags[0]?.count).toBe(3);
         expect(grants[0]?.count).toBe(1);
     });
 
