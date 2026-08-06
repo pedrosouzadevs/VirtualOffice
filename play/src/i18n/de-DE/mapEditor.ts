@@ -522,6 +522,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Bestätigen Sie, dass Sie die Änderungen an der Karte speichern möchten. Dies erstellt eine neue Version der Karte, trennt alle Spieler und lädt die Karte für alle Spieler neu.",
         },
     },
+    floorEditor: {
+        modePaint: "Boden",
+        modeWall: "Wand",
+        modeErase: "Radierer",
+        targetLayer: "Ebene",
+        palette: "Kacheln",
+        selectTileHint: "Wähle eine Kachel aus der Palette, um mit dem Malen zu beginnen.",
+        wallModeDegraded:
+            'Diese Karte hat keine Kollisionsmarkierungs-Kachel oder keine "collisions"-Ebene: Wände sind nur visuell.',
+        eraseHint: "Klicke oder ziehe auf der Karte, um Kacheln zu löschen (hebt auch die Kollision der Zelle auf).",
+    },
     explorer: {
         title: "Raum erkunden",
         description:

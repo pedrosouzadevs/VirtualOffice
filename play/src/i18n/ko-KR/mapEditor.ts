@@ -514,6 +514,16 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "지도의 변경 사항을 저장하시겠습니까? 새 버전이 생성되며, 모든 플레이어가 현재 방에서 연결이 끊어지고 새 지도가 다시 로드됩니다.",
         },
     },
+    floorEditor: {
+        modePaint: "바닥",
+        modeWall: "벽",
+        modeErase: "지우개",
+        targetLayer: "레이어",
+        palette: "타일",
+        selectTileHint: "팔레트에서 타일을 선택하여 그리기를 시작하세요.",
+        wallModeDegraded: '이 맵에는 충돌 마커 타일이나 "collisions" 레이어가 없습니다: 벽은 시각적으로만 표시됩니다.',
+        eraseHint: "맵에서 클릭하거나 드래그하여 타일을 지웁니다(셀의 충돌도 해제됩니다).",
+    },
     explorer: {
         title: "방 탐색",
         description:

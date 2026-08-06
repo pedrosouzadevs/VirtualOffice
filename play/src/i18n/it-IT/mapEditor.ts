@@ -519,6 +519,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Conferma che vuoi salvare le modifiche alla mappa. Questo creerà una nuova versione della mappa, disconnetterà tutti i giocatori e ricaricherà la mappa per tutti i giocatori.",
         },
     },
+    floorEditor: {
+        modePaint: "Pavimento",
+        modeWall: "Muro",
+        modeErase: "Gomma",
+        targetLayer: "Livello",
+        palette: "Tasselli",
+        selectTileHint: "Scegli un tassello dalla palette per iniziare a dipingere.",
+        wallModeDegraded:
+            'Questa mappa non ha un tassello marcatore di collisione né un livello "collisions": i muri saranno solo visivi.',
+        eraseHint: "Clicca o trascina sulla mappa per cancellare i tasselli (libera anche la collisione della cella).",
+    },
     explorer: {
         title: "Esplora la stanza",
         description:

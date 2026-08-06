@@ -8,10 +8,11 @@
     import { mapEditorSelectedToolStore, mapEditorVisibilityStore } from "../../Stores/MapEditorStore";
     import { analyticsClient } from "../../Administration/AnalyticsClient";
     import { mapEditorActivated, mapEditorActivatedForThematics } from "../../Stores/MenuStore";
+    import { userIsMapAdminStore } from "../../Stores/GameStore";
     import { isMediaBreakpointUp } from "../../Utils/BreakpointsUtils";
     import ArrowBarRight from "../Icons/ArrowBarRight.svelte";
     import type { ArqueumSpaceComponent } from "../../../types/component";
-    import { IconX, IconTexture, IconLamp, IconMapSearch, IconSettings, IconTrash } from "@wa-icons";
+    import { IconX, IconTexture, IconLamp, IconLayoutGrid, IconMapSearch, IconSettings, IconTrash } from "@wa-icons";
 
     type SideBarTool = {
         toolName: EditorToolName;
@@ -52,6 +53,14 @@
                 tooltiptext: $LL.mapEditor.sideBar.areaEditor(),
             });
             tools.push(entityEditorTool);
+            if ($userIsMapAdminStore) {
+                // Structural (tile) editing is adminMap-only (ADR-0007); map-storage re-checks server-side.
+                tools.push({
+                    toolName: EditorToolName.FloorEditor,
+                    iconComponent: IconLayoutGrid,
+                    tooltiptext: $LL.mapEditor.sideBar.tileEditor(),
+                });
+            }
             tools.push({
                 toolName: EditorToolName.WAMSettingsEditor,
                 iconComponent: IconSettings,

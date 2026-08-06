@@ -519,6 +519,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Confirmeu que voleu desar els canvis al mapa. Això crearà una nova versió del mapa, desconnectarà tots els jugadors i recarregarà el mapa per a tots els jugadors.",
         },
     },
+    floorEditor: {
+        modePaint: "Terra",
+        modeWall: "Paret",
+        modeErase: "Esborrador",
+        targetLayer: "Capa",
+        palette: "Tessel·les",
+        selectTileHint: "Tria una tessel·la de la paleta per començar a pintar.",
+        wallModeDegraded:
+            'Aquest mapa no té cap tessel·la marcadora de col·lisió ni capa "collisions": les parets seran només visuals.',
+        eraseHint: "Fes clic o arrossega al mapa per esborrar tessel·les (també allibera la col·lisió de la cel·la).",
+    },
     explorer: {
         title: "Explorar la sala",
         description:

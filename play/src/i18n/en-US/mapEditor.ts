@@ -514,6 +514,16 @@ const mapEditor: BaseTranslation = {
                 "Confirm that you want to save the changes to the map. This will create a new version of the map, disconnect all players and reload the map for all players.",
         },
     },
+    floorEditor: {
+        modePaint: "Floor",
+        modeWall: "Wall",
+        modeErase: "Eraser",
+        targetLayer: "Layer",
+        palette: "Tiles",
+        selectTileHint: "Pick a tile in the palette to start painting.",
+        wallModeDegraded: 'This map has no collision marker tile or no "collisions" layer: walls will be visual only.',
+        eraseHint: "Click or drag on the map to erase tiles (also releases the cell's collision).",
+    },
     explorer: {
         title: "Explore the room",
         description:

@@ -503,6 +503,16 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
             confirmSave: "確認您要儲存對地圖的變更。這將建立地圖的新版本，中斷所有玩家的連線並為所有玩家重新載入地圖。",
         },
     },
+    floorEditor: {
+        modePaint: "地板",
+        modeWall: "牆壁",
+        modeErase: "橡皮擦",
+        targetLayer: "圖層",
+        palette: "圖塊",
+        selectTileHint: "在調色盤中選擇一個圖塊開始繪製。",
+        wallModeDegraded: '此地圖沒有碰撞標記圖塊或 "collisions" 圖層：牆壁將僅為視覺效果。',
+        eraseHint: "在地圖上點擊或拖曳以擦除圖塊（同時解除該格子的碰撞）。",
+    },
     explorer: {
         title: "探索房間",
         description:

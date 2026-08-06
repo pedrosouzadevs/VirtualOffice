@@ -522,6 +522,18 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Confirmez que vous souhaitez enregistrer les modifications de la carte. Cela créera une nouvelle version de la carte, déconnectera tous les joueurs et rechargera la carte pour tout le monde.",
         },
     },
+    floorEditor: {
+        modePaint: "Sol",
+        modeWall: "Mur",
+        modeErase: "Gomme",
+        targetLayer: "Calque",
+        palette: "Tuiles",
+        selectTileHint: "Choisissez une tuile dans la palette pour commencer à peindre.",
+        wallModeDegraded:
+            'Cette carte n\'a pas de tuile marqueur de collision ni de calque "collisions" : les murs seront purement visuels.',
+        eraseHint:
+            "Cliquez ou faites glisser sur la carte pour effacer des tuiles (libère aussi la collision de la cellule).",
+    },
     explorer: {
         title: "Explorateur de carte",
         description:

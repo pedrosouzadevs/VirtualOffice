@@ -11,6 +11,7 @@
     import AreaEditor from "./AreaEditor/AreaEditor.svelte";
     import EntityEditor from "./EntityEditor/EntityEditor.svelte";
     import MapEditorSideBar from "./MapEditorSideBar.svelte";
+    import TileEditor from "./TileEditor/TileEditor.svelte";
     import TrashEditor from "./TrashEditor.svelte";
     import ConfigureMyRoom from "./WAMSettingsEditor.svelte";
     import MapEditorResizeHandle from "./MapEditorResizeHandle.svelte";
@@ -81,6 +82,9 @@
                 {/if}
                 {#if $mapEditorSelectedToolStore === EditorToolName.AreaEditor}
                     <AreaEditor />
+                {/if}
+                {#if $mapEditorSelectedToolStore === EditorToolName.FloorEditor}
+                    <TileEditor />
                 {/if}
                 {#if $mapEditorSelectedToolStore === EditorToolName.ExploreTheRoom}
                     <Explorer />

@@ -519,6 +519,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Confirme que desea guardar los cambios del mapa. Esto creará una nueva versión del mapa, desconectará a todos los jugadores y recargará el mapa para todos.",
         },
     },
+    floorEditor: {
+        modePaint: "Suelo",
+        modeWall: "Pared",
+        modeErase: "Borrador",
+        targetLayer: "Capa",
+        palette: "Teselas",
+        selectTileHint: "Elige una tesela de la paleta para empezar a pintar.",
+        wallModeDegraded:
+            'Este mapa no tiene tesela marcadora de colisión ni capa "collisions": las paredes serán solo visuales.',
+        eraseHint: "Haz clic o arrastra en el mapa para borrar teselas (también libera la colisión de la celda).",
+    },
     explorer: {
         title: "Explorar la sala",
         description:

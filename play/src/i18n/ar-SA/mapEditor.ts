@@ -511,6 +511,16 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "أكد أنك تريد حفظ التغييرات على الخريطة. سيؤدي هذا إلى إنشاء إصدار جديد من الخريطة، وفصل جميع اللاعبين، وإعادة تحميل الخريطة لجميع اللاعبين.", // Confirm that you want to save changes to the map. This will create a new version of the map, disconnect all players, and reload the map for all players.
         },
     },
+    floorEditor: {
+        modePaint: "أرضية",
+        modeWall: "جدار",
+        modeErase: "ممحاة",
+        targetLayer: "الطبقة",
+        palette: "البلاطات",
+        selectTileHint: "اختر بلاطة من اللوحة لبدء الرسم.",
+        wallModeDegraded: 'لا تحتوي هذه الخريطة على بلاطة تصادم أو طبقة "collisions": ستكون الجدران مرئية فقط.',
+        eraseHint: "انقر أو اسحب على الخريطة لمسح البلاطات (يزيل أيضًا تصادم الخلية).",
+    },
     explorer: {
         title: "استكشاف الغرفة", // Explore room
         description:

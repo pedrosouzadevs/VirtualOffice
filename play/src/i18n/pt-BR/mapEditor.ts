@@ -522,6 +522,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Confirme que você quer salvar as alterações no mapa. Isso criará uma nova versão do mapa, desconectará todos os jogadores e recarregará o mapa para todos os jogadores.",
         },
     },
+    floorEditor: {
+        modePaint: "Piso",
+        modeWall: "Parede",
+        modeErase: "Borracha",
+        targetLayer: "Camada",
+        palette: "Tiles",
+        selectTileHint: "Escolha um tile na paleta para começar a pintar.",
+        wallModeDegraded:
+            'Este mapa não tem tile marcador de colisão ou camada "collisions": paredes serão apenas visuais.',
+        eraseHint: "Clique ou arraste no mapa para apagar tiles (também libera a colisão da célula).",
+    },
     explorer: {
         title: "Explorar a sala",
         description:

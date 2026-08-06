@@ -522,6 +522,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Bevestig dat je de wijzigingen aan de kaart wilt opslaan. Dit maakt een nieuwe versie van de kaart, verbreekt de verbinding met alle spelers en laadt de kaart opnieuw voor alle spelers.",
         },
     },
+    floorEditor: {
+        modePaint: "Vloer",
+        modeWall: "Muur",
+        modeErase: "Gum",
+        targetLayer: "Laag",
+        palette: "Tegels",
+        selectTileHint: "Kies een tegel in het palet om te beginnen met schilderen.",
+        wallModeDegraded:
+            'Deze kaart heeft geen botsingsmarkeringstegel of "collisions"-laag: muren zijn alleen visueel.',
+        eraseHint: "Klik of sleep op de kaart om tegels te wissen (heft ook de botsing van de cel op).",
+    },
     explorer: {
         title: "Verken de kamer",
         description:

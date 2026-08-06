@@ -517,6 +517,16 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Wobkšuśćo, až cośo změny k kórśe składowaś. To napórajo nowu wersiju kórty, wótzpórajo wšyknych grajaŕow a znowego zacyta kórtu za wšyknych grajaŕow.",
         },
     },
+    floorEditor: {
+        modePaint: "Zemja",
+        modeWall: "Sćěna",
+        modeErase: "Gumka",
+        targetLayer: "Rownina",
+        palette: "Kachle",
+        selectTileHint: "Wubjeŕ kachel z palety, aby zachopił mólowaś.",
+        wallModeDegraded: 'Toś ta kórta njama kachel za kolizije abo rowninu "collisions": sćěny budu jano wizuelne.',
+        eraseHint: "Klikni abo śěgni na kórśe, aby kachle wulašował (wótpóra teke koliziju cele).",
+    },
     explorer: {
         title: "Wobłuk wužiwaś",
         description:

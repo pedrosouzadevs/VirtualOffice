@@ -516,6 +516,16 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "Wobkrućće, zo chceće změny k karće składować. To wutworja nowu wersiju karty, wotstroni wšěch hrajerjow a znowa začita kartu za wšěch hrajerjow.",
         },
     },
+    floorEditor: {
+        modePaint: "Zemja",
+        modeWall: "Sćěna",
+        modeErase: "Gumka",
+        targetLayer: "Runina",
+        palette: "Kachle",
+        selectTileHint: "Wubjer kachlu z palety, zo by započał molować.",
+        wallModeDegraded: 'Tuta karta nima kachlu za kolizije abo runinu "collisions": sćěny budu jenož wizuelne.',
+        eraseHint: "Klikń abo ćehń na karće, zo by kachle zhašał (wotstroni tež koliziju cele).",
+    },
     explorer: {
         title: "Wobłuk wužiwać",
         description:

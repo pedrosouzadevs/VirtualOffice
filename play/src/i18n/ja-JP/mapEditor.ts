@@ -516,6 +516,17 @@ const mapEditor: DeepPartial<Translation["mapEditor"]> = {
                 "変更されたマップを保存します。これにより、新しいバージョンのマップが作成され、すべてのユーザの接続がされ、マップが再読み込みされます。",
         },
     },
+    floorEditor: {
+        modePaint: "床",
+        modeWall: "壁",
+        modeErase: "消しゴム",
+        targetLayer: "レイヤー",
+        palette: "タイル",
+        selectTileHint: "パレットからタイルを選んで描き始めましょう。",
+        wallModeDegraded:
+            "このマップには衝突マーカータイルまたは「collisions」レイヤーがありません: 壁は見た目だけになります。",
+        eraseHint: "マップ上でクリックまたはドラッグしてタイルを消します（セルの衝突も解除されます）。",
+    },
     explorer: {
         title: "ルームの探索",
         description:
