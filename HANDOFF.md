@@ -26,7 +26,7 @@ sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versiona
 | F2 | Entra ID como troca de configuração; falta só validar em staging | ✅ config entregue |
 | Rebrand | `WorkAdventure`/`VirtualOffice` → `ArqueumSpace`; domínios de dev → `arqueum.localhost` | ✅ entregue |
 | Deploy | Compose de produção com `admin-api`, guias VPS / Cloudflare / túnel | ✅ entregue |
-| ADR-0007 | Editor estrutural (tiles) gated por `adminMap`: overlay no `.wam`, UI de pisos/paredes/borracha, export consolidado | ✅ código entregue (branch `feature/tile-editor`); pendem spike S0, e2e e smoke — ver [Next Step](#next-step) |
+| ADR-0007 | Editor estrutural (tiles) gated por `adminMap`: overlay no `.wam`, UI de pisos/paredes/borracha, export consolidado | ✅ entregue e validado (e2e 2/2 verde + smoke manual em dev, 2026-08-06); pende só o deploy em produção — ver [Next Step](#next-step) |
 
 **Verificação atual:** 355 testes unitários, 93 de integração (Postgres real), 10 e2e (Playwright, contra a stack
 rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O `play` mantém seus **436 erros de typecheck
@@ -349,12 +349,34 @@ consolide e limpe o overlay antes de qualquer recorte.
 
 **4. Arte do ArqueumSpace.** Quatro imagens do logo antigo continuam no repositório (ver seção do rebrand).
 
-**5. Fechar o editor estrutural (branch `feature/tile-editor`).** O código das quatro fases está commitado e
-verificado por unit/integração; ficaram para a janela em que a produção puder descer (o Traefik de dev disputa a
-porta 80 com o piloto): o spike S0 de performance (2k tiles batched no Phaser — critério <100 ms), o e2e novo
-[`tests/tests/map_editor/tile_editor.spec.ts`](tests/tests/map_editor/tile_editor.spec.ts) e o smoke manual
-(conceder `adminMap` pela dashboard → pintar piso e parede → colidir → segundo browser vê → export consolidado abre
-no Tiled). Guia de operação: [`docs/MAP-STRUCTURAL-EDITING.pt-BR.md`](docs/MAP-STRUCTURAL-EDITING.pt-BR.md).
+**5. Levar o editor estrutural à produção (a única pendência real da feature).** O e2e
+[`tile_editor.spec.ts`](tests/tests/map_editor/tile_editor.spec.ts) passou 2/2 e o smoke manual em dev validou
+piso, parede com colisão, borracha e persistência (2026-08-06). **A produção está DERRUBADA agora** (desceu para a
+janela de teste dev) e as imagens buildadas hoje **NÃO contêm o fix do import do Phaser** — o build foi antes dele.
+O playbook da troca, nesta ordem, a partir da raiz e de `contrib/docker`:
+
+```bash
+docker compose down                                                                   # derruba o dev (raiz)
+docker compose -f docker-compose.prod.yaml --env-file .env build play                 # rebuild SÓ o play (fix)
+docker compose -f docker-compose.prod.yaml -f docker-compose.tunnel.yaml --env-file .env up -d
+ngrok http --url=unintrusted-loblolly-londa.ngrok-free.dev 80
+docker compose -f docker-compose.prod.yaml --env-file .env exec admin-api npm run member:grant -- pedro.henrique@arqueum.com adminMap
+```
+
+Depois do grant, **logout/login** no mundo (tags valem por sessão de login, não por reconexão — regra descoberta
+no smoke e documentada no guia). Sobrou opcional: o spike S0 de performance (2k tiles batched, critério <100 ms)
+nunca foi medido formalmente — o uso real com dezenas de células não mostrou hitch perceptível. Guia de operação:
+[`docs/MAP-STRUCTURAL-EDITING.pt-BR.md`](docs/MAP-STRUCTURAL-EDITING.pt-BR.md).
+
+Três armadilhas operacionais descobertas em 2026-08-06, para não redescobrir:
+
+- **Tags grudam na sessão de login.** Conceder/revogar qualquer tag (inclusive `adminMap`) só surte efeito após
+  logout/login; F5 não basta. O e2e deleta o storage state do Playwright entre fases por isso.
+- **O Vite do container dev não enxerga edições feitas no Windows** (bind mount não propaga watch): mudou código
+  do `play` em dev, `docker compose restart play` — senão ele serve o transform velho e o bug "não existe".
+- **O Docker Desktop caiu sob a carga de duas stacks + builds + e2e.** Se o diálogo de erro dele aparecer:
+  Restart/reabrir, ou reiniciar o Windows. **Nunca "Reset to factory defaults"** — apaga os volumes, e o banco da
+  produção do piloto (membros/tags/bans) vive num volume.
 
 ### Antes de qualquer uso real
 

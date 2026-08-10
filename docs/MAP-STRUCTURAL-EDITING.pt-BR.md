@@ -17,8 +17,10 @@ pré-criada no bootstrap e concedível como qualquer outra:
 docker compose exec admin-api npm run member:grant -- alguem@empresa.com adminMap
 ```
 
-A pessoa precisa **recarregar** o mundo após a concessão: as tags são lidas na conexão. `adminMap` também abre o
-editor completo (objetos e áreas), então é a única tag que um mantenedor de mapa precisa.
+A pessoa precisa **sair e entrar de novo** (logout/login) após a concessão — só recarregar não basta, porque
+as tags ficam presas à sessão de login (verificado empiricamente no smoke: o e2e só vê a tag concedida após um
+login novo). `adminMap` também abre o editor completo (objetos e áreas), então é a única tag que um mantenedor
+de mapa precisa.
 
 ## Usando o editor
 
@@ -63,7 +65,7 @@ curl -o office-consolidado.tmj "https://<dominio>/map-storage/maps/office.wam?co
 
 | Sintoma | Causa / correção |
 |---|---|
-| Sem ícone de grade na sidebar do editor | O usuário não tem `adminMap`, ou não recarregou após a concessão. |
+| Sem ícone de grade na sidebar do editor | O usuário não tem `adminMap`, ou não fez logout/login após a concessão (as tags ficam presas à sessão de login). |
 | Aviso "paredes serão apenas visuais" | O mapa não tem tile de tileset com `collides: true` ou não tem camada `collisions`. Adicione no Tiled. |
 | Pincelada some logo após pintar | O servidor recusou (sem `adminMap` server-side). A reversão é intencional. |
 | Tile pintado aparece sem rotação | Gids com flip flags renderizam sem rotação in-game; o export consolidado preserva as flags (ADR-0007). |

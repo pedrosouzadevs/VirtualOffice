@@ -1,3 +1,4 @@
+import * as Phaser from "phaser";
 import type { EditMapCommandMessage } from "@workadventure/messages";
 import type { TileChange } from "@workadventure/map-editor";
 import { GameMapProperties } from "@workadventure/map-editor";

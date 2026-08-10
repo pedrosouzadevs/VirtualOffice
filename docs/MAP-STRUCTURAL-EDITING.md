@@ -17,8 +17,10 @@ pre-created at bootstrap and grantable like any other:
 docker compose exec admin-api npm run member:grant -- someone@company.com adminMap
 ```
 
-The person must **reload** the world after a grant: tags are read at connection time. `adminMap` also opens the
-full editor (objects and areas), so it is the only tag a map maintainer needs.
+The person must **log out and log back in** after a grant — a plain reload is not enough, because tags stick
+to the login session (verified empirically while smoke-testing: the e2e only sees a granted tag after a fresh
+login). `adminMap` also opens the full editor (objects and areas), so it is the only tag a map maintainer
+needs.
 
 ## Using the editor
 
@@ -63,7 +65,7 @@ curl -o office-consolidated.tmj "https://<domain>/map-storage/maps/office.wam?co
 
 | Symptom | Cause / fix |
 |---|---|
-| No grid icon in the editor sidebar | The user lacks `adminMap`, or did not reload after the grant. |
+| No grid icon in the editor sidebar | The user lacks `adminMap`, or did not log out/in after the grant (tags stick to the login session). |
 | "walls will be visual only" notice | The map has no tileset tile with `collides: true` or no `collisions` layer. Add them in Tiled. |
 | A stroke disappears right after painting | The server refused it (no `adminMap` server-side). The rollback is intentional. |
 | Painted tile shows no rotation | Flip-flagged gids render unrotated in-game; the consolidated export keeps the flags (ADR-0007). |
