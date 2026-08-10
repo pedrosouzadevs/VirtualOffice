@@ -65,7 +65,13 @@ services:
       - INTERNAL_MAP_STORAGE_URL=http://map-storage:3000
       - PUBLIC_MAP_STORAGE_URL=https://${DOMAIN}/map-storage
       - START_ROOM_URL
-      - OPENID_PROMPT=login
+      # Pass-through from .env, and deliberately EMPTY there. `prompt=login` tells the identity provider to ignore
+      # its own SSO session and demand credentials again — and the pusher re-validates the provider's access token
+      # on every page load (AuthenticateController `checkTokenAuth`), so an expired access token (~1h on Entra) sent
+      # the user back through a full password screen every hour. Empty resolves to `undefined` and the parameter is
+      # omitted, which lets Entra answer silently from its SSO session. Only set this to `login` for kiosk/shared
+      # machines, where inheriting the previous person's session is the greater risk.
+      - OPENID_PROMPT
       - OPENID_WOKA_NAME_POLICY
       - OPENID_CLIENT_ID
       - OPENID_CLIENT_SECRET
