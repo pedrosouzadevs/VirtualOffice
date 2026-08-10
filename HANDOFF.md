@@ -26,7 +26,7 @@ sobe ligado por padrão (`ADMIN_API_URL` está no `docker-compose.yaml` versiona
 | F2 | Entra ID como troca de configuração; falta só validar em staging | ✅ config entregue |
 | Rebrand | `WorkAdventure`/`VirtualOffice` → `ArqueumSpace`; domínios de dev → `arqueum.localhost` | ✅ entregue |
 | Deploy | Compose de produção com `admin-api`, guias VPS / Cloudflare / túnel | ✅ entregue |
-| ADR-0007 | Editor estrutural (tiles) gated por `adminMap`: overlay no `.wam`, UI de pisos/paredes/borracha, export consolidado | ✅ entregue e validado (e2e 2/2 verde + smoke manual em dev, 2026-08-06); pende só o deploy em produção — ver [Next Step](#next-step) |
+| ADR-0007 | Editor estrutural (tiles) gated por `adminMap`: overlay no `.wam`, UI de pisos/paredes/borracha, export consolidado | ✅ entregue, validado (e2e 2/2 verde + smoke manual em dev, 2026-08-06) e **em produção desde 2026-08-10** |
 
 **Verificação atual:** 355 testes unitários, 93 de integração (Postgres real), 10 e2e (Playwright, contra a stack
 rodando). `typecheck`, `svelte-check`, `eslint` e `prettier` limpos. O `play` mantém seus **436 erros de typecheck
@@ -47,6 +47,7 @@ Roda **na máquina do desenvolvedor**, publicada por túnel ngrok com domínio e
 | Login | Azure Entra ID, tenant `7ac12efa-2494-4ee4-88b7-26bfeaa77a48`, app `ArqueumSpace` |
 | Admin do bootstrap | `pedro.henrique@arqueum.com` |
 | Mapa | `maps/office.wam` + `maps/conference.wam`, já subidos |
+| Editor estrutural | No ar desde 2026-08-10; `pedro.henrique@arqueum.com` tem `admin, adminMap` |
 
 Para subir de novo, a partir de `contrib/docker`:
 
@@ -349,11 +350,18 @@ consolide e limpe o overlay antes de qualquer recorte.
 
 **4. Arte do ArqueumSpace.** Quatro imagens do logo antigo continuam no repositório (ver seção do rebrand).
 
-**5. Levar o editor estrutural à produção (a única pendência real da feature).** O e2e
+**5. ~~Levar o editor estrutural à produção~~ — ✅ FEITO em 2026-08-10.** O e2e
 [`tile_editor.spec.ts`](tests/tests/map_editor/tile_editor.spec.ts) passou 2/2 e o smoke manual em dev validou
-piso, parede com colisão, borracha e persistência (2026-08-06). **A produção está DERRUBADA agora** (desceu para a
-janela de teste dev) e as imagens buildadas hoje **NÃO contêm o fix do import do Phaser** — o build foi antes dele.
-O playbook da troca, nesta ordem, a partir da raiz e de `contrib/docker`:
+piso, parede com colisão, borracha e persistência (2026-08-06). A imagem do `play` foi reconstruída **com** o fix do
+import do Phaser, a produção subiu com o túnel, e o `adminMap` foi concedido. Verificado em produção:
+
+- **A imagem que roda é a que foi buildada** — o ID do `virtualoffice/play:fork` recém-construído bate com o
+  `.Image` do container, o `FloorEditorTool.ts` dentro da imagem tem o `import * as Phaser from "phaser"`, e o
+  bundle servido contém o código do editor de tiles.
+- **O export consolidado responde pelo túnel**: 414 KB de `.tmj` contra 1,4 KB do `.wam` (invariante #31).
+- `/` → 302 → `/~/maps/office.wam`; `/admin/` → 302 → login **https**; `/map-storage/` → 401.
+
+O playbook da troca continua válido para repetir a subida, nesta ordem, a partir da raiz e de `contrib/docker`:
 
 ```bash
 docker compose down                                                                   # derruba o dev (raiz)
@@ -383,15 +391,22 @@ Três armadilhas operacionais descobertas em 2026-08-06, para não redescobrir:
 O **modelo de ameaças STRIDE** está escrito em [`docs/security/threat-model.pt-BR.md`](docs/security/threat-model.pt-BR.md)
 e tem a lista completa. O resumo:
 
-- **F7 — o `ADMIN_API_SESSION_SECRET` ainda é o padrão de desenvolvimento.** Quem o tiver forja sessão para qualquer
-  e-mail. `openssl rand -base64 48`. **É o único achado de severidade alta ainda aberto.**
+- ~~F7~~ — **fechado no piloto (verificado 2026-08-10).** O `contrib/docker/.env` de produção tem segredo gerado, não
+  o `dev-only-admin-dashboard-session-secret-change-me` do `.env.template`. O default continua no `.env` de **dev**,
+  que é onde ele pertence. Ao criar um ambiente novo: `openssl rand -base64 48`, e nunca reaproveitar o
+  `ADMIN_API_TOKEN` (item 14 da lista de invariantes).
 - ~~F1~~ — **fechado.** O `admin` agora só é atribuído por SQL direto; nem o dashboard nem a CLI concedem. A decisão
   #8 do ADR-0004 foi revisada e o teste obrigatório #10 substituído. **Custo consciente: uma concessão legítima de
   `admin` não deixa rastro nenhum**, porque o SQL contorna o log de auditoria.
-- **HTTPS e `Secure` no cookie.** Já automáticos quando o `ADMIN_API_PUBLIC_URL` começa com `https://`, mas ninguém
-  verificou num deploy de verdade.
-- **`ADMIN_API_TRUST_PROXY`** batendo com a topologia: `false` se não houver proxy na frente, ou o limite de taxa do
-  login é contornável com `X-Forwarded-For` forjado.
+- ~~**HTTPS e `Secure` no cookie**~~ — **verificado 2026-08-10.** O compose de produção define
+  `ADMIN_API_PUBLIC_URL: "https://${DOMAIN}"`, e o `/admin/` pelo túnel redireciona para um `/admin/login` em
+  `https://` — que é o que liga o `Secure`.
+- ~~**`ADMIN_API_TRUST_PROXY`**~~ — **verificado 2026-08-10.** O compose de produção já define `"1"`, que é o certo
+  para esta topologia (Traefik na frente). A regra continua valendo para deploy sem proxy: ali é `false`, ou o
+  limite de taxa do login vira contornável com `X-Forwarded-For` forjado.
+
+**Sobra em aberto:** nada de severidade alta. O que resta é rumo, não segurança — ver os itens 1 e 2 do Next Step
+(o túnel gratuito e a ausência de TURN).
 
 ---
 
@@ -510,6 +525,14 @@ Cada item abaixo tem teste de regressão. Se um deles quebrar, **não ajuste o t
 31. **O export consolidado (`<wam>?consolidated-tmj`) é público e pendurado na URL do próprio wam.** É o único
     endereço válido em toda topologia de deploy, e o overlay já é transmitido a todo cliente conectado — mover
     para rota autenticada quebraria o botão de download sem ganhar sigilo nenhum.
+
+    **É a URL do wam no `map-storage`, não a rota do mundo** — e confundir as duas produz falso positivo no smoke,
+    porque `/~/maps/office.wam` é rota SPA do `play`: devolve o `index.html` com **200 para qualquer query string**,
+    inclusive esta. O endereço que prova o export (414 KB de `.tmj` contra 1,4 KB do `.wam`):
+
+    ```bash
+    curl -s -o NUL -w "%{http_code} %{size_download}\n" "https://<dominio>/map-storage/maps/office.wam?consolidated-tmj"
+    ```
 
 ### Também não mexer sem conversar
 
